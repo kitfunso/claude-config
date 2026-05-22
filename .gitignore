@@ -1,0 +1,11 @@
+# Global Claude Code config repo — allowlist .gitignore.
+# Ignore everything by default, then permit ONLY the shareable files.
+# This guarantees secrets and local state can never be staged, even by an
+# accidental `git add -A`: settings.json (API keys), settings.local.json,
+# projects/ (memory + sessions), plugins/, skills/, voice/, sessions/,
+# history.jsonl, todos/, statsig/, shell-snapshots/, *.old backups, etc.
+*
+!/CLAUDE.md
+!/rules/
+!/rules/**
+!/.gitignore
