@@ -2,10 +2,42 @@
 # Ignore everything by default, then permit ONLY the shareable files.
 # This guarantees secrets and local state can never be staged, even by an
 # accidental `git add -A`: settings.json (API keys), settings.local.json,
-# projects/ (memory + sessions), plugins/, skills/, voice/, sessions/,
-# history.jsonl, todos/, statsig/, shell-snapshots/, *.old backups, etc.
+# projects/ (memory + sessions), plugins/, voice/, sessions/, history.jsonl,
+# todos/, statsig/, shell-snapshots/, *.old backups, etc.
 *
 !/CLAUDE.md
 !/rules/
 !/rules/**
+!/skills/
+!/skills/**
+!/hooks/
+!/hooks/**
 !/.gitignore
+
+# Keep shareable skill and hook source, not vendored dependencies, nested repos,
+# generated bundles, or local binary artifacts.
+/skills/**/.git/
+/skills/**/.git/**
+/skills/**/node_modules/
+/skills/**/node_modules/**
+/skills/**/dist/
+/skills/**/dist/**
+/skills/**/__pycache__/
+/skills/**/__pycache__/**
+/skills/frontend-slides/
+/skills/frontend-slides/**
+/skills/gstack/
+/skills/gstack/**
+/skills/**/*.pyc
+/skills/**/*.exe
+/skills/**/*.dll
+/skills/**/*.dylib
+/skills/**/*.so
+/skills/**/*.node
+/skills/**/*.wasm
+/skills/**/*.pack
+/skills/**/*.idx
+/skills/**/*.zip
+/skills/**/*.gz
+/skills/**/*.old
+/skills/**/*.old-*

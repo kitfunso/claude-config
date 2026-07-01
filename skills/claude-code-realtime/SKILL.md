@@ -1,0 +1,54 @@
+---
+name: claude-code-realtime
+description: Use when the user wants a realtime or near-realtime bridge to Claude Code from another agent, script, terminal, or workflow. Provides a JSONL mailbox protocol and helper scripts for sending prompts to `claude -p` and reading responses.
+metadata:
+  short-description: Realtime Claude Code mailbox bridge
+---
+
+# Claude Code Realtime
+
+Use a project-local mailbox when another process needs to communicate with Claude Code without driving the interactive TUI.
+
+## Protocol
+
+- Mailbox default: `.claude-realtime/`.
+- Send requests by appending JSON lines to `inbox.jsonl`.
+- Read replies from `outbox.jsonl`.
+- Each request should include:
+  - `id`: stable unique id.
+  - `prompt`: message for Claude Code.
+  - `cwd`: optional working directory.
+  - `system`: optional extra instruction text.
+
+Example request:
+
+```json
+{"id":"smoke-001","prompt":"Run the test suite and summarize failures.","cwd":"C:\\path\\to\\repo"}
+```
+
+## Workflow
+
+1. Start the bridge from a terminal:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Start-ClaudeRealtimeBridge.ps1
+```
+
+2. Send a request:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Send-ClaudeRealtimeMessage.ps1 -Prompt "Inspect the repo and report the riskiest failing test."
+```
+
+3. Tail replies:
+
+```powershell
+Get-Content .\.claude-realtime\outbox.jsonl -Wait
+```
+
+## Operating Rules
+
+- Treat the bridge as near-realtime, not as a long-lived shared conversation. Each request invokes `claude -p`.
+- Keep prompts self-contained; include relevant paths and expected output shape.
+- For automation, request JSON output from the prompt itself when the caller needs machine-readable results.
+- Stop after repeated CLI/auth failures and surface the raw error from `outbox.jsonl`.

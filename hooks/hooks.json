@@ -1,0 +1,40 @@
+{
+  "description": "Custom hooks for Claude Code quality gates and session management",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${HOME}/.claude/scripts/hooks/pre-bash-guard.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${HOME}/.claude/scripts/hooks/suggest-compact.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${HOME}/.claude/scripts/hooks/session-end.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

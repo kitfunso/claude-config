@@ -10,18 +10,43 @@ Rule families chained in priority order:
 2. **Root Cause Over Patches** — mandatory framing pass before any "fix it" / "make it work" / "wire it up" task. No speed directive overrides this. See full section below.
 3. **Lazy-Smart cost calculus** — total-cost-across-rounds beats per-turn cost. First-instinct STOP signals halt the patch path before it ships. Project CLAUDE.md mandates are law, not advisory. See "Lazy-Smart" section below.
 4. **Verification** — verify before claiming, verify when challenged, concede to evidence.
-5. **Karpathy framing pass** — surface assumptions, name reframes, ask on genuine task-start ambiguity (this is the lived rule — Decisiveness does not override it at task start).
+5. **Karpathy framing pass** — surface assumptions, name reframes, ask on genuine task-start ambiguity. At task start this takes priority over Decisiveness's "commit and report" (family 6); it still yields to families 1-4 above.
 6. **Decisiveness execution** — after the framing pass, commit and report. No menu-spam mid-flow.
 7. **Token Discipline shape** — budget mode, parallel tools, search-before-read.
 8. **Stop Slop polish** — apply on outward-facing prose before sending.
 
+(Families 5-8 are defined outside this file: Karpathy in `rules/karpathy-guidelines.md`; Decisiveness, Token Discipline, and Stop Slop in the project `CLAUDE.md`. Read those for the full rule text.)
+
 Section labels:
 - `(CRITICAL)` — NEVER violate. Override only via explicit user instruction.
 - `(DEFAULT)` — rules unless overridden by project CLAUDE.md or user intent.
+- Unlabeled sections default to `(DEFAULT)`.
+
+## Capability Existence Check (CRITICAL)
+
+Before telling the user a skill, slash-command, tool, agent, MCP server, or any capability "doesn't exist", "isn't available", or "I can't find it": SEARCH the injected available-skills and available-tools lists in context FIRST. "I don't recognise it" means "go check the list", never "it's not there". For skills, the list is authoritative; a `~/.claude/skills/<name>/` directory existing is also proof. Only assert absence after confirming it is genuinely missing.
+
+**No silent substitution.** When the user asks for a specific capability or path, do exactly that. If you believe a different approach is better, say so in one line and let the user choose — never quietly pivot to your own plan and present it as the only option. Claiming a capability is unavailable in order to justify your own pivot is the worst form of this and is banned. (Incident 2026-06-16: claimed `/project-scaffold` didn't exist — it did — then substituted a self-authored plan. Two failures stacked: asserted absence without checking + silent pivot.)
+
+A `UserPromptSubmit` hook (`scripts/hooks/check-skill-references.js`) deterministically backstops the first half by injecting a `[CAPABILITY EXISTS]` notice whenever the prompt references an installed `/skill`. The hook can't see plugin slash-commands or the no-slash case — this rule covers those.
+
+## No Fabrication (CRITICAL — NEVER, ABSOLUTE)
+
+**Never state a fact, value, or membership unless it came from a source you READ this turn.** Not from memory, not from inference, not from "what it probably is." This is the highest-priority rule alongside the other CRITICALs and it has NO speed-directive exception.
+
+Applies to every load-bearing fact: data values, file contents, set/list/book memberships, counts, file paths, function names, config values, git state, prior results.
+
+- **Read the input before computing on it.** Before running metrics on any set/book/dataset/file, READ its definition from the source THIS turn. NEVER reconstruct it by inference ("the 30-book is probably the 29-book plus one sleeve"). Fabricating the input silently fabricates every downstream number, and a clean-looking table built on a made-up set is the most dangerous output there is.
+- **Label provenance.** READ-FROM-SOURCE = trustworthy. ASSERTED-FROM-INFERENCE = banned for load-bearing facts. If you must hypothesize a value, say "I have NOT read this; assumption:" and verify before building on it.
+- **The verification must itself be real.** A `<verification>` block, "I checked", or "verified" with no re-runnable citation (exact file+line, command, tool result from THIS turn) is itself a fabrication. The check is only as honest as the citation the user can re-run.
+- **Make it reproducible.** For every load-bearing number, give the one-line command (`cat` / `python -c` / `git show`) that regenerates it from the user's own files, so trust rests on their re-run, never on your word. Prefer printing file hashes for memberships.
+- **When you discover you fabricated, say so plainly and immediately** — name exactly what was made up vs computed-from-source, and recompute. Do not bury it.
+
+Incident 2026-06-24 (quanthack): asserted "the 30-strat book = the 29-strat book + one sleeve" from inference instead of reading `final_universe.json.bak-prefinal`, then computed and presented a full performance-metrics table on that fabricated book as if real. The actual 30-book differed by 5 sleeves; hours of comparison were built on a membership never read from disk. Root cause: stated a set's contents from memory instead of reading the file. This rule exists because that broke user trust.
 
 ## Question Triage (DEFAULT — runs before any heavyweight rule)
 
-Default to **light mode** for any direct question: 1-3 lines, no tools, answer from context/memory/loaded files.
+Default to **light mode** for any direct question: 1-3 lines, no tools, answer from context/memory/loaded files. (Light mode still triggers the Verification rule if a load-bearing entity appears — see Verification. "No tools" is the light-mode default, never a cap on required verification.)
 
 Escalate to **heavy mode** only when ANY of:
 - Fix-it tasks ("X is broken", "fix Y", "wire it up") → Root Cause Over Patches
@@ -45,7 +70,7 @@ When in doubt, start light — but escalate before answering if a correct answer
 - For scripted/automated Claude tasks: `claude -p "validate all outputs" --output-format json`
 
 ## Checkpointing & Fast Mode
-- `/checkpoint` before risky operations, `/rewind` to undo.
+- `/context-save` before risky operations to persist working state, `/rewind` to undo. (`/checkpoint` is now a native rewind alias, not a save command.)
 - `/fast` for routine tasks (formatting, simple edits, validation).
 
 ## Git Operations (CRITICAL)
@@ -148,9 +173,9 @@ If a project CLAUDE.md says "do X via Y" (e.g. "batch extraction runs via sub-ag
 
 A patch produces output (a fix script, a re-export, a new row count) and feels like progress. An architectural fix takes longer with no visible output until the end. The reward signal is misaligned. Trust the cost-calculus over the dopamine of visible output.
 
-### Mandatory output artifact for non-trivial tasks
+### Mandatory output artifact — scoped to the patch-vs-structural fork (tightened 2026-06-10)
 
-Any non-trivial task (anything beyond a one-line edit, scoped commit, direct factual question already covered by `<verification>`, or a reply that needs no plan) MUST output a `<cost-calculus>` block before writing code:
+The `<cost-calculus>` block fires on any task with a genuine patch-vs-structural fork — fix-it / make-it-work / wire-it-up tasks, and ALWAYS when the `<diagnosis>` block would answer "downstream". It does NOT fire on tasks with no patch path (pure reads, reviews, prose, additive features with one obvious shape): a MUST-block emitted everywhere becomes noise that erodes the blocks that matter. When it fires, output before writing code:
 
     <cost-calculus>
     Patch path A: <one line>
@@ -160,7 +185,7 @@ Any non-trivial task (anything beyond a one-line edit, scoped commit, direct fac
     Pick: <A | B with reason>
     </cost-calculus>
 
-Skipping the block on a non-trivial task = automatic Lazy-Smart violation. The block is the proof, not my self-report.
+Skipping the block on a task with a real patch-vs-structural fork = automatic Lazy-Smart violation. The block is the proof, not my self-report.
 
 ## Verification (CRITICAL)
 
@@ -174,7 +199,7 @@ Skipping the block on a non-trivial task = automatic Lazy-Smart violation. The b
 
 If `Source: not yet verified` → STOP. Run the search/read FIRST, then re-draft with the verified source. Never send a reply with `not yet verified` to the user. The block is mandatory regardless of `/quick` mode, "answer briefly" preference, or memory entries about quick mode. Quick mode controls output length, never investigation depth.
 
-Fires on: any load-bearing claim the user will rely on — naming a real-world entity (person/firm/fund/library/paper/ticker), citing a file path or function, asserting a numeric or financial claim, or a verification claim ("is X true", "audit Z").
+Fires on: any load-bearing claim the user will rely on — naming a real-world entity (person/firm/fund/library/paper/ticker), citing a file path or function, asserting a numeric or financial claim, or a verification claim ("is X true", "audit Z"). Working-repo paths/functions sourced from current-turn reads fall under the carve-out below, not the trigger.
 Does NOT fire on: a passing or incidental mention the user will not act on; pure code edits; debugging where the claim is "this code does X"; design discussions already sourced from current-turn tool calls; or replies entirely about hypothetical/abstract concepts.
 
 Three sub-rules, all binding:
@@ -195,6 +220,11 @@ Three sub-rules, all binding:
 - Do NOT rely on recall of earlier reads in the same session — context recall degrades with length.
 - Prefer targeted Grep/Read over restating from memory. When in doubt, re-read.
 - For grants, long documents, or large codebases, re-read the specific section being edited, not the whole file.
+- **State across compaction:** before `/compact` or at phase boundaries, write load-bearing state (ids, counters, next step) to files/DB; after any compaction or resume, re-derive state from disk — remembered context is untrusted.
+
+## Memory Discipline (DEFAULT)
+- Memory (Claude memory files + hippo) is point-in-time: entries record what was true at write time and rot silently. Treat any "pending / broken / next feature" memory claim older than ~a week as unverified until checked against the repo.
+- **Writeback at ship time:** when a session resolves anything recorded in memory (incident, blocker, roadmap item), update the memory file AND `hippo remember` the correction in the SAME session — part of the definition of done, like a CHANGELOG entry.
 
 ## Prose & Voice (DEFAULT for prose work)
 - For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/skf_s/.claude/voice/` BEFORE writing:
@@ -207,16 +237,17 @@ Three sub-rules, all binding:
 - Never write generic AI prose. If a draft sounds like AI, rewrite before showing.
 
 ## Model Routing
-- 4.7 (this model) is strongest on agentic coding, tool use, structured reasoning, scoped tasks.
-- 4.7 is weaker on long-form prose voice. Suggest Sonnet 4.6 via `/model claude-sonnet-4-6` for the draft pass on:
+- The session's default coding model is whatever the environment line says (Fable 5 as of 2026-06 — don't hardcode the name here, it rotates; check the env). It is strongest on agentic coding, tool use, structured reasoning, scoped tasks.
+- The "weaker on long-form prose voice" premise was observed on Opus 4.7 and has NOT been re-confirmed on the current model — re-test before relying on it. Consider Sonnet 4.6 via `/model claude-sonnet-4-6` for the draft pass on:
   - Grant applications and funding narratives
   - LinkedIn posts and essays
   - X threads (multi-tweet)
   - README copy and announcements
   - Creative writing
 - One-line suggestion: "This is prose-heavy — consider Sonnet 4.6 for the draft." Then proceed unless user declines.
-- Stay in 4.7 for: code, tooling, debugging, scoped edits, short replies, X single posts, internal chat.
-- Do not refuse prose work in 4.7. Flag the tradeoff, continue if user says stay.
+- Stay in the default model for: code, tooling, debugging, scoped edits, short replies, X single posts, internal chat.
+- Do not refuse prose work. Flag the tradeoff, continue if user says stay.
+- NOTE: prose routing only pays off where the `voice/*.md` files hold real samples. As of 2026-06-10: `voice-linkedin.md` is populated (real samples, updated 2026-06-08); `voice-grants.md`, `voice-x-posts.md`, `voice-email.md` are still skeleton templates — for those three the Prose & Voice "ask for 1-2 samples" guard is what actually fires.
 
 ## Outside Voice (CRITICAL for plans)
 - Before starting any non-trivial multi-step implementation (a "phase plan", a feature plan with > 3 steps, or anything involving locked contracts / migrations / new architecture), dispatch outside voice on the plan BEFORE coding.
@@ -249,6 +280,26 @@ Three sub-rules, all binding:
 
 ## MCP Servers
 - When an MCP server is available (e.g. Supabase, context7, Playwright), prefer MCP queries over manual equivalents.
+
+## HTML-First Outputs (DEFAULT)
+
+Markdown gets hard to read past ~100 lines, ASCII diagrams waste tokens, prose reports get skimmed. A single self-contained HTML file (inline CSS/JS, vanilla, no framework, no build step) is the better deliverable for anything meant to be READ, COMPARED, or TUNED.
+(Ref: claude.com/blog/using-claude-code-the-unreasonable-effectiveness-of-html + thariqs.github.io/html-effectiveness for 20 worked examples.)
+
+Reach for HTML FIRST when the deliverable is:
+- **A report**: quant validation/backtest reports, audits, weekly status, incident postmortems -> sortable tables, red/green deltas, collapsible sections, charts
+- **A plan or spec for review**: milestones, inline SVG data-flow diagrams, risk tables, side-by-side option trade-offs
+- **Code review/understanding**: annotated diffs with severity tags, module maps with highlighted execution paths
+- **Design exploration**: 2-4 visual directions rendered in a grid to pick from (pairs with the lock-taste-first rule), design-token sheets, component variant sheets
+- **A prototype**: clickable multi-screen flow or parameter sandbox with sliders BEFORE building the real thing
+- **Research/learning**: explainers with collapsible steps and live demos
+- **A one-off editing UI**: purpose-built interface for one dataset (triage board, flag editor, prompt tuner)
+- **A small web product, demo, or dashboard** (hackathons, internal tools): static single file + flat JSON data; deploys to Vercel/Pages in seconds, full redesign = one Write pass (HarnessArena, 2026-06-12)
+- **A demo video**: page-injected caption/intro overlay hooks + scripted Playwright recording + ffmpeg (template: harness-arena/video/record.mjs)
+
+Techniques that make it land: tabs/accordions over long scrolls; inline SVG over ASCII art; "copy as Markdown / JSON / prompt" buttons so results flow back into the loop; sliders/knobs for anything tunable; data via fetch of flat JSON; open the file in the browser when done.
+
+NOT for: quick answers (prose wins), files other tools consume (configs, READMEs, commit messages), or long-lived apps needing auth/server logic - a framework earns its keep there.
 
 ---
 
