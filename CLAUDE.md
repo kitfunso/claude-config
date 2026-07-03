@@ -1,4 +1,4 @@
-# Global Claude Code Configuration
+﻿# Global Claude Code Configuration
 
 ## Precedence
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first; treat global rules as defaults.
@@ -102,6 +102,8 @@ Before writing any code that fixes a bug, makes broken behavior work, or wires u
 
 If **downstream** → STOP. Reply: "this is a patch — root cause is X, structural fix is Y" and wait for explicit confirmation in a **separate user message**. You cannot confirm your own downstream framing in the same turn.
 
+**Unattended carve-out** (headless runs, crons, or the harness states the user cannot respond mid-task): don't stall waiting for a message that can't arrive. Default to the structural fix if it's safely in scope for the session; if it's too large or risky to do unattended, ship NOTHING — the diagnosis block IS the deliverable. Being unattended never authorises the patch path; that always requires a human yes.
+
 **Fires on:** fix-it tasks ("X is broken", "fix Y", "wire it up"), execution of contract / schema / migration changes, multi-step implementation (>3 steps).
 **Does NOT fire on:** factual questions, refactors with no bug, single-file typo / formatting / comment edits.
 
@@ -189,7 +191,7 @@ Skipping the block on a task with a real patch-vs-structural fork = automatic La
 
 ## Verification (CRITICAL)
 
-**Mandatory output artifact.** Any reply that makes a load-bearing claim the user will rely on — naming a person, firm, fund, library, paper title, ticker, file path, function name, or version number, or asserting a specific numeric or financial claim — MUST output a `<verification>` block as the FIRST content of the reply, before any prose:
+**Mandatory output artifact (provenance-scoped 2026-07-03).** Any reply that makes a load-bearing claim the user will rely on WITHOUT a tool-call source from this turn — naming a person, firm, fund, library, paper title, ticker, file path, function name, or version number from memory, or asserting a specific numeric or financial claim — MUST output a `<verification>` block as the FIRST content of the reply, before any prose:
 
     <verification>
     Claim: <one-line summary of the verifiable claim>
@@ -199,8 +201,9 @@ Skipping the block on a task with a real patch-vs-structural fork = automatic La
 
 If `Source: not yet verified` → STOP. Run the search/read FIRST, then re-draft with the verified source. Never send a reply with `not yet verified` to the user. The block is mandatory regardless of `/quick` mode, "answer briefly" preference, or memory entries about quick mode. Quick mode controls output length, never investigation depth.
 
-Fires on: any load-bearing claim the user will rely on — naming a real-world entity (person/firm/fund/library/paper/ticker), citing a file path or function, asserting a numeric or financial claim, or a verification claim ("is X true", "audit Z"). Working-repo paths/functions sourced from current-turn reads fall under the carve-out below, not the trigger.
-Does NOT fire on: a passing or incidental mention the user will not act on; pure code edits; debugging where the claim is "this code does X"; design discussions already sourced from current-turn tool calls; or replies entirely about hypothetical/abstract concepts.
+Fires on: a load-bearing claim the user will act on whose source is memory/inference rather than a tool call this turn — naming a real-world entity (person/firm/fund/library/paper/ticker), citing a file path or function not read this turn, asserting a numeric or financial claim, or answering a verification ask ("is X true", "audit Z"). The test is provenance, not entity type: no source this turn + user will act on it → go get the source first (No Fabrication), then the block shows it.
+Does NOT fire on: anything already sourced from a current-turn tool call — cite it inline (file:line, URL, command) instead of a block; working-repo paths/functions/file contents read this turn; a passing or incidental mention the user will not act on; pure code edits; debugging where the claim is "this code does X"; or replies entirely about hypothetical/abstract concepts.
+Rule of thumb: the block exists to force a missing source into existence. If the source already exists this turn, the inline citation IS the verification; a block on top of it is ceremony.
 
 Three sub-rules, all binding:
 
@@ -227,7 +230,7 @@ Three sub-rules, all binding:
 - **Writeback at ship time:** when a session resolves anything recorded in memory (incident, blocker, roadmap item), update the memory file AND `hippo remember` the correction in the SAME session — part of the definition of done, like a CHANGELOG entry.
 
 ## Prose & Voice (DEFAULT for prose work)
-- For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/skf_s/.claude/voice/` BEFORE writing:
+- For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/kit.sofun/.claude/voice/` BEFORE writing:
   - Grants / applications → `voice-grants.md`
   - X posts / threads → `voice-x-posts.md`
   - LinkedIn → `voice-linkedin.md`
@@ -237,17 +240,25 @@ Three sub-rules, all binding:
 - Never write generic AI prose. If a draft sounds like AI, rewrite before showing.
 
 ## Model Routing
-- The session's default coding model is whatever the environment line says (Fable 5 as of 2026-06 — don't hardcode the name here, it rotates; check the env). It is strongest on agentic coding, tool use, structured reasoning, scoped tasks.
-- The "weaker on long-form prose voice" premise was observed on Opus 4.7 and has NOT been re-confirmed on the current model — re-test before relying on it. Consider Sonnet 4.6 via `/model claude-sonnet-4-6` for the draft pass on:
+- The session's default coding model is whatever the environment line says (Fable 5 as of 2026-07 — don't hardcode the name here, it rotates; check the env). It is strongest on agentic coding, tool use, structured reasoning, scoped tasks.
+- Current lineup as of 2026-07: Claude 5 family (Fable 5 `claude-fable-5`, Sonnet 5 `claude-sonnet-5`), Opus 4.8 `claude-opus-4-8`. Verify against the env line before citing — this list rots.
+- The "weaker on long-form prose voice" premise was observed on Opus 4.7 and has NOT been re-confirmed on the current model — re-test before relying on it. Consider Sonnet 5 via `/model claude-sonnet-5` for the draft pass on:
   - Grant applications and funding narratives
   - LinkedIn posts and essays
   - X threads (multi-tweet)
   - README copy and announcements
   - Creative writing
-- One-line suggestion: "This is prose-heavy — consider Sonnet 4.6 for the draft." Then proceed unless user declines.
+- One-line suggestion: "This is prose-heavy — consider Sonnet 5 for the draft." Then proceed unless user declines.
 - Stay in the default model for: code, tooling, debugging, scoped edits, short replies, X single posts, internal chat.
 - Do not refuse prose work. Flag the tradeoff, continue if user says stay.
 - NOTE: prose routing only pays off where the `voice/*.md` files hold real samples. As of 2026-06-10: `voice-linkedin.md` is populated (real samples, updated 2026-06-08); `voice-grants.md`, `voice-x-posts.md`, `voice-email.md` are still skeleton templates — for those three the Prose & Voice "ask for 1-2 samples" guard is what actually fires.
+
+### Subagent model routing (added 2026-07-02, fable carve-out 2026-07-03)
+- When spawning subagents (Agent tool, or Workflow `agent()` calls), ALWAYS set the `model` parameter explicitly — never let subagents silently inherit the session model.
+- Use `model: "opus"` (resolves to latest Opus, 4.8 as of 2026-07) for complex subagent work: architecture review, debugging, multi-file refactors, adversarial verification.
+- Use `model: "sonnet"` (resolves to latest Sonnet, Sonnet 5 as of 2026-07) for routine subagent work: searches, mechanical edits, data extraction, smoke tests, summarization.
+- `fable` (session model) subagents: allowed unprompted ONLY for the few highest-stakes verdicts per task — a final adversarial verification gating a ship/deploy, a security-critical review, or a single judge/synthesis pass over other agents' work. Cap ~3 per task. NEVER for fan-outs, searches, or routine work — cost is the constraint there, not capability. If more than ~3 seems warranted, say so and let the user decide.
+- Agent definitions in `.claude/agents/*.md` with a `model:` frontmatter keep their own setting; this rule covers the default/unspecified case.
 
 ## Outside Voice (CRITICAL for plans)
 - Before starting any non-trivial multi-step implementation (a "phase plan", a feature plan with > 3 steps, or anything involving locked contracts / migrations / new architecture), dispatch outside voice on the plan BEFORE coding.
@@ -303,4 +314,4 @@ NOT for: quick answers (prose wins), files other tools consume (configs, READMEs
 
 ---
 
-Project-specific rules live in each project's own `CLAUDE.md` (e.g. `C:/Users/skf_s/Quantamental/CLAUDE.md`). Do not re-encode project rules here.
+Project-specific rules live in each project's own `CLAUDE.md` (e.g. `C:/Users/kit.sofun/Quantamental/CLAUDE.md`). Do not re-encode project rules here.
