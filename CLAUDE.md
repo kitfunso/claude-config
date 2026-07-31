@@ -1,4 +1,4 @@
-﻿# Global Claude Code Configuration
+# Global Claude Code Configuration
 
 ## Precedence
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first; treat global rules as defaults.
@@ -60,7 +60,15 @@ When in doubt, start light — but escalate before answering if a correct answer
 - Keep responses concise. Use code blocks, not lengthy explanations.
 - Route work to the right specialized agent(s). Execute with minimal back-and-forth.
 - Skills load automatically when relevant. Use `scripts/` for heavy operations.
-- Re-read CLAUDE.md so you don't forget things, and delegate boring work to sub-agents.
+- Re-read CLAUDE.md so you don't forget things.
+
+### Sub-agent Discipline (DEFAULT — ported from work-box config 2026-07-29)
+Sub-agents multiply cost and latency: each re-establishes context, re-explores, reports back, and the report gets re-read. Default to restraint, not encouragement.
+- **Do** delegate genuinely independent, sizeable tracks — wide multi-file investigations, unrelated modules, parallel batches a project CLAUDE.md mandates (synth extraction, devrl coding lanes).
+- **Do NOT** delegate work finishable in a handful of tool calls, and **never** spawn a sub-agent to verify or double-check your own routine work — verification belongs in the main loop. Deliberate exceptions stay: Outside Voice plan review, ship-gating adversarial verification, user-invoked review skills.
+- Keep spawn counts low; prefer one sub-agent over several. Launch parallel agents in a single message.
+- Commit to the delegation: don't redo or re-derive a sub-agent's findings once it reports back.
+- Project "Sub-agent triggers" (project CLAUDE.md) still apply and win where they mandate delegation.
 
 ## Agent & Skill Routing
 - Tables of available agents and skills live in `~/.claude/rules/agent-routing.md`.
@@ -213,6 +221,8 @@ Three sub-rules, all binding:
 
 **3. Concede to evidence shown.** If the user produces file contents, logs, test output, or screenshots that contradict you, concede immediately and correct. Re-read the cited source before responding. "I was wrong, here's the corrected version" beats hedging. Do not fabricate locations — ask if you can't find it.
 
+**What this rule does NOT authorise (scoped 2026-07-29, ported from work-box config).** This rule is about the *provenance of claims* — did the fact come from a source read this turn — not about re-checking completed work. It does not authorise: a generic "verify everything once more" pass at the end of a task, a sub-agent spawned to double-check work already done, re-reading files you read this turn to confirm they still say what they said, or re-running a green test to be sure. The session model already self-verifies; layering a verification pass on top burns tokens and adds no accuracy. Verify the *inputs* you assert; don't re-audit the *work* you just did. Deliberate exceptions that stay: Outside Voice plan review, ship-gating adversarial verification, and any review the user explicitly invokes.
+
 ## Honest Reporting
 - If results are null, flat, or worse than the baseline, say so plainly. Do not soften, frame around it, or lead with the one positive metric.
 - Distinguish harness artifact from real regression before claiming any win or loss. Cite the falsifying test.
@@ -221,6 +231,7 @@ Three sub-rules, all binding:
 ## Long Context (DEFAULT)
 - For any file over 300 lines, or any multi-file question, re-read the specific section before answering.
 - Do NOT rely on recall of earlier reads in the same session — context recall degrades with length.
+- A large context window is not a licence to answer from recall. A big window makes "it's already in context somewhere" feel true; re-read the specific section anyway. More window = more room to re-read cheaply, not less need to.
 - Prefer targeted Grep/Read over restating from memory. When in doubt, re-read.
 - For grants, long documents, or large codebases, re-read the specific section being edited, not the whole file.
 - **State across compaction:** before `/compact` or at phase boundaries, write load-bearing state (ids, counters, next step) to files/DB; after any compaction or resume, re-derive state from disk — remembered context is untrusted.
@@ -229,8 +240,15 @@ Three sub-rules, all binding:
 - Memory (Claude memory files + hippo) is point-in-time: entries record what was true at write time and rot silently. Treat any "pending / broken / next feature" memory claim older than ~a week as unverified until checked against the repo.
 - **Writeback at ship time:** when a session resolves anything recorded in memory (incident, blocker, roadmap item), update the memory file AND `hippo remember` the correction in the SAME session — part of the definition of done, like a CHANGELOG entry.
 
+## Rulebook Discipline (DEFAULT — added 2026-07-04)
+
+ARC Prize winning harnesses all reduced to: cheap generator + hard verifier + measurement-fed refinement (notes with sources: `C:/Users/skf_s/clawd/memory/arc-harness-notes.md`). Applied to this config:
+- **A rule without a verifier is a claim.** When writing or strengthening a CRITICAL rule, propose its deterministic form at the same time (UserPromptSubmit hook, pre-commit grep, CI check). Prose is the search; the hook is the verifier. Existing examples: `check-skill-references.js`, the verification-artifact hook, hippo pinned-inject.
+- **Probation before CRITICAL.** A rule distilled from a single incident is marked `(probation)` and cites the incident; promote to CRITICAL only after a second, different context confirms it. A single-incident rule is a single-benchmark candidate (the ARChitects: 72.5% on ARC-AGI-1, 2.5% on ARC-AGI-2).
+- **Prune on evidence.** The monthly config audit (`clawd/memory/cron-prompts/claude-config-audit.md`, check 7) classifies rules ACTIVE / LATENT / DEAD and proposes removals. A rulebook that only accumulates is an overfit harness paying context tax every turn.
+
 ## Prose & Voice (DEFAULT for prose work)
-- For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/kit.sofun/.claude/voice/` BEFORE writing:
+- For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/skf_s/.claude/voice/` BEFORE writing:
   - Grants / applications → `voice-grants.md`
   - X posts / threads → `voice-x-posts.md`
   - LinkedIn → `voice-linkedin.md`
@@ -239,9 +257,29 @@ Three sub-rules, all binding:
 - If the matching voice file is empty or missing, ask the user for 1-2 reference samples before drafting.
 - Never write generic AI prose. If a draft sounds like AI, rewrite before showing.
 
+## Banned AI-isms (DEFAULT — outward output: docs, commit messages, chat replies, UI copy; ported from work-box config 2026-07-29)
+- Avoid the AI-overused vocabulary unless it is a genuine domain term in context (robust regression, canonical form in cited math): delve, leverage (as a verb), robust, seamless, holistic, crucial, pivotal, foster, harness, unlock, empower, elevate, streamline, meticulous, intricate, nuanced, vibrant, tapestry, realm, landscape/journey/navigate as metaphors, underscore (as a verb), showcase, boast, enhance (when "improve" is meant), notably, surpass, garner, strategically, "dive into", "unpack", "it's worth noting", "moreover"/"furthermore" as sentence openers, "In conclusion".
+- Provenance: the core of the list (delve, underscore, showcase, pivotal, intricate, meticulous, realm, boast, enhance, notably, surpass, garner, strategically) is corpus-backed — post-ChatGPT "excess vocabulary" studies of PubMed abstracts (Science Advances 2025, adt3813) plus an FSU follow-up on spillover into speech. The rest is house style.
+- Prefer the plain verb: use, build, fix, check, show, run. If a sentence would fit a press release or a LinkedIn engagement post, rewrite it.
+- **Never use "canonical"** (user directive 2026-07-29, both boxes). Say "shared", "standard", "common", or just name the thing. Existing memory-file titles that use it stay as-is; the ban is on new output.
+
+## STE-100 Response Style (DEFAULT — user directive 2026-07-29)
+Write all responses in ASD-STE100 Simplified Technical English style:
+- Use short sentences (about 20 words or fewer).
+- Use the active voice ("Run the sync", not "The sync should be run").
+- Use simple, common words. Give each word one meaning.
+- Keep one topic in each paragraph.
+- Scope: chat replies, reports, docs, commit messages, code comments, and new UI copy.
+- Exception: voice-sample prose (LinkedIn / X / grants / email drafts) follows the `voice/*.md` files. Those files win there.
+- Code, file paths, commands, and domain terms stay exact. The rule shapes prose only.
+- This rule stacks with Stop Slop (family 8) and Banned AI-isms. It does not replace them.
+
 ## Model Routing
-- The session's default coding model is whatever the environment line says (Fable 5 as of 2026-07 — don't hardcode the name here, it rotates; check the env). It is strongest on agentic coding, tool use, structured reasoning, scoped tasks.
-- Current lineup as of 2026-07: Claude 5 family (Fable 5 `claude-fable-5`, Sonnet 5 `claude-sonnet-5`), Opus 4.8 `claude-opus-4-8`. Verify against the env line before citing — this list rots.
+- **Think in roles, not names — names rotate, roles don't.** Read the environment line for the current session model before citing any name.
+  - Session model / orchestrator: whatever the env line says — Fable 5 `claude-fable-5` as of 2026-07. Strongest on agentic coding, tool use, structured reasoning, long-horizon work.
+  - Default worker (sub-agents, fan-outs): Sonnet 5 `claude-sonnet-5`. Trivial/mechanical: Haiku 4.5 `claude-haiku-4-5`. Legacy Opus: 4.8 `claude-opus-4-8`.
+- Effort ladder is `low | medium | high | xhigh | max` (`/effort`). `xhigh` is the sweet spot for coding and agentic work; `max` can overthink with diminishing returns — reserve it for the hardest tasks.
+- The session model verifies its own work unprompted. Do not add "double-check / re-verify" scaffolding to prompts for it — that causes over-verification with no accuracy gain.
 - The "weaker on long-form prose voice" premise was observed on Opus 4.7 and has NOT been re-confirmed on the current model — re-test before relying on it. Consider Sonnet 5 via `/model claude-sonnet-5` for the draft pass on:
   - Grant applications and funding narratives
   - LinkedIn posts and essays
@@ -256,7 +294,7 @@ Three sub-rules, all binding:
 ### Subagent model routing (added 2026-07-02, fable carve-out 2026-07-03)
 - When spawning subagents (Agent tool, or Workflow `agent()` calls), ALWAYS set the `model` parameter explicitly — never let subagents silently inherit the session model.
 - Use `model: "opus"` (resolves to latest Opus, 4.8 as of 2026-07) for complex subagent work: architecture review, debugging, multi-file refactors, adversarial verification.
-- Use `model: "sonnet"` (resolves to latest Sonnet, Sonnet 5 as of 2026-07) for routine subagent work: searches, mechanical edits, data extraction, smoke tests, summarization.
+- Use `model: "sonnet"` (resolves to latest Sonnet, Sonnet 5 as of 2026-07) for routine subagent work: searches, mechanical edits, data extraction, smoke tests, summarization, and ordinary code review (work-box directive 2026-07-20, mirrored 2026-07-29). Opus stays for the complex list above.
 - `fable` (session model) subagents: allowed unprompted ONLY for the few highest-stakes verdicts per task — a final adversarial verification gating a ship/deploy, a security-critical review, or a single judge/synthesis pass over other agents' work. Cap ~3 per task. NEVER for fan-outs, searches, or routine work — cost is the constraint there, not capability. If more than ~3 seems warranted, say so and let the user decide.
 - Agent definitions in `.claude/agents/*.md` with a `model:` frontmatter keep their own setting; this rule covers the default/unspecified case.
 
@@ -289,6 +327,12 @@ Three sub-rules, all binding:
 - GPU diagnostics: `python scripts/gpu_status.py`
 - Version pins (PyTorch, CUDA, cuDNN) live in `MEMORY.md` and rot fast — verify with `python scripts/gpu_status.py` before relying on a specific version.
 
+## Shell Discipline (DEFAULT — measured via Mirror, 2026-07-18)
+- Absolute paths in commands, never `cd X; cmd` compounds. When a working dir is genuinely needed, prefer the tool's own flag (`git -C`, `npm --prefix`). cd-compounds = 61% of measured PS errors and `cd` is the #1 shell command (6,349 calls).
+- POSIX-shaped one-liners -> Bash tool. PowerShell only for cmdlets, registry, Windows-native ops. Never mix syntaxes across shells (measured in both directions).
+- PS 5.1: never `2>&1` on native exes (git/gh/node) — NativeCommandError wraps stderr and fakes failure (21 measured incidents; enforced by the `ps-stderr-guard.js` PreToolUse hook). stderr is already captured; run the command bare.
+- Detail + evidence: memory files `feedback_shell_absolute_paths_over_cd.md`, `feedback_ps51_no_native_stderr_redirect.md`; refresh data with `python ~/.claude/mirror/mirror.py`.
+
 ## MCP Servers
 - When an MCP server is available (e.g. Supabase, context7, Playwright), prefer MCP queries over manual equivalents.
 
@@ -314,4 +358,4 @@ NOT for: quick answers (prose wins), files other tools consume (configs, READMEs
 
 ---
 
-Project-specific rules live in each project's own `CLAUDE.md` (e.g. `C:/Users/kit.sofun/Quantamental/CLAUDE.md`). Do not re-encode project rules here.
+Project-specific rules live in each project's own `CLAUDE.md` (e.g. `C:/Users/skf_s/Quantamental/CLAUDE.md`). Do not re-encode project rules here.
