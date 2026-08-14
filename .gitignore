@@ -12,6 +12,8 @@
 !/skills/**
 !/hooks/
 !/hooks/**
+!/scripts/
+!/scripts/**
 !/.gitignore
 
 # Keep shareable skill and hook source, not vendored dependencies, nested repos,
@@ -41,3 +43,8 @@
 /skills/**/*.gz
 /skills/**/*.old
 /skills/**/*.old-*
+/scripts/**/__pycache__/
+/scripts/**/__pycache__/**
+/scripts/**/*.pyc
+/scripts/**/*.old
+/scripts/**/*.old-*
