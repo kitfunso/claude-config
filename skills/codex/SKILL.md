@@ -855,7 +855,20 @@ assumptions, catches things you might miss. Present its output faithfully, not s
 
 ```bash
 CODEX_BIN=$(which codex 2>/dev/null || echo "")
+# Fallback (2026-07-21): no PATH install on this box (Zscaler blocks exes) —
+# the OpenAI VS Code extension bundles an authenticated CLI; newest wins.
+if [ -z "$CODEX_BIN" ]; then
+  CODEX_BIN=$(ls -t ~/.vscode/extensions/openai.chatgpt-*/bin/windows-x86_64/codex.exe 2>/dev/null | head -1)
+fi
 [ -z "$CODEX_BIN" ] && echo "NOT_FOUND" || echo "FOUND: $CODEX_BIN"
+```
+
+**PATH-less invocation rule:** when the binary came from the extension fallback, every
+`codex ...` command in the steps below must be invoked as `"$CODEX_BIN" ...`, and since
+each bash call is a fresh shell, re-resolve it at the top of that same call:
+
+```bash
+CODEX_BIN=$(which codex 2>/dev/null || ls -t ~/.vscode/extensions/openai.chatgpt-*/bin/windows-x86_64/codex.exe 2>/dev/null | head -1)
 ```
 
 If `NOT_FOUND`: stop and tell the user:
@@ -877,13 +890,17 @@ shared helpers that both `/codex` and `/autoplan` use.
 
 ```bash
 _TEL=$(~/.claude/skills/gstack/bin/gstack-config get telemetry 2>/dev/null || echo off)
-source ~/.claude/skills/gstack/bin/gstack-codex-probe
-
-if ! _gstack_codex_auth_probe >/dev/null; then
-  _gstack_codex_log_event "codex_auth_failed"
-  echo "AUTH_FAILED"
+# Probe helpers may be absent on this box (gstack bin not installed) — a missing
+# probe must SKIP, not fake AUTH_FAILED; auth is then verified by the real call.
+if source ~/.claude/skills/gstack/bin/gstack-codex-probe 2>/dev/null; then
+  if ! _gstack_codex_auth_probe >/dev/null; then
+    _gstack_codex_log_event "codex_auth_failed" 2>/dev/null || true
+    echo "AUTH_FAILED"
+  fi
+  _gstack_codex_version_check   # warns if known-bad, non-blocking
+else
+  echo "PROBE_UNAVAILABLE — skipping auth pre-check (real call will verify)"
 fi
-_gstack_codex_version_check   # warns if known-bad, non-blocking
 ```
 
 If the output contains `AUTH_FAILED`, stop and tell the user:

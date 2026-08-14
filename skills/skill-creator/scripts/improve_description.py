@@ -115,8 +115,8 @@ Please respond with only the new description text in <new_description> tags, not
         model=model,
         max_tokens=16000,
         thinking={
-            "type": "enabled",
-            "budget_tokens": 10000,
+            "type": "adaptive",
+            "display": "summarized",
         },
         messages=[{"role": "user", "content": prompt}],
     )
