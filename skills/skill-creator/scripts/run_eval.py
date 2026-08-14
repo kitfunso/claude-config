@@ -8,10 +8,9 @@ for a set of queries. Outputs results as JSON.
 import argparse
 import json
 import os
-import select
 import subprocess
 import sys
-import time
+import threading
 import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -39,6 +38,7 @@ def run_single_query(
     timeout: int,
     project_root: str,
     model: str | None = None,
+    use_installed: bool = False,
 ) -> bool:
     """Run a single query and return whether the skill was triggered.
 
@@ -49,23 +49,30 @@ def run_single_query(
     full assistant message, which only arrives after tool execution.
     """
     unique_id = uuid.uuid4().hex[:8]
-    clean_name = f"{skill_name}-skill-{unique_id}"
     project_commands_dir = Path(project_root) / ".claude" / "commands"
-    command_file = project_commands_dir / f"{clean_name}.md"
+    if use_installed:
+        # Detect the real installed skill: no probe command, match its name.
+        # The description under test must already be in the skill's SKILL.md.
+        clean_name = skill_name
+        command_file = None
+    else:
+        clean_name = f"{skill_name}-skill-{unique_id}"
+        command_file = project_commands_dir / f"{clean_name}.md"
 
     try:
-        project_commands_dir.mkdir(parents=True, exist_ok=True)
-        # Use YAML block scalar to avoid breaking on quotes in description
-        indented_desc = "\n  ".join(skill_description.split("\n"))
-        command_content = (
-            f"---\n"
-            f"description: |\n"
-            f"  {indented_desc}\n"
-            f"---\n\n"
-            f"# {skill_name}\n\n"
-            f"This skill handles: {skill_description}\n"
-        )
-        command_file.write_text(command_content)
+        if command_file is not None:
+            project_commands_dir.mkdir(parents=True, exist_ok=True)
+            # Use YAML block scalar to avoid breaking on quotes in description
+            indented_desc = "\n  ".join(skill_description.split("\n"))
+            command_content = (
+                f"---\n"
+                f"description: |\n"
+                f"  {indented_desc}\n"
+                f"---\n\n"
+                f"# {skill_name}\n\n"
+                f"This skill handles: {skill_description}\n"
+            )
+            command_file.write_text(command_content)
 
         cmd = [
             "claude",
@@ -91,85 +98,73 @@ def run_single_query(
         )
 
         triggered = False
-        start_time = time.time()
-        buffer = ""
         # Track state for stream event detection
         pending_tool_name = None
         accumulated_json = ""
 
+        # select() only works on sockets on Windows, so enforce the timeout
+        # with a kill-timer and read the pipe with a blocking line iterator.
+        killer = threading.Timer(
+            timeout, lambda: process.poll() is None and process.kill()
+        )
+        killer.start()
         try:
-            while time.time() - start_time < timeout:
-                if process.poll() is not None:
-                    remaining = process.stdout.read()
-                    if remaining:
-                        buffer += remaining.decode("utf-8", errors="replace")
-                    break
-
-                ready, _, _ = select.select([process.stdout], [], [], 1.0)
-                if not ready:
+            for raw_line in process.stdout:
+                line = raw_line.decode("utf-8", errors="replace").strip()
+                if not line:
                     continue
 
-                chunk = os.read(process.stdout.fileno(), 8192)
-                if not chunk:
-                    break
-                buffer += chunk.decode("utf-8", errors="replace")
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
 
-                while "\n" in buffer:
-                    line, buffer = buffer.split("\n", 1)
-                    line = line.strip()
-                    if not line:
-                        continue
+                # Early detection via stream events
+                if event.get("type") == "stream_event":
+                    se = event.get("event", {})
+                    se_type = se.get("type", "")
 
-                    try:
-                        event = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-
-                    # Early detection via stream events
-                    if event.get("type") == "stream_event":
-                        se = event.get("event", {})
-                        se_type = se.get("type", "")
-
-                        if se_type == "content_block_start":
-                            cb = se.get("content_block", {})
-                            if cb.get("type") == "tool_use":
-                                tool_name = cb.get("name", "")
-                                if tool_name in ("Skill", "Read"):
-                                    pending_tool_name = tool_name
-                                    accumulated_json = ""
-                                else:
-                                    return False
-
-                        elif se_type == "content_block_delta" and pending_tool_name:
-                            delta = se.get("delta", {})
-                            if delta.get("type") == "input_json_delta":
-                                accumulated_json += delta.get("partial_json", "")
-                                if clean_name in accumulated_json:
-                                    return True
-
-                        elif se_type in ("content_block_stop", "message_stop"):
-                            if pending_tool_name:
-                                return clean_name in accumulated_json
-                            if se_type == "message_stop":
+                    if se_type == "content_block_start":
+                        cb = se.get("content_block", {})
+                        if cb.get("type") == "tool_use":
+                            tool_name = cb.get("name", "")
+                            if tool_name in ("Skill", "Read"):
+                                pending_tool_name = tool_name
+                                accumulated_json = ""
+                            else:
                                 return False
 
-                    # Fallback: full assistant message
-                    elif event.get("type") == "assistant":
-                        message = event.get("message", {})
-                        for content_item in message.get("content", []):
-                            if content_item.get("type") != "tool_use":
-                                continue
-                            tool_name = content_item.get("name", "")
-                            tool_input = content_item.get("input", {})
-                            if tool_name == "Skill" and clean_name in tool_input.get("skill", ""):
-                                triggered = True
-                            elif tool_name == "Read" and clean_name in tool_input.get("file_path", ""):
-                                triggered = True
-                            return triggered
+                    elif se_type == "content_block_delta" and pending_tool_name:
+                        delta = se.get("delta", {})
+                        if delta.get("type") == "input_json_delta":
+                            accumulated_json += delta.get("partial_json", "")
+                            if clean_name in accumulated_json:
+                                return True
 
-                    elif event.get("type") == "result":
+                    elif se_type in ("content_block_stop", "message_stop"):
+                        if pending_tool_name:
+                            return clean_name in accumulated_json
+                        if se_type == "message_stop":
+                            return False
+
+                # Fallback: full assistant message
+                elif event.get("type") == "assistant":
+                    message = event.get("message", {})
+                    for content_item in message.get("content", []):
+                        if content_item.get("type") != "tool_use":
+                            continue
+                        tool_name = content_item.get("name", "")
+                        tool_input = content_item.get("input", {})
+                        if tool_name == "Skill" and clean_name in tool_input.get("skill", ""):
+                            triggered = True
+                        elif tool_name == "Read" and clean_name in tool_input.get("file_path", ""):
+                            triggered = True
                         return triggered
+
+                elif event.get("type") == "result":
+                    return triggered
         finally:
+            killer.cancel()
             # Clean up process on any exit path (return, exception, timeout)
             if process.poll() is None:
                 process.kill()
@@ -177,7 +172,7 @@ def run_single_query(
 
         return triggered
     finally:
-        if command_file.exists():
+        if command_file is not None and command_file.exists():
             command_file.unlink()
 
 
@@ -191,6 +186,7 @@ def run_eval(
     runs_per_query: int = 1,
     trigger_threshold: float = 0.5,
     model: str | None = None,
+    use_installed: bool = False,
 ) -> dict:
     """Run the full eval set and return results."""
     results = []
@@ -207,6 +203,7 @@ def run_eval(
                     timeout,
                     str(project_root),
                     model,
+                    use_installed,
                 )
                 future_to_info[future] = (item, run_idx)
 
@@ -266,6 +263,7 @@ def main():
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
     parser.add_argument("--model", default=None, help="Model to use for claude -p (default: user's configured model)")
+    parser.add_argument("--use-installed", action="store_true", help="Detect the installed skill by its real name instead of a probe command (description under test must be live in SKILL.md)")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
 
@@ -293,6 +291,7 @@ def main():
         runs_per_query=args.runs_per_query,
         trigger_threshold=args.trigger_threshold,
         model=args.model,
+        use_installed=args.use_installed,
     )
 
     if args.verbose:
