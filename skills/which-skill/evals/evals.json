@@ -1,0 +1,40 @@
+{
+  "skill_name": "which-skill",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "my streamlit arb page crashes when i select a route — which skills should i be using to fix this properly?",
+      "expected_output": "Recommends /investigate (or /systematic-debugging) as primary with a short chain ending in /verification-before-completion. Exact slash names. Short output.",
+      "files": [],
+      "expectations": [
+        "Primary recommendation is /investigate or /systematic-debugging (root-cause first, not a generic fix)",
+        "Chain includes /verification-before-completion before claiming fixed",
+        "Skill names are exact slash-invocable names that exist in this environment",
+        "Concise: at most 5 distinct skills recommended, no long menu"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I'm about to build a new feature: a freight-adjusted breakeven panel on the floating storage page. What's the right skill workflow start to finish?",
+      "expected_output": "A stage chain: brainstorming, then a planning skill (writing-plans / plan-eng-review), then tdd, then verification-before-completion, then the repo's real deploy path. One skill per stage, no padding.",
+      "files": [],
+      "expectations": [
+        "Chain starts with /brainstorming (mandated before creative feature work)",
+        "Includes a planning-stage skill (/writing-plans or /plan-eng-review)",
+        "Includes /verification-before-completion before any ship/commit step",
+        "One skill per stage, no padding: at most 7 skills total"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "is there a skill for turning a markdown report into a proper pdf?",
+      "expected_output": "Yes — /make-pdf. Confirms by checking the available list; never claims absence without checking.",
+      "files": [],
+      "expectations": [
+        "Answers yes and names /make-pdf",
+        "Does not claim the capability is missing or unavailable",
+        "Short answer: no multi-skill chain forced onto a single-skill question"
+      ]
+    }
+  ]
+}
