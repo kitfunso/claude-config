@@ -1,4 +1,4 @@
-﻿# Global Claude Code Configuration
+# Global Claude Code Configuration
 
 ## Precedence
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first; treat global rules as defaults.
@@ -30,7 +30,7 @@ Before telling the user a skill, slash-command, tool, agent, MCP server, or any 
 
 **No silent substitution.** When the user asks for a specific capability or path, do exactly that. If you believe a different approach is better, say so in one line and let the user choose — never quietly pivot to your own plan and present it as the only option. Claiming a capability is unavailable in order to justify your own pivot is the worst form of this and is banned. (Incident 2026-06-16: claimed `/project-scaffold` didn't exist — it did — then substituted a self-authored plan. Two failures stacked: asserted absence without checking + silent pivot.)
 
-A `UserPromptSubmit` hook (`~/.claude/scripts/hooks/check_skill_references.py`, registered in `settings.json`, Python — node is not installed on this box) deterministically backstops the first half: it scans the prompt for `/name` references, matches them against skills and commands that exist on disk, and injects a `[CAPABILITY EXISTS]` notice naming the install path. It stays silent when nothing matches, ignores file paths like `src/codex/main.py`, and always exits 0 — it can never block a prompt. **Its blind spots are yours to cover:** bundled skills that aren't on disk under `~/.claude/`, plugin slash-commands, and any capability referenced without a leading slash. For those, this rule is still the only guard.
+A `UserPromptSubmit` hook (`~/.claude/scripts/hooks/check-skill-references.js`, registered in `settings.json`) deterministically backstops the first half: it scans the prompt for `/name` references, matches them against skills and commands that exist on disk, and injects a `[CAPABILITY EXISTS]` notice naming the install path. It stays silent when nothing matches, ignores file paths like `src/codex/main.py`, and always exits 0 — it can never block a prompt. **Its blind spots are yours to cover:** bundled skills that aren't on disk under `~/.claude/`, plugin slash-commands, and any capability referenced without a leading slash. For those, this rule is still the only guard.
 
 ## No Fabrication (CRITICAL — NEVER, ABSOLUTE)
 
@@ -81,22 +81,10 @@ When the session model is Opus 5 or Fable 5: optimize for wall-clock speed. Fini
 - No conflicts from parallelism: never let two subagents touch the same files or overlapping scope. Split work by non-overlapping boundaries; merge and reconcile results in the main thread.
 - Precedence: in Opus 5 / Fable 5 sessions this section supersedes the delegation-restraint defaults above (including the ~3 Opus-subagent cap, when hard independent reasoning genuinely needs more). The subagent model rules still hold: Sonnet default, Fable subagents never unprompted.
 
-## Data Discovery First (DEFAULT)
-
-For ANY project or analysis that needs data, before sourcing it any other way (scraping, manual downloads, new integrations):
-
-1. **Check the crude datalake** — versioned DuckDB read-model at `C:/dl` (query rules in `C:/dl/CLAUDE.md`). Discover with `crude_db.find("<keyword>")` or `meta.tables` / `meta.columns` — never hand-roll file readers.
-2. **Survey the wired APIs** — READ `dev/etl/crude-db/config/datasets.yaml` (Kpler, Kayrros, SPGCI, EIA, IIR, PortWatch, Refinitiv, Energy Aspects, …), don't recall from memory.
-
-Only if both come up empty, source data another way — and state it explicitly ("checked lake + APIs, no coverage"). Does not fire on tasks that need no data (pure code edits, prose, config changes). Pipeline/consumer mechanics live in the repo files (see Crude repos below).
-
-## Crude repos (DEFAULT)
-
-Full rules live in the repos and auto-load when working there: `dev/crude-db-app/CLAUDE.md` (page playbook, DB-only reads, live-feed exception list, deploy) and `dev/etl/CLAUDE.md` (pipeline checklist, Airflow-first scheduling, publish rules). Starting crude work from any OTHER directory: read both first. Global invariant: new app data flows ETL repo → lake → `datasets.yaml` → published DuckDB → page; describe the full workflow and get explicit sign-off BEFORE implementing any new pipeline, scheduling, deployment, or infra design (user directive 2026-07-14).
-
 ## Agent & Skill Routing
-- To pick the right skill (or chain) for a task, invoke `/which-skill` — it checks the live skills list and routes by workflow stage (added 2026-08-14).
 - Tables of available agents and skills live in `~/.claude/rules/agent-routing.md`. Read that file when picking an agent, not from memory.
+- Existing API keys, databases, and MCP servers (all projects): `~/.claude/rules/infra-inventory.md`. Check it before provisioning anything new. Names and locations only — never secret values.
+- The injected available-skills list is the authority on what is installed; `~/.claude/skills/` (141 entries) and `~/.claude/commands/` are the on-disk proof. Check both before saying a skill is missing (Capability Existence Check).
 
 ## Headless Mode
 - For scripted/automated Claude tasks: `claude -p "validate all outputs" --output-format json`
@@ -111,12 +99,12 @@ Full rules live in the repos and auto-load when working there: `dev/crude-db-app
 - When asked to commit and push, do ONLY that. Review the diff you are committing, but do not touch unrelated files, run unrelated scripts, or do any autonomous work beyond the explicit request.
 - **NEVER use `--no-verify`** unless the user explicitly asks. Skipping pre-commit hooks bypasses the rule below.
 - Pre-commit hooks can revert file edits. After editing, verify changes survived hooks before moving on.
-- Deterministic backstop (2026-08-14): `scripts/hooks/git_guard.py` (PreToolUse, registered in `settings.json`) injects the current branch before any state-changing git command and flags banned AI-isms in commit text. Warn-only — the rules above still bind.
+- Deterministic backstop: `scripts/hooks/commit-msg-guard.js` (PreToolUse on Bash|PowerShell, registered in `settings.json`) denies a `git commit` whose inline text holds an em dash, and denies piping stdin into `git commit` from PowerShell (the pipe prepends a UTF-8 BOM to the subject). It reads inline command text only, so a `-F <file>` message is not inspected — the rules above still bind.
 
 ## Hand-Maintained Files (CRITICAL)
 Before fully rewriting any file in `~/.claude/` or any `CLAUDE.md`: show the proposed content, wait for explicit "apply", and save a `.old` backup before overwriting. Targeted Edits proceed normally — Edit's exact-match check is sufficient.
 
-Deterministic backstop (2026-08-14): `scripts/hooks/claude_backup.py` (PreToolUse on Edit|Write, registered in `settings.json`) saves a dated `.old-YYYYMMDD` backup before any edit to files under `~/.claude/` or any `CLAUDE.md` — one per file per day; machine-managed dirs (projects/ memory, todos, plugins, …) excluded. The show-and-wait rule above still applies to full rewrites.
+Deterministic backstop: `scripts/hooks/pre-write-guard.js` (PreToolUse on Write, registered in `settings.json`) saves a `.old` backup before any Write to a file under `~/.claude/` or any `CLAUDE.md`, and logs it to `~/.claude/logs/hand-maintained-backups.log`. It covers Write only, not Edit, and the show-and-wait rule above still applies to full rewrites.
 
 ## Root Cause Over Patches (CRITICAL — MANDATORY, NO EXCEPTIONS)
 
@@ -270,8 +258,15 @@ Not half done. Not done except for the part you decided to skip. And not a repor
 - Memory (Claude memory files + hippo) is point-in-time: entries record what was true at write time and rot silently. Treat any "pending / broken / next feature" memory claim older than ~a week as unverified until checked against the repo.
 - **Writeback at ship time:** when a session resolves anything recorded in memory (incident, blocker, roadmap item), update the memory file AND `hippo remember` the correction in the SAME session — part of the definition of done, like a CHANGELOG entry.
 
+## Rulebook Discipline (DEFAULT — added 2026-07-04, restored 2026-08-14)
+
+ARC Prize winning harnesses all reduced to: cheap generator + hard verifier + measurement-fed refinement (notes with sources: `C:/Users/skf_s/clawd/memory/arc-harness-notes.md`). Applied to this config:
+- **A rule without a verifier is a claim.** When writing or strengthening a CRITICAL rule, propose its deterministic form at the same time (UserPromptSubmit hook, pre-commit grep, CI check). Prose is the search; the hook is the verifier. This box runs 9 such hooks, registered in `settings.json` — `check-skill-references.js`, `commit-msg-guard.js`, `ps-stderr-guard.js`, `pre-write-guard.js`, and the rest.
+- **Probation before CRITICAL.** A rule distilled from a single incident is marked `(probation)` and cites the incident; promote to CRITICAL only after a second, different context confirms it. A single-incident rule is a single-benchmark candidate (the ARChitects: 72.5% on ARC-AGI-1, 2.5% on ARC-AGI-2). The tag is in active use: 12 entries in `MEMORY.md` and one in `rules/coding-standards.md` carry it.
+- **Prune on evidence.** The monthly config audit (`clawd/memory/cron-prompts/claude-config-audit.md`, check 7) classifies rules ACTIVE / LATENT / DEAD and proposes removals. A rulebook that only accumulates is an overfit harness paying context tax every turn.
+
 ## Prose & Voice (DEFAULT for prose work)
-- For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/kit.sofun/.claude/voice/` BEFORE writing:
+- For prose tasks (grants, LinkedIn, X, emails, marketing copy, README, announcements), READ the matching voice sample file from `C:/Users/skf_s/.claude/voice/` BEFORE writing:
   - Grants / applications → `voice-grants.md`
   - X posts / threads → `voice-x-posts.md`
   - LinkedIn → `voice-linkedin.md`
@@ -366,6 +361,12 @@ Short-responses addendum (user directive 2026-08-14):
 - GPU diagnostics: `python scripts/gpu_status.py`
 - Version pins (PyTorch, CUDA, cuDNN) live in `MEMORY.md` and rot fast — verify with `python scripts/gpu_status.py` before relying on a specific version.
 
+## Shell Discipline (DEFAULT — measured via Mirror, 2026-07-18)
+- Absolute paths in commands, never `cd X; cmd` compounds. When a working dir is genuinely needed, prefer the tool's own flag (`git -C`, `npm --prefix`). cd-compounds = 61% of measured PS errors and `cd` is the #1 shell command (6,349 calls).
+- POSIX-shaped one-liners -> Bash tool. PowerShell only for cmdlets, registry, Windows-native ops. Never mix syntaxes across shells (measured in both directions).
+- PS 5.1: never `2>&1` on native exes (git/gh/node) — NativeCommandError wraps stderr and fakes failure (21 measured incidents; enforced by the `ps-stderr-guard.js` PreToolUse hook). stderr is already captured; run the command bare.
+- Detail + evidence: memory files `feedback_shell_absolute_paths_over_cd.md`, `feedback_ps51_no_native_stderr_redirect.md`; refresh data with `python ~/.claude/mirror/mirror.py`.
+
 ## MCP Servers
 - When an MCP server is available (e.g. Supabase, context7, Playwright), prefer MCP queries over manual equivalents.
 
@@ -431,4 +432,4 @@ Final pass on outward-facing prose only — chat replies, commit messages, PR bo
 
 ---
 
-Project-specific rules live in each project's own `CLAUDE.md` (e.g. `C:/Users/kit.sofun/Quantamental/CLAUDE.md`). Do not re-encode project rules here.
+Project-specific rules live in each project's own `CLAUDE.md` (e.g. `C:/Users/skf_s/Quantamental/CLAUDE.md`). Do not re-encode project rules here.

@@ -9,11 +9,11 @@ Review every change made in this session. Be thorough and honest — the goal is
 
 ## Steps
 
-1. **Collect the diff**: Run `git diff` (unstaged) and `git diff --staged` (staged) to see all modifications. If files were newly created, read them in full.
+1. **Collect the diff — all three layers**: Resolve the session base first: the branch fork point (`git merge-base HEAD <default-branch>`), or on the default branch, the commit before this session's first commit. Then review `git diff <base>...HEAD` (committed work), `git diff --staged`, and `git diff` (unstaged). Committed work counts — a clean worktree does NOT mean nothing changed this session. If files were newly created, read them in full.
 
 2. **Check each changed file** against these criteria:
    - **Correctness**: Does the logic do what was intended? Off-by-one errors, wrong variable, inverted condition, missing edge case?
-   - **Completeness**: Were all requested changes made? Any files or locations missed?
+   - **Completeness**: Re-read the user's original request verbatim first. Were all requested changes made? Any files or locations missed?
    - **Consistency**: Do new patterns match the existing codebase style? Naming, imports, error handling?
    - **Regressions**: Could any change break existing functionality? Check callers/consumers of modified functions.
    - **Residual debug code**: Any leftover `print()`, `console.log()`, `TODO`, or commented-out code that shouldn't ship?

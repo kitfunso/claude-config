@@ -46,7 +46,7 @@ A plan that skips these is reliably caught at the plan-eng-critic gate and trigg
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **For Claude:** REQUIRED SUB-SKILL: Use executing-plans to implement this plan task-by-task.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -109,21 +109,11 @@ git commit -m "feat: add specific feature"
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After saving the plan, announce: "Plan complete and saved to `docs/plans/<filename>.md`."
 
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
+Then pick the execution mode yourself — auto-decide, no menu:
 
-**1. Subagent-Driven (this session)** - I dispatch fresh subagent per task, review between tasks, fast iteration
+- **Default — Subagent-Driven (this session):** fresh subagent per task, review between tasks. REQUIRED SUB-SKILL: subagent-driven-development.
+- **Parallel Session** only when the plan is too large for this session's remaining context, or the user asked for a separate session: guide them to open a new session in the worktree. REQUIRED SUB-SKILL: executing-plans.
 
-**2. Parallel Session (separate)** - Open new session with executing-plans, batch execution with checkpoints
-
-**Which approach?"**
-
-**If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
-- Stay in this session
-- Fresh subagent per task + code review
-
-**If Parallel Session chosen:**
-- Guide them to open new session in worktree
-- **REQUIRED SUB-SKILL:** New session uses superpowers:executing-plans
+Name the choice in one line and start. The user can redirect.

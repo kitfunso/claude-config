@@ -9,29 +9,22 @@ Runs a development problem as an **episode**: brainstorm a framing, walk the `/d
 
 The policy is prompts + memories — Claude's weights are frozen. This is experiential-RL: the system improves by accumulating trajectories and updating skill prompts, not by gradient descent.
 
-## Status
+## Current state
 
-Phase MVP + Phase Learn + Phase Elevate complete (2026-05-23, 7-tier elevation; 535 tests green). Codex promoted from shadow-only (Tier 5) to a mandatory gating critic at the `review` stage (2026-05-24); `/self-review` wired into `execute`, `/review` into `review`, `/ship-check` into `ship`. **Phase Elevate v2** opened 2026-05-24 with **Tier 8 — counterfactual critic-trust attribution** shipped: per-critic empirical trust scores computed from real episode outcomes (`learn-attribute` + `critic-trust` CLIs, migration 0008). Tier 8 is observation-only; Tiers 9-13 scoped in `RL-PLAN.md` v0.7. **`/grill-me`** wired 2026-05-24 as the orchestrator's self-interrogation hook — the orchestrator is the subject ("me" = the orchestrator's own work), invoked at brainstorm-post-selection, plan-stage tail (before plan-eng-critic), and (optionally, opt-in) as a meta-critic on any `pass` verdict to test whether the pass survives adversarial pressure.
+All phases through Tier 8 are shipped and tested (real-DB suite under `tests/`).
+Full tier history, ship dates, and design detail live in `RL-PLAN.md` (v0.7) and
+`README.md` — this file holds only operating instructions. Running today: episode
+lifecycle + host locks (`episodes.db`), per-stage manifests, 7 verdict critics, 8
+per-type reward rubrics, secret scrubbing on every DB write, per-episode +
+cross-episode learning, the batch ritual, critic-trust attribution
+(observation-only), and every command in the CLI table at the bottom.
 
-Wired and tested (real-DB test suite under `tests/`):
-- Episode lifecycle — init, host lock, steps, finalize, reward — `episodes.db`
-- Per-stage manifest contract with `/dev-framework`
-- 7 verdict critics (`adapters/critics.py`); 8 per-type reward rubrics
-- Secret/PII scrubbing on every DB write
-- Per-episode learn step, cross-episode failure clustering, and the `learn` mode below
-- **Tier 0.0** `devrl.py status` operator dashboard
-- **Tier 0.1** post-deploy scheduler (migration 0003): `postdeploy-due`, `episode-deploy-meta`; finalize auto-populates `post_deploy_due_at = ended_at + 7d`
-- **Tier 0.2** finalize CLI wiring: `--user-satisfaction N|deferred`, `--redirects N`, `satisfaction-record` follow-up
-- **Tier 0.3** `step-record` records `step_prompts` via `--prompt` + `--memory-ref`
-- **Tier 0.4** post-deploy outcome reminder: `postdeploy-prompt [--within-days N] [--json]` is the operator-facing summarizer (table mode for humans, JSON mode for cron). Episodes ended in the last 24h are excluded as too-fresh-to-assess. The live cron `devrl-post-deploy` (daily 09:00 Europe/London, openclaw + Telegram, agent `openai-codex/gpt-5.5` thinking high) was already installed prior to Tier 0.4 work; its prompt file lives at `C:/Users/skf_s/clawd/memory/cron-prompts/devrl-post-deploy.md` and runs a verification protocol (`gh pr checks` + `git log --grep="revert"` per episode) — NEVER mass-marks `--clean` without evidence. The CLI added in Tier 0.4 complements that protocol but does not replace it. Hard guard (from the live prompt, mirrored here): never guess `--clean` to clear the queue; uncertain outcomes stay as `unknown` and surface to Telegram for human decision.
-- **Tier 1** embedding clustering (migration 0004): `learn-cluster --mode embedding` + `embed-cache-prune`
-- **Tier 2** brainstorm-judge ranking critic: `brainstorm-rank $EID candidates.json --judge <file>|--select-idx N` (separate CLI, NOT in critic-check)
-- **Tier 3** synchronous friction→memory: finalize `--learn-emit` emits `pending_apply/$EID.json`; `apply-pending` views/clears
-- **Tier 4** critic A/B (migration 0006): `episode-init --critic-set default|minimal|full|random`; `critic-ab-report`
-- **Tier 5** codex shadow (migration 0005): `codex-shadow $EID <stage> --local-verdict <v> --max-wait-sec 90`; `codex-shadow-report`; **DEPRECATED 2026-05-24** — superseded by `codex-review-critic` (gates at the `review` stage). CLI now prints a deprecation warning on every invocation; retained for backwards-compat + cross-stage A/B logging (plan-stage codex consultations) where the gating critic does not run.
-- **Tier 6** auto-confirm probation memories on use (requires `warning_pattern:` in memory frontmatter); `memory-needs-pattern` lists missing ones
-- **Tier 7** batch ritual (migration 0007): `batch-init`, `batch-add`, `batch-finalize` (auto-clusters), `batch-deploy --decision shipped|aborted|partial`; sole-writer of `post_deploy_due_at` for batched episodes
-- **Tier 8** counterfactual critic-trust attribution (migration 0008): `learn-attribute [--since DATE]` recomputes per-critic empirical trust from the trajectory store; `critic-trust [--critic NAME] [--json]` reads the dashboard. Pure observation — Tier 9 (verdict weighting) reads this table but never modifies it. Score = Beta(2,2)-smoothed `(verdict-matched-outcome)` rate; NULL until n_seen ≥ 5.
+Post-deploy outcomes: finalize auto-schedules a 7-day check; the `devrl-post-deploy`
+cron (daily 09:00 Europe/London, prompt at
+`C:/Users/skf_s/clawd/memory/cron-prompts/devrl-post-deploy.md`) runs the
+verification protocol (`gh pr checks` + revert-grep per episode). HARD GUARD:
+never mass-mark `--clean` to clear the queue — uncertain outcomes stay `unknown`
+and go to the human via Telegram.
 
 ## Prerequisites
 
@@ -41,7 +34,15 @@ Wired and tested (real-DB test suite under `tests/`):
 python ~/.claude/dev-framework/scripts/migrate.py
 ```
 
-**Invoking devrl — use the absolute path; do NOT leave the shell `cd`-ed into dev-framework (CRITICAL anti-drift rule, learned the hard way 2026-06-02).** The Bash-tool cwd PERSISTS across calls. If you `cd ~/.claude/dev-framework` to run a devrl command (init / lock / heartbeat / step-record / critic-check), the NEXT feature-repo command (git / npm / vitest / codex / grep) silently runs in dev-framework — cwd-drift. This is the single most recurring orchestrator friction (it bit 6+ times in ONE hippo episode despite a memory warning — memory-recalled discipline demonstrably fails under load). The mechanical fix: invoke devrl by its **absolute path, run from the feature repo** — `python ~/.claude/dev-framework/scripts/devrl.py <cmd>` — and never run a bare `cd ~/.claude/dev-framework`. The `python scripts/devrl.py …` snippets below are shorthand for that absolute form; in practice prefix `~/.claude/dev-framework/`, OR wrap in a non-persisting subshell `( cd ~/.claude/dev-framework && python scripts/devrl.py … )`. And give EVERY feature-repo command its own explicit `cd <feature-repo> &&` in the SAME Bash call — never rely on inherited cwd.
+**Invoking devrl — absolute path, never a persisting `cd` (CRITICAL anti-drift
+rule).** The Bash-tool cwd PERSISTS across calls: a bare `cd ~/.claude/dev-framework`
+silently re-homes every later feature-repo command — the single most recurring
+orchestrator friction, and memory-recalled discipline demonstrably fails under load.
+Mechanics: `python ~/.claude/dev-framework/scripts/devrl.py <cmd>` run FROM the
+feature repo (the `python scripts/devrl.py` snippets below are shorthand for that
+absolute form), OR a non-persisting subshell `( cd ~/.claude/dev-framework && ... )`;
+give EVERY feature-repo command its own explicit `cd <repo> &&` in the SAME call.
+Full incident detail: AUDIT-RULES.md "cwd-drift".
 
 ## Episode lifecycle
 
@@ -61,9 +62,27 @@ Exit 1 / "denied" → another session owns this episode. **Stop.** Do not procee
 
 Heartbeat the lock (`lock-heartbeat $EID`) at least every few minutes during long stages — a lock un-heartbeated for 5 minutes is reaped and the episode marked `stalled`.
 
-**Background-op heartbeat discipline (learned 2026-05-29, boring-math episode `01KSRA0R8FEVMVYRJXNAC8NY22`).** Long *background* operations — a `Workflow` build run, a full test suite, a `codex review` (each minutes long) — silently burn the 5-minute window with no orchestrator-side heartbeat, so the lock reaps mid-stage and the episode flips to `stalled`. Heartbeat immediately BEFORE and AFTER every such op, and if a heartbeat returns `lock-vanished` re-acquire with `lock-acquire` and continue. Also: never `&&`-chain a manifest write (or any required step) after `lock-heartbeat` — a vanished lock exits non-zero and aborts the rest of the chain, so the manifest never gets written. Write the manifest unconditionally; put the heartbeat on its own line.
+**Background-op heartbeat discipline.** Long background ops (Workflow builds, full
+test suites, codex reviews) silently burn the 5-minute lock window: heartbeat
+immediately BEFORE and AFTER every such op; on `lock-vanished`, re-acquire and
+continue. Never `&&`-chain a manifest write (or any required step) after
+`lock-heartbeat` — a vanished lock exits non-zero and aborts the chain; write the
+manifest unconditionally on its own line. Full incident: AUDIT-RULES.md
+"background-op heartbeat".
 
-**Isolate into a dedicated git worktree at episode START for high-contention repos (learned 2026-06-02, hippo sleep enqueue-hook `01KT4CP9K6BEQ4ESCTFV49A8DX`).** Repos with heavy concurrent multi-agent activity (e.g. hippo, with many `.claude/worktrees/` agents) can have a SIBLING session edit your branch's MAIN working tree mid-episode AND merge a version ahead of you — forcing a reactive worktree-isolation + rebase + version-collision bump late in the episode (it happened: a7-recall-trace edited my `api.ts` and merged v1.18.0 while I worked, so I had to isolate + rebase + bump 1.18.0→1.19.0). Pre-empt it: right after `lock-acquire`, create a dedicated worktree off `master` for the WHOLE episode — `git worktree add -b <feat-branch> <path> origin/master`, then symlink `node_modules` (`ln -s <main-repo>/node_modules <path>/node_modules`) for build/test — and do ALL edits/commits/codex/build/test there, leaving the main working tree to the other session. Clean it up at deploy (`git worktree remove <path> --force`). ALSO: `git fetch origin && git show origin/master:package.json | grep version` right BEFORE the version bump, so a concurrent version merge is caught and you bump PAST it (not into a collision). Tear-down note: `git worktree remove --force` deletes the worktree dir but a symlinked `node_modules` is removed as a link (the main repo's `node_modules` target is NOT followed/deleted) — verify the main `node_modules` survives.
+**Isolate into a dedicated worktree at episode START for high-contention repos.**
+TRIGGER: `git worktree list` shows active `.claude/worktrees/` agents, or another
+session may checkout the shared tree. Right after `lock-acquire`:
+`git worktree add -b <feat-branch> <path> origin/master`, then `npm install`
++ `npm run build` in the worktree (do NOT junction `node_modules`: npm
+destroys a non-directory junction on its first install, arriving-empty cost a
+build round on 2026-08-02; a real install is seconds on this repo), do ALL
+edits/commits/codex/build/test there; remove at close-out (if a legacy
+junction exists, `rmdir` it BEFORE `git worktree remove` or the removal can
+follow it into the main repo's node_modules). Before any version bump:
+`git fetch origin && git show origin/master:package.json | grep version` and bump
+PAST a concurrent merge. Full incidents: AUDIT-RULES.md "episode-start worktree
+isolation".
 
 **Probation-memory exposure (R9, 2026-06-09).** Right after `lock-acquire`, run `python scripts/devrl.py memory-list --status probation`. Carry the relevant memories into this episode's stage briefs tagged `[PROBATION]` — they are unconfirmed hints, not settled law — and record each one's id on the steps where it was in scope (`step-record ... --memory-ref <id>`). This is what lets a useful memory earn its 3 shipped-episode confirmations and a useless one earn its deprecation; a probation memory kept out of context can never do either.
 
@@ -84,9 +103,40 @@ fi
 
 If codex is missing, decide upfront whether to (a) install it, (b) skip codex-review-critic with explicit human override at the review stage, or (c) defer the episode entirely. Surfacing this at init beats surfacing it at review-stage round 1.
 
-Learned 2026-05-26 from episode `01KSHTN0RYYSCXCAJCTN5TJJDC` (hippo-memory C5 WYSIATI): mid-episode codex unavailability forced a pause at the review stage. The episode shipped clean after the operator ran `/codex` manually in another session, but the friction was avoidable with an init-time probe.
+(Incident 2026-05-26, hippo C5: mid-episode codex unavailability paused the review stage; an init-time probe would have caught it upfront.)
 
-**Pin cwd when running `codex review --uncommitted` (review stage).** `codex review --uncommitted` reviews the git repo of the CURRENT working directory. The orchestrator's `lock-heartbeat` / `devrl.py` commands `cd` to `~/.claude/dev-framework`, so a codex review launched right after one silently reviews dev-framework's OWN uncommitted changes instead of the feature repo — a wasted round whose findings name the wrong files. ALWAYS pin the cwd in the same command (`cd <feature-repo> && codex review --uncommitted`) and confirm the `workdir:` line in codex's output names the feature repo before trusting any finding. Learned 2026-05-30 (E2 project_brief `01KSWQDQQN3YJ9FMSBG64S0X19`): codex round 2 reviewed `dev-framework/scripts/*.py` (its own uncommitted Tier-8 work), not the hippo diff; caught only by reading the workdir line, forcing a pinned re-run.
+**Pin cwd for `codex review --uncommitted` — use the wrapper.** `codex review
+--uncommitted` reviews the CURRENT cwd's repo; after any devrl command that can
+mean dev-framework itself. Never call it bare from an orchestrator session — invoke
+`bash ~/.claude/dev-framework/scripts/codex-review-pinned.sh <feature-repo> [args]`
+(subshell-cds, verifies codex's `workdir` line, exit 3 = review VOID). Full
+incident: AUDIT-RULES.md "codex review cwd pinning".
+
+**Codex-on-Windows root cause + hard timeout (2026-08-02, episode 01KZ1FHCK).**
+Codex's Windows sandbox helper receives its policy on the command line; at
+~33.9KB payload it exceeds the 32,767-char CreateProcess limit (os error 206),
+EVERY shell exec fails, and `codex review` stalls forever instead of failing
+fast — a 2h14m silent hang. The wrapper now defaults
+`-c 'sandbox_mode="danger-full-access"'` (bypasses the broken helper),
+`-c 'notify=[]'` (disables the computer-use turn-end hook), and a hard
+`timeout` (default 600s, override `CODEX_REVIEW_TIMEOUT`; 124 => exit 3 VOID).
+The old `-c "mcp_servers={}"` guard no longer disables MCP in codex 0.144.x —
+do not rely on it. NEVER run codex as an unbounded background job: watchdog by
+output-file mtime, not just content.
+
+**Base-aware invocation (2026-08-15, episode 01M025CW434ZAPVSFC61BGFGCT).**
+Check `git status` in the feature repo BEFORE invoking the wrapper:
+- Work already committed => `--uncommitted` reviews NOTHING ("working tree is
+  clean") and wastes a round. Pass `--base origin/master` (or the base sha).
+  Codex rejects `--base` combined with a positional prompt — use the flag alone.
+- Re-review rounds after fix commits => scope to the DELTA with
+  `--base <prior-commit-sha>`. A grown multi-commit branch (~4k insertions)
+  blew a 900s timeout on a full re-review; the delta-scoped run completed.
+- Full-branch reviews of substantial diffs => set `CODEX_REVIEW_TIMEOUT=900`
+  or higher. The 600s default killed one review AFTER it had written complete
+  findings (VOID by wrapper contract; findings salvageable only as unverified
+  input, re-verify against source).
+Memory: `feedback_codex_review_base_aware.md` (tier-1, probation).
 
 ### 1.6 Publish credentials probe (recommended for `library` / package releases)
 
@@ -111,7 +161,7 @@ npm whoami >/dev/null 2>&1 || {
 
 If creds are missing, decide upfront whether to (a) have the operator authenticate (`! npm login`, export the PyPI token) so the deploy stage can publish, (b) treat publish as a documented manual handoff and tag-only, or (c) defer. Either way the deploy-gate human checkpoint should state the publish path explicitly rather than discovering the 401 after merge.
 
-Learned 2026-05-28 from episode `01KSR5424D5845DMXSAQQBEBRX` (hippo-memory v1.15.0 release): all six gates passed and PR #79 merged, then `npm publish` could not run (401, no PyPI token in session), forcing the publish + git tag into a manual operator step after the fact. A §1.5-style init probe would have surfaced the credential path before the work, not after.
+(Incident 2026-05-28, hippo v1.15.0: all gates passed and the PR merged, then `npm publish` 401'd — publish became a manual after-the-fact operator step.)
 
 ### 2. Brainstorm pre-stage
 
@@ -142,223 +192,96 @@ python scripts/devrl.py step-record $EID discover --skill /dev-framework --criti
 
 ### 3b. Pre-plan codebase audit (mandatory between discover and the first plan stage)
 
-Two friction signals in 2026-05-23/24 pointed at the same root cause: plan-eng-critic
-caught drifts (parallel allow-lists missed, version-bump targets under-counted,
-TODOS items already shipped) that an earlier codebase grep would have surfaced for
-free, before any sub-agent dispatch. The fix is a deterministic audit pass between
-discover and the first plan invocation.
+A deterministic audit pass between discover and the first plan invocation: greps are
+free; the same drifts cost a critic round each when found later. Run the applicable
+rules in ONE batch of parallel Grep calls before invoking `/dev-framework plan`.
+Each rule: TRIGGER → action. Full detail + incidents: `AUDIT-RULES.md` (read a rule's
+section when it fires or the plan matches its shape).
 
-Run these greps in ONE batch of parallel `Grep` calls before invoking `/dev-framework plan`:
-
-1. **TODOS staleness reproduce-check.** For each item this episode's brief references,
-   grep the codebase for the symbol/test/CLI flag/file path named in the item. If the
-   item is already shipped (file exists with the named contents OR test passes OR the
-   CLI command is wired), **abort the episode** — record the friction note
-   `"TODOS-stale item X already resolved at <file:line>"`, sync `TODOS.md` with a
-   DONE-by-design line, commit, finalize as `aborted` with the reproduce-check WIN
-   in the summary. This is a successful episode (work was identifying staleness).
-
-2. **Parallel allow-list grep.** For any allow-list / registry / `Set<>` / `Map<>` the
-   plan adds an entry to (e.g. `VALID_AUDIT_OPS`, `STAGE_CRITICS`, route tables),
-   grep the EXACT pattern across the repo. If N>1 sites exist, the plan MUST enumerate
-   all N. Drift between them is a plan-eng-critic CRIT preventable here.
-   **Hardcoded CLI-flag allow-lists are one such list.** When an episode adds a
-   *repeatable* CLI flag, grep the argv parser's repeatable-flag allow-list (e.g.
-   hippo's `parseArgs` `key === 'tag' || key === 'artifact' || ...` in `src/cli.ts`)
-   and add the new flag there. A repeatable flag NOT in the list is silently
-   last-wins (only the final `--flag` value survives) — a bug a code-review critic
-   often misses but a CLI test catches. Learned 2026-05-29 on the E2 `process`
-   episode: `--step` was last-wins because it was absent from the allow-list.
-
-3. **Version-bump target count.** If the plan ships a version bump, enumerate every
-   manifest:
-   ```bash
-   git grep -l 'version' package.json **/package.json **/*.plugin.json src/version.ts
-   ```
-   (or the project's equivalent). The plan MUST list every file. Missing any causes
-   the v1.10.1-class manifest drift that ships under-tagged releases.
-
-   When the bump is to a version **constant in code** (e.g. `CURRENT_SCHEMA_VERSION`
-   / `SCHEMA_VERSION`), the manifest grep is NOT enough — grep its TEST assertions too
-   (`getCurrentSchemaVersion` / `getSchemaVersion` / `getMeta('schema_version')`-style
-   checks hard-code the old number and break in lockstep). Enumerate every assertion
-   site, not just the manifest. Learned 2026-05-28 (E2 decision): bumping
-   `CURRENT_SCHEMA_VERSION` 29->30 broke 10 test sites caught only at the verify stage.
-
-4. **Roadmap-sync sweep — `docs/evals/` freshness.** If the episode references a
-   "canonical roadmap" claim (e.g. "feature F never measured locally", "Track X is
-   blocked"), grep `docs/evals/` for results docs post-dating the canonical doc's
-   last modification time. Negative-result eval docs that bypassed canonical-doc
-   updates under v1.7.9-class retraction discipline WILL be missed by reading only
-   `ROADMAP.md` / `TODOS.md` / `ROADMAP-RESEARCH.md`.
-
-5. **Public-API caller audit.** If the plan changes a function signature, grep for
-   callers at every import surface (`from X import`, `sys.path` insert,
-   `importlib.util.spec_from_file_location`, dynamic `require()`). Don't only audit
-   internal helpers. (Promoted from a `feedback_audit_public_callers_not_helpers`
-   probation memory.)
-
-6. **Functional-duplicate check (when the plan ADDS a user-facing artifact).** A
-   slug / name / path collision check is NOT enough: a new page, calculator, route, or
-   endpoint can duplicate an existing one's *capability* under a different name. For each
-   new artifact the plan adds, grep the existing artifacts' titles AND
-   descriptions/feature lists for the same capability, not just the same slug. If an
-   existing artifact already does the job, the plan must fold / differentiate / drop the
-   new one. Learned 2026-05-29 (boring-math `01KSRA0R8FEVMVYRJXNAC8NY22`): "Days Between
-   Dates" and "Business Days" both passed the slug gap-check but functionally duplicated
-   the existing DateDifferenceCalculator (which already had a business-days toggle); only
-   plan-design-critic caught it, costing a plan retry.
-
-7. **Temporal / as-of / point-in-time query check.** If the plan builds a query that
-   answers "what was X at time T" (as-of, effective-dating, bi-temporal, valid-time vs
-   transaction-time, version-history-at-a-date), STOP and do two things before the plan
-   stage: (a) grep for an existing temporal pattern in the codebase to MIRROR rather than
-   reinvent (hippo's `src/recall-history.ts` has a correct successor-aware `asOf` filter:
-   include a superseded/historical row only while its successor's `valid_from > asOf`;
-   exclude retired/closed rows); (b) the plan MUST explicitly enumerate the **valid-time
-   vs transaction-time axes**, **which row statuses the query includes** (a naive
-   `status='active'`-only filter silently drops historically-valid superseded versions —
-   that conflates the two axes), and the **date-granularity contract** (a date-only input
-   vs a datetime — midnight vs end-of-day; whether the stored timestamp is backdated or
-   the read side resolves the day). These are subtle and pass plausible-but-wrong:
-   learned 2026-05-30 (E2 policy `01KSW4XHBGTKT7HAJ37TBS1W79`) — plan-eng + both Claude
-   review gates passed a flawed as-of query; codex needed 3 rounds to converge it.
-
-8. **Sibling-clone audit (don't clone a latent bug).** When the plan mirrors an existing
-   sibling route / module / handler (the dominant pattern for these E2-object episodes),
-   the copied code inherits the sibling's latent bugs — audit the pattern you are cloning,
-   do not just replicate it, and prefer extracting a shared helper over an Nth copy. Known
-   instance: list-route `?limit=` validation must use `Number.isInteger` (not
-   `Number.isFinite`, which accepts `1.5` that SQLite `LIMIT ?` then rejects with a
-   datatype-mismatch 500). Learned 2026-05-30 (E2 policy): the fractional-limit hole was
-   copied from the decision/incident/process/prediction list routes; codex caught it and
-   the root fix was one shared `parseListLimit` across all five.
-
-9. **Cross-cap consistency (generate-then-store-in-a-capped-column).** When the plan
-   ASSEMBLES / generates a value that is then written to a length-capped storage field,
-   the generation caps must be provably `<=` the storage cap, OR the assembly must be
-   budget-bounded. A feature whose generation caps (`N items x per-item cap`) can exceed
-   the destination column / validation cap will THROW for inputs within its OWN advertised
-   caps. Grep the generation caps and the destination cap; if `N x per_item_cap + overhead
-   > column_cap`, require budget-aware assembly (include items until the cap, note the
-   omitted remainder) rather than a naive join. Learned 2026-05-30 (E2 project_brief
-   `01KSWQDQQN3YJ9FMSBG64S0X19`): `refreshBrief` built an ~11KB digest from
-   `MAX_BRIEF_RECEIPTS(50) x MAX_RECEIPT_HEADLINE_LEN(200)` but the `summary` column caps
-   at 8192, so refresh threw within its own caps; all three Claude gates missed it, codex
-   caught it round 1.
-
-10. **Migration column-name reserved-word check.** When the plan adds a COLUMN in a
-    migration, check each new column name against SQL reserved words (`trigger`, `order`,
-    `group`, `check`, `default`, `references`, `index`, `table`, `column`, `select`,
-    `where`, ...). A reserved name either errors at `CREATE TABLE` or forces brittle
-    quoting everywhere; rename with a safe suffix (`_text` / `_at`) and map it back to the
-    domain field. Learned 2026-05-30 (E2 skill `01KSWHXW8G8X8YGDB0G58MKFM2`): the `trigger`
-    field collided with the SQLite TRIGGER keyword, so it is stored in a `trigger_text`
-    column (TS field `trigger`, mapped in `rowToSkill`); caught in the grill, not by an
-    audit rule — this rule closes that gap.
-
-11. **Bidirectional guard for a denormalized-parent-value invariant.** When the plan
-    has a CHILD row denormalize a value from a PARENT row (e.g. a copied `source_kind`,
-    a cached tenant_id, a snapshotted status) AND a guard enforces "child matches
-    parent", a FORWARD guard (CHECK / BEFORE INSERT + BEFORE UPDATE trigger on the
-    CHILD) is necessary but NOT sufficient: the invariant is still bypassable by later
-    MUTATING the PARENT. The plan MUST also specify a REVERSE guard (a BEFORE UPDATE
-    trigger on the PARENT that blocks — or a cascade/repair path that fixes — parent
-    changes which would invalidate the child's copy or the invariant), OR explicitly
-    accept the parent as immutable-while-referenced. Enumerate BOTH directions before
-    the plan stage. Learned 2026-06-01 (E3.3 graph guard `01KT1N4XC3JFJ5YK7FQ4XXZKCE`):
-    `entities.source_kind` copied `memories.kind` and the forward graph-table triggers
-    enforced "never raw" on insert/update, but `UPDATE memories SET kind='raw'` after a
-    graph row referenced the memory bypassed every forward trigger; plan-eng,
-    code-review, AND an empirical independent-review probe all missed the reverse
-    direction — codex caught it (P1). Fixed with `trg_memories_graph_referenced_guard`
-    (parent-side BEFORE UPDATE). The "make bad rows unrepresentable" principle is
-    DIRECTIONAL; cover both.
-
-12. **Fail-soft side-effect after a committed write — enumerate the post-commit failure
-    windows UP FRONT.** When the plan adds a best-effort / fail-soft side-effect that runs
-    AFTER a committed write (enqueue a job, mark-dirty, notify, cache-invalidate), the
-    "fail-soft" framing hides a family of windows where the write commits but the
-    side-effect is silently lost: (a) the host process CRASHES between commit and the
-    side-effect; (b) a LATER step in the same write path throws before the side-effect runs
-    (e.g. a post-commit mirror/index write fails); (c) the side-effect opens a SECOND DB
-    connection while the write's transaction is still OPEN → `database is locked` / deadlock.
-    The plan MUST enumerate these windows for the specific write path and state, per window,
-    whether it is closed (run the side-effect via a post-commit hook that fires BEFORE any
-    later fallible step; share the write's connection; or make it atomic-with-rollback) or
-    accepted as a self-healing residual (and exactly how it self-heals). Learned 2026-06-02
-    (hippo sleep enqueue-hook `01KT4CP9K6BEQ4ESCTFV49A8DX`): codex took **4 rounds**, each
-    surfacing one such window of a fail-soft `markGraphDirty` enqueue (a mirror
-    cascade-delete dropped the dirty row; a snapshot-read failure aborted core sleep;
-    concurrent rebuilds duped rows; a post-commit mirror-write failure left a committed save
-    unflagged). All real, all fixable, but each cost a full codex round because they weren't
-    enumerated at plan time. A `writeEntry`-style `afterCommit` hook (runs post-commit,
-    pre-mirror, on the committed idle connection) closes (a)/(b); a single `BEGIN IMMEDIATE`
-    rebuild closes (c). Note (c) is also the trap when making a multi-write op atomic: a
-    transaction that holds the write lock cannot open a second connection for its reads —
-    preload reads before the transaction.
-
-13. **Bounded-neighbourhood / subgraph / focus query — enumerate the correctness
-    dimensions UP FRONT.** When the plan builds a "focus / subgraph / k-hop /
-    neighbourhood / show-X-and-what's-near-it" query (a node + its neighbours + the
-    edges among them, bounded by a `limit`), it has a KNOWN FAMILY of correctness
-    dimensions that each fail plausible-but-wrong and each cost a separate review
-    round if discovered one at a time. The plan MUST state, per dimension, how it is
-    handled: (a) **find the seed BEFORE the global cap** — look the focus node up
-    directly (by name/key), never filter it out of a globally-capped list (else a seed
-    beyond the cap falsely reports "not found"); (b) **edges AMONG the result set, not
-    merely TOUCHING the seed** — a `both-endpoints-in-set` query, so neighbour-to-
-    neighbour edges appear and a `LIMIT` can't evict a valid in-set edge in favour of
-    out-of-set rows; (c) **push the bound into SQL** (`LIMIT`/`WHERE` in the query),
-    never an app-layer `.slice()` after materialising every matching row (a name shared
-    by thousands of rows otherwise loads them all); (d) **truncation honesty** — set the
-    `truncated`/incomplete flag when ANY cap fills (the seed-match cap, the
-    neighbour-scan cap, the node-set cap, the edge cap, or an early `break`), not just
-    one of them; (e) **align the input cap to the DOMAIN cap** — validate a name/key
-    param against the field's real max (e.g. a 512-char entity-name cap), not an
-    id-shaped 256 that rejects valid nodes the rest of the system accepts; (f) **one read
-    SNAPSHOT across multi-table reads** — if the model is assembled from ≥2 separate
-    loader reads, run them inside a single read transaction (one WAL snapshot) so a
-    concurrent rebuild that clears+reinserts rows can't make the model mix old ids
-    (entities) with new ids (relations). Learned 2026-06-02 (hippo graph observability
-    `01KT4V9ZS1QAYZMY091FFFHECW`): the `--entity` focus subgraph took **7 codex rounds**,
-    one per dimension above (find-before-cap, edges-among-union, SQL-vs-app bound,
-    truncation-honesty ×2, domain-cap alignment, read-snapshot) — all real, all
-    enumerable at plan time. This mirrors rule 12 for fail-soft writes: a query shape
-    with a known failure family gets its checklist up front, not one review round each.
-
-14. **FK-action / trigger-firing interactions — verify EMPIRICALLY in the target runtime,
-    not from the SQLite docs.** When a migration adds a FK `ON DELETE SET NULL` / `CASCADE`
-    AND a `BEFORE INSERT`/`BEFORE UPDATE` trigger on the same table, do NOT reason from the
-    docs about whether the FK action fires the trigger — TEST it. `node:sqlite` fires a
-    `BEFORE UPDATE` trigger from an `ON DELETE SET NULL` action EVEN WITH `recursive_triggers`
-    OFF, contradicting the documented SQLite behavior. A guard that aborts on the resulting
-    row state then blocks the parent delete and every cascade-driven lifecycle op (forget,
-    sleep-prune). Probe pattern: build the table + FK + trigger in a `:memory:` db, run the
-    delete, observe. Learned 2026-06-03 (hippo graph/E2 provenance
-    `01KT6PY1H6EWDQF85R30Z15XWJ`): the plan AND plan-eng-critic both asserted "SET NULL won't
-    fire the guard (recursive_triggers OFF)" from the docs; a 3-line probe proved the
-    opposite; codex caught the resulting core-`sleep` break as a P1.
-
-15. **Dual-provenance / denormalized-invariant guard — write ONE invariant + enumerate the
-    combinatorial matrix UP FRONT.** When a row's validity depends on >1 provenance source
-    (e.g. memory-pointer OR object-pointer) or a denormalized copy, the guard surface is
-    COMBINATORIAL: {insert, explicit-update, FK-action-update} × {source A present/absent} ×
-    {source B absent/incomplete/valid/invalid} × {tenant change} × {extraction race}. Do NOT
-    discover these corners one review round at a time — enumerate the matrix at plan time and
-    implement ONE shared invariant helper applied at EVERY write path (insert + the explicit-
-    update path + the producer/extractor), with the FK-action-update transition explicitly
-    carved out (validate on an EXPLICIT column change, never on the FK-driven one). Also: a
-    feature that invalidates a GLOBALLY-derived cache must design the tenant-level
-    REBUILD-SCHEDULING up front — a per-row/per-memory write signal cannot express "rebuild
-    this whole tenant," so cache-drop-on-migration and a delete that changes OTHER rows'
-    derived state both silently under-derive until the next unrelated write. Learned
-    2026-06-03 (hippo graph/E2 provenance `01KT6PY1H6EWDQF85R30Z15XWJ`): a dual-provenance
-    (memory-OR-object) graph guard took **6 codex rounds** (guard hole, close-no-rebuild,
-    dual-set-not-validated, all-null-on-SET-NULL, extraction-race, all-or-none pair,
-    tenant-move-revalidation, plus the globally-derived-cache rebuild-scheduling gap) — each a
-    corner of that matrix found in a SEPARATE round because it was spot-patched, not
-    enumerated. All three Claude critics passed a diff codex then showed had a P1.
+1. **TODOS staleness reproduce-check** — TRIGGER: the brief references TODO/backlog
+   items. Grep each item's named symbol/test/CLI-flag/file; already shipped → abort
+   the episode as a reproduce-check WIN (sync TODOS.md, finalize `aborted`; a WIN is
+   a successful episode and breaker-exempt). → AUDIT-RULES.md #1
+2. **Parallel allow-list grep** — TRIGGER: the plan adds an entry to ANY
+   allow-list/registry/`Set`/`Map` (incl. repeatable-CLI-flag allow-lists in argv
+   parsers). Grep the exact pattern repo-wide; N>1 sites → the plan must enumerate
+   all N (a repeatable flag missing from the parser list is silently last-wins).
+   → AUDIT-RULES.md #2
+3. **Version-bump target count** — TRIGGER: the plan ships a version bump. Enumerate
+   every manifest via git grep; for version CONSTANTS in code, also grep the TEST
+   assertions that hard-code the old number. → AUDIT-RULES.md #3
+4. **Roadmap-sync sweep** — TRIGGER: the episode cites a canonical-roadmap claim
+   ("never measured", "Track X blocked"). Grep `docs/evals/` for results docs newer
+   than the canonical doc's mtime. → AUDIT-RULES.md #4
+5. **Public-API caller audit** — TRIGGER: the plan changes a function signature.
+   Grep callers at EVERY import surface (`from X import`, `sys.path` inserts,
+   `spec_from_file_location`, dynamic `require()`), not just internal helpers.
+   → AUDIT-RULES.md #5
+6. **Functional-duplicate check** — TRIGGER: the plan ADDS a user-facing artifact
+   (page/calculator/route/endpoint). Grep existing artifacts' titles AND
+   descriptions for the same CAPABILITY — a slug/name collision check alone is
+   insufficient. → AUDIT-RULES.md #6
+7. **Temporal / as-of query check** — TRIGGER: the plan builds a "what was X at time
+   T" query. Mirror an existing temporal pattern (hippo `src/recall-history.ts`
+   successor-aware `asOf`); the plan must enumerate valid-time vs transaction-time,
+   which row statuses are included, and the date-granularity contract.
+   → AUDIT-RULES.md #7
+8. **Sibling-clone audit** — TRIGGER: the plan mirrors an existing sibling
+   route/module/handler. Audit the pattern being cloned for latent bugs before
+   replicating (e.g. `?limit=` needs `Number.isInteger`); prefer one shared helper
+   over an Nth copy. → AUDIT-RULES.md #8
+9. **Cross-cap consistency** — TRIGGER: the plan generates/assembles a value stored
+   into a length-capped field. Prove `N × per_item_cap + overhead <= column_cap` or
+   require budget-aware assembly. → AUDIT-RULES.md #9
+10. **Reserved-word column check** — TRIGGER: a migration adds a column. Check each
+    name against SQL reserved words (`trigger`, `order`, `group`, ...); rename with
+    a safe suffix and map back to the domain field. → AUDIT-RULES.md #10
+11. **Bidirectional denormalized-value guard** — TRIGGER: a child row denormalizes a
+    parent value with a "child matches parent" guard. A forward guard on the child
+    is NOT sufficient — also spec a parent-side reverse guard (or explicitly accept
+    parent immutability). Cover BOTH directions. → AUDIT-RULES.md #11
+12. **Fail-soft post-commit side-effect** — TRIGGER: the plan adds a best-effort
+    side-effect after a committed write (enqueue/mark-dirty/notify/invalidate).
+    Enumerate the loss windows UP FRONT; state per window: closed, or accepted
+    self-healing (and how). → AUDIT-RULES.md #12
+13. **Bounded-neighbourhood / focus query** — TRIGGER: the plan builds a
+    focus/subgraph/k-hop query with a limit. Run the six-point correctness
+    checklist UP FRONT (seed, edges, SQL-pushed bound, truncation flags, cap
+    alignment, one snapshot). → AUDIT-RULES.md #13
+14. **FK-action / trigger firing — verify empirically** — TRIGGER: a migration
+    combines FK `ON DELETE` actions with `BEFORE` triggers on the same table. Do NOT
+    reason from docs; probe in a `:memory:` db (`node:sqlite` fires BEFORE UPDATE
+    from `ON DELETE SET NULL` even with recursive_triggers OFF). → AUDIT-RULES.md #14
+15. **Dual-provenance invariant matrix** — TRIGGER: row validity depends on >1
+    provenance source or a denormalized copy. Enumerate the guard matrix at plan
+    time; ONE shared invariant helper at EVERY write path. → AUDIT-RULES.md #15
+16. **Already-shipped / already-fixed check** — TRIGGER: every episode, before
+    brainstorm (direct invocations included). `git fetch origin`; resolve the
+    DEFAULT branch (never hardcoded); diff `HEAD..origin/<default>` + grep the
+    feature's key terms across the origin tree; `gh pr list --search "<terms>"`.
+    Hit → STOP and reframe to the user. Network/auth failure → warn and proceed.
+    → AUDIT-RULES.md #16
+17. **Per-site fix-plan greps** — TRIGGER: the plan maps fixes to specific sites.
+    BEFORE writing the mapping, grep: existing helpers with the same purpose; the
+    real call chain into each edited function; the enclosing function at each cited
+    line; same-function siblings sharing the defect class. Names/line-proximity
+    reasoning is reliably wrong. → AUDIT-RULES.md #17
+18. **Search-first for external solutions** — TRIGGER: the plan BUILDS new
+    non-trivial machinery (parser, scheduler, diff engine, retry/queue layer,
+    protocol client, algorithm implementation). Before the plan stage, search for an
+    existing library/built-in/pattern ("<runtime> <thing> built-in", "<thing> best
+    practice <year>") and state in the plan what was found and why build-vs-adopt.
+    Rules 6/16 catch internal and already-shipped duplicates; this catches
+    reinventing an external wheel. → AUDIT-RULES.md #18
+19. **Dataset-invariant audit (eval episodes)** — TRIGGER: the episode builds or
+    pre-registers an eval harness/protocol over a dataset. BEFORE any pre-reg doc
+    locks, script three <5-min checks against the REAL data: (a) temporal ordering
+    (any context timestamps after the evaluation timestamp?), (b) per-feature
+    variance through the real ingest path on a small sample, (c) duplicate-content
+    rates (tie-break stress). Paste the outputs into the plan. Memory:
+    `feedback_eval_prereg_dataset_invariant_audit`. (LC2-E1 2026-08-09: skipping
+    this cost 2 protocol amendments + two 77-minute full reruns; a critic and codex
+    each found one of the missed invariants empirically.)
 
 Record the audit as a step:
 ```bash
@@ -369,7 +292,7 @@ python scripts/devrl.py step-record $EID codebase-audit --skill /dev-framework-r
 ```bash
 python scripts/devrl.py audit-record $EID --rule <slug>[:what-it-prevented]   # repeatable
 ```
-Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`. A fired rule is positive evidence it earns its per-episode token cost; `policy-compact-report` proposes demoting rules that never fire across instrumented episodes (propose-only — absence alone never demotes, the human decides).
+Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`. A fired rule is positive evidence it earns its per-episode token cost; `policy-compact-report` proposes demoting rules that never fire across instrumented episodes (propose-only — absence alone never demotes, the human decides).
 
 If the audit surfaces a reproduce-check WIN, jump to finalize (skip plan/execute/verify/review/ship). The win IS the deliverable.
 
@@ -384,16 +307,22 @@ Iterate the `stages` list from `stage-plan.json` (NOT a hardcoded 9). For each s
    ```
    Validation failure → record the step with `--critic-status error` and **escalate to the human**.
 3. If the stage has critic(s) — `critic_registry.STAGE_CRITICS` maps each gated stage to its critics (`plan` → `plan-eng-critic` + `plan-design-critic`, `execute` → `code-review-critic`, `review` → `independent-review-critic` + `codex-review-critic`, `ship` → `ship-readiness-critic`, `deploy` → `canary-monitor`). These are the exact names `critic-check` accepts — pass them verbatim (every critic carries the `-critic` suffix except `canary-monitor`). For each critic of this stage:
-   - Launch a `senior-code-reviewer` sub-agent. Brief it with the full contents of that critic's briefing (`prompts/critic-<role>.md`) plus the milestone goal and the stage's artifacts from the manifest. (`plan-design-critic` runs only for UI projects.)
-   - **If the plan artifact is an existing repo doc** (e.g. `docs/.../plans/<date>-<name>.md`) rather than an in-episode draft, brief the critic explicitly that any `Status: Draft` or `not yet reviewed` marker means the doc has NOT been engineering-reviewed yet; fresh-eyes scrutiny is the point. A pre-existing plan author's reasoning is not pre-vetted, and the orchestrator should not defer to its existing prose. Learned 2026-05-23 from the resona admin-dashboard Phase A episode (`01KSA2C6YSMSFFDE0X37PZ3EK0`): the round-1 plan-eng-critic caught a cross-org schema leak in a 5-day-old draft plan exactly because the brief said to judge it fresh.
-   - **For the `plan` stage specifically: pre-stage brainstorm concerns must be carried forward into the revised plan.** When entering `plan`, re-read the brainstorm step's `summary` field (via `episode-steps`). Each concern surfaced there must be either explicitly addressed in the revised plan artifact OR explicitly noted as out-of-scope in the plan manifest. Don't let brainstorm-stage framing dissolve before the plan-eng-critic runs — the critic only judges what's IN the revised plan, not what was flagged during brainstorm. Learned 2026-05-23 from the resona admin-dashboard Phase B Task B2 episode (`01KSAYQBNY2EDHXPRKQ76BS362`): rate-limiting + UUID enumeration were flagged as known re-identification surfaces during brainstorm but didn't appear in the revised plan; plan-eng-critic round 1 passed without them, and independent-review-critic caught the rate-limit gap as HIGH at the review stage, costing a round-1 retry.
+   - Launch a `senior-code-reviewer` sub-agent. Brief it with the full contents of that critic's briefing (`prompts/critic-<role>.md`) plus the milestone goal and the stage's artifacts from the manifest. (`plan-design-critic` runs only for UI projects.) **Exception: `independent-review-critic` gets NO sub-agent wrapper** — the orchestrator runs `/code-review` directly and grades its findings into the critic contract (see the `review` bullet in §4a); the zero-tool-calls check below applies to sub-agent critics only.
+   - **If the plan artifact is an existing repo doc** (e.g. `docs/.../plans/<date>-<name>.md`) rather than an in-episode draft, brief the critic explicitly that any `Status: Draft` or `not yet reviewed` marker means the doc has NOT been engineering-reviewed yet; fresh-eyes scrutiny is the point. A pre-existing plan author's reasoning is not pre-vetted, and the orchestrator should not defer to its existing prose. (Incident 2026-05-23, resona Phase A: fresh-eyes briefing caught a cross-org schema leak in a 5-day-old draft.)
+   - **For the `plan` stage specifically: pre-stage brainstorm concerns must be carried forward into the revised plan.** When entering `plan`, re-read the brainstorm step's `summary` field (via `episode-steps`). Each concern surfaced there must be either explicitly addressed in the revised plan artifact OR explicitly noted as out-of-scope in the plan manifest. Don't let brainstorm-stage framing dissolve before the plan-eng-critic runs — the critic only judges what's IN the revised plan, not what was flagged during brainstorm. (Incident 2026-05-23, resona Phase B: brainstorm-flagged rate-limiting never reached the revised plan; the gap surfaced at review and cost a retry.)
    - **Confirm the sub-agent actually read the artifacts.** If its result reports zero tool calls, it produced a verdict from the prompt text without opening the diff / plan / files — discard it, do NOT `step-record` it, and re-launch the critic. If a re-launched critic again returns zero tool calls, record `--critic-status error` and escalate. A critic that read nothing has not reviewed; the critic briefings mandate file reads for the same reason.
    - Save the sub-agent's response to a temp file, then:
      ```bash
      python scripts/devrl.py critic-check <critic-name> <temp-file>
      ```
    - **Exit 0 (pass)** → `step-record ... --critic-status pass --critic-score <n>`.
-   - **Exit 1 (fail)** → `step-record ... --critic-status fail --critic-score <n> --must-fix "..."`. Re-run the stage with the must-fix fed back, up to the per-stage cap (plan 3, execute 2, review 1, ship 1; `--retry-count <n+1> --retry-strategy revise_with_feedback`). Cap hit → **escalate to the human**. **Cap-extension carve-out (learned 2026-06-02, hippo A7 recall-trace):** when a plan round returns score ≥ 75, 0 `crit`, and the SOLE remaining finding is a one-clause fix the orchestrator introduced in its OWN prior revision, a single one-round cap extension (with operator notification) is permitted before full escalation; escalate if that extension round also fails or introduces a new finding. The cap exists to stop thrashing on a broken plan, not to block a converged one over a self-inflicted typo.
+   - **Exit 1 (fail)** → `step-record ... --critic-status fail --critic-score <n> --must-fix "..."`. Re-run the stage with the must-fix fed back, up to the per-stage cap (plan 3, execute 2, review 1, ship 1; `--retry-count <n+1> --retry-strategy revise_with_feedback`). Cap hit → **escalate to the human**. **Root-cause pass before the final retry (added
+2026-07-18):** when a stage's critic has failed twice consecutively AND the must-fix
+describes a DEFECT (failing test, wrong behavior, crash) rather than a plan/scope gap,
+run `/investigate` on the defect BEFORE the last permitted retry — the final attempt
+must be built on a named root cause, never a third revise-with-feedback guess (global
+rule: after 2 failed iterations, reconsider instead of retry). Record the
+investigation's one-line cause in the retry step's summary. **Cap-extension carve-out (learned 2026-06-02, hippo A7 recall-trace):** when a plan round returns score ≥ 75, 0 `crit`, and the SOLE remaining finding is a one-clause fix the orchestrator introduced in its OWN prior revision, a single one-round cap extension (with operator notification) is permitted before full escalation; escalate if that extension round also fails or introduces a new finding. The cap exists to stop thrashing on a broken plan, not to block a converged one over a self-inflicted typo.
    - **Exit 2 (parse error)** → `step-record ... --critic-status error`, **escalate to the human**.
    The stage advances only when all of its critics pass.
 
@@ -414,9 +343,21 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 - **`execute` stage — run `/self-review` as the tail step before manifest emit.** Same-session pass over the diff just produced. Catches missed requirements, regressions, and forgotten edge cases that `code-review-critic` would otherwise spend a sub-agent finding. Record the summary in the manifest's `self_review_summary` field — the schema enforces this at `stage: execute, status: completed`, so the validator will reject the manifest without it. If `/self-review` surfaces a must-fix, address it in-stage before emitting the manifest — do not advance.
 
-- **`review` stage — `/review` is the canonical implementation of `independent-review-critic`.** The review-stage sub-agent brief should *invoke* `/review` against the base branch and grade its output into the critic contract. Both `independent-review-critic` and `codex-review-critic` gate independently; codex provides the cross-model second opinion.
+- **`verify` stage — drive the affected flow end-to-end as the tail step before manifest emit (reworded 2026-08-02; the 2026-07-18 text named a `/verify` skill that was never installed).**
+  Re-running the test suite is necessary but not sufficient: exercise the AFFECTED
+  FLOW in the real app/CLI and observe behavior — the class of runtime
+  regression that green tests and `gh pr checks` both miss (the CI-red-merge incident's
+  root cause). For UI projects use `/qa-only` (browser QA, report-only) as the driver;
+  for CLIs/APIs run the real commands/requests against the built artifact. Record what was driven + observed in the verify manifest's
+  `verify_skill_summary` field (optional schema field today; may be promoted to required
+  once the workflow shape stabilises). A behavioral mismatch found here is fixed in-stage
+  before the manifest emits — do not advance.
+
+- **`review` stage — the official `/code-review` plugin implements `independent-review-critic` (rewired 2026-08-02, no fallback — Keith directive).** Sequence: commit the episode's work in the worktree, push the branch, open a DRAFT PR (`gh pr create --draft`), then invoke the plugin (`claude-plugins-official:code-review` — its command carries `disable-model-invocation: false`, so the orchestrator CAN launch it; pass the PR number). It fans out 5 parallel Sonnet reviewers + Haiku confidence-verification and filters findings below 80/100 — adversarially verified findings, which matters because the review stage has a retry cap of 1 and one false positive burns the only retry. Grade the surviving findings into the critic contract (findings -> `--must-fix`, score per `prompts/critic-independent-review.md`, then `critic-check independent-review-critic`); pass the briefing's house blind-spot checklist (SQL safety, LLM trust boundaries, conditional side effects, CLI dual-write patterns) in the invocation args. TWO TRAPS, both verified 2026-08-02: (a) the BUNDLED skill also named `code-review` is operator-only (`disable-model-invocation`) — a bare `Skill(code-review)` call errors; use the plugin-qualified name; (b) NEVER wire `/code-review ultra` — billed cloud review, user-triggered only. The `ship` stage then marks the PR ready-for-review instead of creating it. Both `independent-review-critic` and `codex-review-critic` still gate independently; codex stays the cross-model second opinion.
 
 - **`ship` stage — run `/ship-check` as the first step.** Pre-PR sanity pass: what shipped, is it worth shipping, did we do enough QA? Save the output to the manifest's `ship_check_summary` field — the schema enforces this at `stage: ship, status: completed`, so the validator will reject the manifest without it. Pass the summary to `ship-readiness-critic` as input. A blocker from `/ship-check` short-circuits the stage — escalate to the human rather than asking the critic to rubber-stamp it.
+
+- **`ship` stage — Fable final-review pass for the hardest changes (Keith directive, 2026-08-23).** TRIGGER (any): a schema migration; security- or tenant-isolation-touched code; a change to a core write-path / invariant primitive (the `upsertEntryRow` class); or a diff over ~500 changed lines. When it fires, after `/ship-check` but BEFORE `ship-readiness-critic`: spawn exactly ONE Agent sub-agent with `model: "fable"`, briefed with the full diff, the plan artifact, and all prior critic + codex verdicts. Its job is a fresh adversarial "would you ship this?" pass — surface what every earlier gate missed, not re-run their checklists. Real defects it finds are must-fix in-stage before `ship-readiness-critic` runs; append its one-line verdict to the ship step's `--summary`. This bullet is the standing explicit ask the global routing rule requires ("`fable` sub-agents: never unprompted") — it authorises this ONE pass at this ONE point only: never at earlier stages, never as a fan-out, never more than one per episode. Non-triggering episodes skip it silently — Sonnet critics + codex already cover routine diffs (A/B verdict, §4b). Cost context: one Fable review pass is a fraction of Fable orchestrating an episode; run orchestrator sessions on Opus/Sonnet and let this bullet be Fable's only slot.
 
 - **`ship` stage — record deploy metadata right after the PR opens.** `python ~/.claude/dev-framework/scripts/devrl.py episode-deploy-record $EID --pr-url <PR-URL>` (the ship manifest schema now REQUIRES a `pr_url` artifact at `status: completed`; a sanctioned no-PR ship — direct-commit / quant pipelines — records the literal `none`). At the `deploy` stage after merge, re-run with `--merge-commit <SHA>`. This is the producer feeding `episode-deploy-meta`, the `devrl-post-deploy` cron, and every outcome-weighted learning leg — an episode that skips it can never resolve a post-deploy outcome (the 0/95 outcome-starvation root cause, fixed 2026-06-09, PLAN-continuous-loop Phase A).
 
@@ -427,6 +368,56 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 - **(Optional, opt-in) Meta-critic mode** — when a critic returns `pass`, the orchestrator MAY run `/grill-me` against the critic's verdict + reasoning, asking "did this pass actually hold up under adversarial pressure?" If the grill breaks the pass (surfaces an issue the critic missed), the verdict becomes provisional: record as `friction` via `episode-friction` and either re-run the stage with the missed concern in the must-fix, or escalate to the human. This is expensive (extra sub-agent per pass) and OFF by default — opt-in via `episode-init --meta-critic-grill`. Reserve for high-stakes episodes (production deploys, schema migrations, security-touched diffs). Tier 10's `learn-evolve` reads `friction` notes flagged this way to propose critic-prompt mutations.
 
 `/full-power` is deliberately NOT wired — the orchestrator already fans out sub-agents per critic, so layering it on inflates token cost without changing behaviour. `/grill-me` is wired because it's targeted adversarial pressure on a specific artifact (framing / plan / verdict) at a specific decision point, not a general "try harder" mode.
+
+### 4b. Execution delegation — the orchestrator does not code (Keith directive, 2026-07-04)
+
+The session model (Fable or whatever the env line says) is the ORCHESTRATOR:
+framing, triage, plan authorship, sub-agent briefs, gate parsing, verdicts,
+trajectory bookkeeping, and the final synthesis. It does NOT write
+implementation code inline. (Incident 2026-07-04: the orchestrator implemented a whole execute stage
+inline — expensive session-model tokens, no author/reviewer separation.)
+
+- **Execute-stage implementation (code + tests + mechanical doc edits) goes to
+  Agent-tool sub-agents with `model: "sonnet"`.** Brief each executor with:
+  the plan file path, the episode's execute-entry checks, the exact files/
+  regions to touch, the project conventions that bind (real-DB tests, additive
+  public API, AGENTS.md rules), and what NOT to touch. Prefer one executor per
+  coherent task (T1/T2/T3), parallel when files are disjoint, sequential when
+  they overlap. The worktree-isolation rules above apply unchanged.
+- **The orchestrator reviews every executor diff before accepting it** (read
+  the diff, check it against the plan and entry checks), runs `/self-review`
+  itself, and owns all commits. Executor output is a proposal, not a merge.
+- **Small-fix carve-out:** one-to-few-line fixes the orchestrator can specify
+  byte-exactly (a review round's single-clause fix, a version-string bump, a
+  comment correction) MAY be applied directly — dispatching an executor for a
+  two-line edit costs more than it saves. The moment a fix needs design
+  judgment or touches more than ~10 lines, it goes to an executor.
+- **Discovery fan-out** (broad greps across many files, existing-pattern
+  hunts) goes to Explore/sonnet sub-agents when it would bloat orchestrator
+  context; targeted single-file reads the orchestrator needs verbatim in
+  context stay inline.
+- **Critic model routing: critics run `model: "sonnet"`** (A/B verdict
+  2026-08-02, 4 shipped episodes per arm, flat reward 23.06 vs 22.63 — no
+  measured Opus premium, cost decides; the CLOSED block below records the
+  data). The session model stays reserved for at most ~3 highest-stakes
+  verdict/synthesis passes per task, never fan-outs.
+- Record each executor dispatch on the execute step via `step-record ...
+  --prompt <executor-brief-summary>` so the trajectory shows who authored what.
+
+**Critic-model A/B — CLOSED (verdict read 2026-08-02 at the pre-registered
+4-shipped-episodes-per-arm point).** The question was: do Opus critics earn
+their premium over Sonnet 5 critics? Answer: no measured premium. Mean reward
+23.06 (default-opus) vs 22.63 (default-sonnet); regression 0.0 in both arms
+(2 known outcomes each); friction 4/4 vs 3/4 episodes. FLAT at this n, so
+cost decides: critics run `model: "sonnet"` (folded into the routing bullet
+above). Labels retired — `episode-init` uses the plain `default` critic set;
+do NOT alternate arms. Re-open only with a bigger pre-registered n if
+critic-trust drops post-switch. Two standing notes survive the retirement: `codex-review-critic`
+always runs — the cross-model catch is the safety net (01KWQF28's
+window-starvation P2 was missed by three Opus-tier critics and caught only by
+codex); and `independent-review-critic` runs via `/code-review` since
+2026-08-02, so read `critic-ab-report` / `critic-trust` for that critic with
+the swap-date confound in mind.
 
 ### 5. Finalize
 
@@ -440,9 +431,43 @@ python scripts/devrl.py lock-release $EID
 
 `reward` loads the per-type rubric, derives the gates (shipped, all-critics-passed) and the user-satisfaction component from the DB, and writes `final_reward` + `reward_breakdown`. Pass `--automated-score` from the verify-stage results. Downstream-stability is left deferred — it resolves after the next episode — so the score is **provisional** until then. The scalar is a dashboard metric; the learn step keys off the trajectory, not this number.
 
+**"Ship it" includes the npm build (Keith standing directive, 2026-08-03).** For npm-package projects (hippo), the human's "ship it" covers merge AND refreshing the live binary: from a CLEAN checkout of merged master (temp worktree if the main checkout is dirty), `npm install` + `npm run build:all` + `npm pack` + `npm i -g ./<tarball>.tgz`. NEVER `npm i -g .` from a temp dir — folder installs SYMLINK to the folder, and tearing the worktree down guts the global (2026-08-03 incident: MODULE_NOT_FOUND an hour after "verified"). Verify AFTER teardown: `<cli> --version` works and the global package is a real dir, not a symlink. Registry publish stays a separate /publish-repo decision.
+
 Roughly 7 days after a shipped episode's deploy, record whether it held up: `python scripts/devrl.py episode-postdeploy $EID --clean` (or `--regressed`). This feeds the learn mode's `regression_rate` weighting.
 
 At the start of any orchestrator session, run `devrl.py status` — it surfaces pending satisfaction prompts; record them then (`satisfaction-pending` prints ready-to-run commands, `satisfaction-record-batch ID=SCORE ...` records several at once).
+
+### 5b. Episode close-out (MANDATORY after finalize, ship AND abort — added 2026-08-03)
+
+"Ship it" ends when the environment is clean, not when the merge lands.
+Nothing may be reported to the operator as "left over" unless it is
+human-only (quiz, satisfaction scores) or held by ANOTHER live session's
+resources — and then name exactly which. Checklist, in order:
+
+1. **Kill your own orphans FIRST.** TaskStop kills the harness task, NOT
+   detached process trees. Query by path before teardown:
+   `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*<worktree-name>*' }`
+   — wrapper bash shells, tsserver/typingsInstaller from the worktree's
+   node_modules, and build daemons are the usual holders. Kill only
+   processes traceable to THIS episode's commands; never another session's
+   (the shared repo runs concurrent agents).
+2. **Teardown**: `git worktree remove --force <path>` (then `rm -rf` the
+   husk), `git worktree prune`, delete the merged branch local AND remote.
+   A dir that stays busy after step 1 is another session's handle — report
+   it by name, don't fight it.
+3. **npm projects on "ship it"**: build + refresh the global install per
+   the standing directive above; verify `<cli> --version` and (for hippo)
+   that the live store migrated.
+4. **Docs the episode owns**: commit + push episode-related doc edits
+   sitting in the MAIN checkout (rebase with `--autostash` if the tree
+   carries other WIP). Non-episode WIP: identify it precisely (read the
+   diff, say what it IS) and report — NEVER absorb, commit, or discard it.
+5. **Memory writebacks**: project memory files + MEMORY.md index + hippo
+   remember/capture/outcome; confirm probation memories that earned their
+   keep (`devrl.py memory-confirm`).
+6. **Sweep**: no running background tasks from this episode (check by CIM,
+   not by task list), scratchpad temp files are disposable by location, the
+   trajectory dir holds all manifests.
 
 ### 6. Learn step (per-episode)
 
@@ -774,15 +799,15 @@ only surface across a batch. Apply the policy deltas, then start the next batch.
 
 ## Worktree isolation for code episodes (execute stage)
 
-For any CODE episode in a repo with concurrent multi-agent activity (check `git worktree list` — if `.claude/worktrees/` shows active/locked agents, or another session may `git checkout` the shared tree), do the **execute** stage in a DEDICATED worktree from the START:
-
-```bash
-git worktree add <tmp-path> -b feat/<episode> origin/master
-```
-
-Edit + build + test there; never edit the shared main working tree. A concurrent session can `git checkout <other-branch>` on the main tree mid-stage — and during a multi-minute execute sub-agent run it WILL — silently moving your uncommitted edits onto the wrong branch. **Edit-in-place is unsafe even pre-commit**: the hazard is the branch switching under you, not just a mis-targeted commit. Recovery (capture `git diff` → worktree → `git apply` → reverse-apply `git apply -R` off the wrong tree, `--check`-guarded) is non-destructive but costs a full detour. Learned twice on hippo (2026-06-02 analytics commit landed on the E3.2 branch; 2026-06-02 A7 recall-trace — the main tree switched master → a concurrent E-session's branch during a 9-minute execute sub-agent). Reuse the same worktree for the ship-stage commit/push so the work never touches the shared tree.
-
-node_modules in the worktree: junction from the main checkout (`mklink /J node_modules <main>\node_modules` on Windows) to skip a full reinstall — but remove the junction with `rmdir` (Windows) BEFORE `git worktree remove`, or the worktree removal can follow the junction and delete the MAIN repo's node_modules.
+TRIGGER: any CODE episode in a repo with concurrent multi-agent activity (check
+`git worktree list`). Do the execute stage in a DEDICATED worktree from the START —
+`git worktree add <tmp-path> -b feat/<episode> origin/master` — and edit/build/test
+there only. Edit-in-place is unsafe even pre-commit: a concurrent session CAN and
+WILL `git checkout` the shared tree mid-stage, moving your uncommitted edits onto
+the wrong branch. Reuse the same worktree for the ship-stage commit/push.
+`node_modules`: junction from the main checkout; `rmdir` the junction BEFORE
+`git worktree remove`. Recovery from a hit (non-destructive, costs a detour) +
+both incidents: AUDIT-RULES.md "execute-stage worktree isolation".
 
 ## Real test-DB convention (`verify` stage)
 
@@ -793,7 +818,7 @@ If the project's tests need a real database (per the global `always use real DB 
 - The verify agent re-runs `npm test` (or equivalent) against the same instance — second confirmation is cheap.
 - If the DB ends up bootstrapped inside the execute agent regardless, document the limitation in the verify manifest (`status: completed` with caveat) and recommend the human re-run before merge. Do NOT auto-fail verify on a one-shot run; do NOT pretend the run is a second confirmation when it is not.
 
-Learned 2026-05-23 from the resona admin-dashboard Phase A episode (`01KSA2C6YSMSFFDE0X37PZ3EK0`): the execute agent bootstrapped a `/tmp/pgdata` trust-auth PG that died with its process group, and the NetworkService-owned surviving backends held the port from re-bind without admin, so the verify stage had no way to re-run.
+(Incident 2026-05-23, resona Phase A: an execute-agent ad-hoc `/tmp/pgdata` PG died with its process group and surviving backends held the port, so verify could not re-run.)
 
 ## Headless mode
 
@@ -851,7 +876,7 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `learn-reject --failure-mode ID ...` | reject a cluster | 0 |
 | `apply-pending <id> [--clear]` | view or clear pending_apply/<id>.json (Tier 3) | 0 / 2 |
 | `embed-cache-prune [--older-than N]` | remove embed cache entries older than N days (Tier 1) | 0 |
-| `codex-shadow <id> <stage> --local-verdict <v> [--max-wait-sec N] [--brief <file>]` | log codex second opinion; never gates (Tier 5) | 0 / 2 |
+| `codex-shadow <id> <stage> --local-verdict <v> [--max-wait-sec N] [--brief <file>]` | log codex second opinion; never gates (Tier 5; DEPRECATED 2026-05-24) | 0 / 2 |
 | `codex-shadow-report [--since DATE]` | list codex disagreements (Tier 5) | 0 |
 | `critic-ab-report [--since DATE]` | per critic_set aggregates over shipped episodes (Tier 4) | 0 |
 | `batch-init <name>` | create a batch (Tier 7); fails if name exists | 0 / 2 |
@@ -877,12 +902,12 @@ All free-text fields are secret-scrubbed before they reach the DB.
 ## Files
 
 Orchestrator infrastructure lives in `~/.claude/dev-framework/` (see its `README.md`):
-- `RL-PLAN.md` — full design (v0.6)
+- `RL-PLAN.md` — full design (v0.7)
 - `episodes.db` — SQLite trajectory store
 - `scripts/devrl.py` — the CLI this skill drives
 - `scripts/` — `episode_store`, `scrubber`, `critic_contract`, `critic_registry`, `rubric`, `reward`, `learn`, `clustering`, `ulid_gen`, `validate_manifest`, `migrate`
-- `adapters/critics.py` — the 6 verdict critics (data-driven)
-- `prompts/critic-*.md` — the 6 critic sub-agent briefings
+- `adapters/critics.py` — the 7 verdict critics (data-driven)
+- `prompts/critic-*.md` — the 7 verdict-critic briefings + `critic-brainstorm-judge.md`
 - `rubrics/REWARD.*.md` — 8 per-project-type reward rubrics
 - `schemas/` — stage-manifest + stage-plan JSON schemas
 - `tests/` — real-DB test suite (`python -m pytest tests/`)

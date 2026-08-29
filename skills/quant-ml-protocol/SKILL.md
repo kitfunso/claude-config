@@ -5,6 +5,10 @@ description: Rigorous development protocol for predictive models on market/time-
 
 # Quant ML Protocol
 
+This is the general protocol. `/model-improve` is its Quantamental
+instantiation — use that skill for the mechanics there, but on any conflict
+of statistical principle (nulls, holdouts, selection honesty), this file wins.
+
 Distilled from a real 9-iteration model campaign (Aug 2026): every rule below
 was paid for by a specific failure, recorded in `references/steering-bank.md`.
 The core insight is a three-tier map of what goes wrong:
@@ -97,9 +101,11 @@ chart. A model that cannot name the naive strategy it beats has no result.
    the pre-registered ACCRUAL LIST with a scheduled re-test date — never
    into the model, never forgotten.
 6. **Mandated self-audit** before any verdict: answer "what else is wrong
-   with what you did?" with a numbered list of ≥8 findings across data,
-   statistics, code, and process — or defend why fewer exist. One pass,
-   written down, in the report.
+   with what you did?" with a numbered list of findings covering ALL FOUR
+   categories — data, statistics, code, process. A category with no finding
+   needs a written one-line defense of why it is clean; there is no minimum
+   count (coverage, not quota — a quota manufactures filler findings). One
+   pass, written down, in the report.
 
 ## Stage 6 — THE PROMOTION GATE (hard user gate — never skip)
 
