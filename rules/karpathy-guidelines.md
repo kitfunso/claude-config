@@ -22,6 +22,22 @@ Before implementing:
 - No error handling for impossible scenarios.
 - **If you write 200 lines and it could be 50, rewrite it.**
 
+The bans above say what not to write. The ladder below says where to look first.
+Stop climbing at the first rung that holds. (From github.com/dietrichgebert/ponytail,
+adopted 2026-09-01, with rung 3 rewritten to defer to project law.)
+
+1. Does it need to exist? If the need is speculative, say so in one line and skip it.
+2. Is it already in this codebase? Reuse it. Re-implementing what lives a few files
+   over is the most common form of this mistake.
+3. Standard library, native platform feature, or an already-installed dependency?
+   Use it — **unless the project bans it.** `bitfall` and `fifty` both open with a
+   CRITICAL handwritten-only allowlist. There this rung inverts: write it yourself.
+4. Can it be one line? Then one line.
+5. Only then, the smallest code that works.
+
+The ladder shortens the solution, never the reading. Trace what a change touches
+before you shorten it. The smallest change in the wrong place is a second bug.
+
 Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
 ## 3. Surgical Changes
