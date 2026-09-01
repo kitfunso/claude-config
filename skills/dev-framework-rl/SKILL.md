@@ -288,11 +288,14 @@ Record the audit as a step:
 python scripts/devrl.py step-record $EID codebase-audit --skill /dev-framework-rl --critic-status n/a --summary "<grep results: N TODOS items reproduce-checked; M allow-list sites identified; K version-bump targets enumerated; J docs/evals/ results-docs scanned; L public-API caller surfaces audited>"
 ```
 
-**Then record which rules FIRED (C1 policy decay).** For every rule above that surfaced a finding this episode:
+**Then record every rule you RAN, and say whether it found anything (C1 policy decay).** Record the ones that ran clean too, not only the ones that hit:
 ```bash
-python scripts/devrl.py audit-record $EID --rule <slug>[:what-it-prevented]   # repeatable
+python scripts/devrl.py audit-record $EID \
+  --rule <slug>[:what-you-checked] \      # ran, found nothing (repeatable)
+  --caught <slug>[:what-it-found]         # ran and found something (repeatable)
 ```
-Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`. A fired rule is positive evidence it earns its per-episode token cost; `policy-compact-report` proposes demoting rules that never fire across instrumented episodes (propose-only — absence alone never demotes, the human decides).
+A rule that runs every episode and never once catches anything costs tokens forever and scores highest on firing count alone, so `--rule` vs `--caught` is the whole measurement. Passing the same slug to both exits 2. Only the FIRST colon splits, so a note may contain `file.ts:42`.
+Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`. `policy-compact-report` proposes two kinds of retirement, both propose-only, and absence alone never demotes: `demotion_candidates` never fire at all, `never_caught_candidates` fire but have never found anything across at least `--min-scored` scored firings. Firings recorded before migration 0017 carry no verdict and count as `unscored`, never as clean, so they can never retire a rule.
 
 If the audit surfaces a reproduce-check WIN, jump to finalize (skip plan/execute/verify/review/ship). The win IS the deliverable.
 
@@ -530,11 +533,17 @@ policy surface: `learn-effect` scores deltas, `policy-compact-report` scores
 audit rules. Pruning is half of getting better, and only these two commands can
 tell you what to cut.
 
-`policy-compact-report` lists every rule's firing count and names
-`demotion_candidates` — rules with zero firings across instrumented episodes. It
-proposes only; a human demotes. It also prints `unknown_slugs_recorded`, which
-is non-empty when a rule exists on some surfaces but not in `AUDIT_RULE_SLUGS`.
+`policy-compact-report` lists every rule's firings, catches, clean runs and
+catch rate, then names two retirement classes: `demotion_candidates` never fire
+at all, and `never_caught_candidates` fire but have never found anything. Both
+propose only; a human demotes. It also prints `unknown_slugs_recorded`, which is
+non-empty when a rule exists on some surfaces but not in `AUDIT_RULE_SLUGS`.
 Treat any entry there as a bug in the three-surface contract, not as data.
+
+A rule with a high firing count and a `catch_rate` of 0.0 is the expensive case:
+it runs every episode, costs tokens every episode, and has never once paid for
+itself. Firing count alone rates that rule highest, which is why catch rate
+exists. A `catch_rate` of `null` means the rule has no scored firings yet.
 
 For every cluster with a fix
 recorded against it, it prints occurrences before vs after `applied_at`, plus
@@ -925,8 +934,8 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `learn-attribute [--since DATE] [--include-backfill]` | recompute critic_trust_scores incl. v2 (Tier 8/9; backfill outcomes excluded by default per R4) | 0 |
 | `critic-trust [--critic NAME] [--json]` | read view over critic_trust_scores (Tier 8) | 0 |
 | `stage-gate <id> <stage> [--weighted]` | evaluate a stage's gate from recorded verdicts; trust-weighted when episode opted in (Tier 9c) | 0 pass / 1 fail / 2 error |
-| `audit-record <id> --rule SLUG[:note] ...` | record fired §3b audit rules (C1) | 0 / 2 |
-| `policy-compact-report [--min-episodes N]` | propose-only policy-decay report over rule firings (C1) | 0 |
+| `audit-record <id> [--rule SLUG[:note] ...] [--caught SLUG[:note] ...]` | record §3b audit rules that ran; `--rule` found nothing, `--caught` found something (C1) | 0 / 2 |
+| `policy-compact-report [--min-episodes N] [--min-scored N]` | propose-only policy-decay report over rule firings and catch rates (C1) | 0 |
 | `memory-register <id> [--auto-tier1 --episode E --summary S [--cluster C]]` | register a learn-added memory (probation); auto-tier1 = B4 auto-apply path, rejects without valid warning_pattern | 0 / 2 dup or rejected |
 | `memory-confirm <id>` | confirm a memory useful | 0 / 2 missing |
 | `memory-deprecate <id>` | retire a memory | 0 / 2 missing |
