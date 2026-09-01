@@ -511,20 +511,32 @@ A separate mode from running an episode — the cross-episode pass. Run it perio
 
 Pick the tier by how settled and how cross-cutting the lesson is:
 
-0. **Audit rule** — reach here FIRST whenever the lesson can be written as "before X, check Y". An audit rule is a TRIGGER plus a concrete check that a later episode either runs or does not, and `audit-record` logs each firing. That makes it the only tier that produces its own evidence: 18 of the 19 rules have fired, 114 times across 34 episodes, and `version-bump-targets` alone recorded 30 prevented defects. Tiers 1 to 3 are prose, and prose cannot be counted. Adding one means editing three surfaces that must stay 1:1 — `episode_store.AUDIT_RULE_SLUGS`, the compact rule plus its `→ AUDIT-RULES.md #N` pointer and slug line in §3b of this file, and the numbered detail section in `AUDIT-RULES.md`. Run `pytest tests/test_audit_rules_sync.py` after; it fails on any surface you miss. A lesson that cannot be phrased as a pre-check is not an audit rule — send it to tier 1.
+0. **Audit rule** — reach here FIRST whenever the lesson can be written as "before X, check Y". An audit rule is a TRIGGER plus a concrete check that a later episode either runs or does not, and `audit-record` logs each firing. That makes it the only tier that produces its own evidence: 18 of the 19 rules have fired, 114 times across 34 episodes, and 111 of those firings carry a note saying what the check found. Tiers 1 to 3 are prose, and prose cannot be counted or pruned. (`audit_rule_firings.prevented` is that note, a TEXT column, not a count. Do not aggregate it arithmetically.) Adding one means editing three surfaces that must stay 1:1 — `episode_store.AUDIT_RULE_SLUGS`, the compact rule plus its `→ AUDIT-RULES.md #N` pointer and slug line in §3b of this file, and the numbered detail section in `AUDIT-RULES.md`. Run `pytest tests/test_audit_rules_sync.py` after; it fails on any surface you miss. A lesson that cannot be phrased as a pre-check is not an audit rule — send it to tier 1.
 1. **Hippo memory** — for lessons with no check to run. Small or tentative. Cheap, decays, probation-gated (`--memory-added`).
 2. **Skill prompt** — when a workflow or critic actually behaved wrong. Medium weight. Recorded with `--skill-changed <path>`.
 3. **CLAUDE.md (project or global)** — the top tier, deliberately rare. Only a lesson that recurred across many episodes, is a genuine cross-cutting rule, and would keep happening otherwise — a "law", not a tip. Tips go to tier 1.
 
 Tier 3's bar is high because a CLAUDE.md loads into every session: it costs tokens every run and is the highest-blast-radius place to be wrong. A cluster qualifies only when its `regression_rate` is non-trivial — it recurred *and* caused real post-deploy regressions — not merely high `occurrences`. Record it like a skill: `--skill-changed <path-to-that-CLAUDE.md>` (the audit trail hashes any path). Two guards apply automatically: the learn loop never auto-applies, and the global Hand-Maintained-Files rule forces show-content + explicit-apply + a `.old` backup before any CLAUDE.md edit. Episodes record `project_type`, not a project path — the human names the exact file at approval time.
 
-### 0. Score the deltas you already applied
+### 0. Score what you already applied
 
 ```bash
 python scripts/devrl.py learn-effect
+python scripts/devrl.py policy-compact-report
 ```
 
-Run this FIRST, before proposing anything new. For every cluster with a fix
+Run BOTH first, before proposing anything new. They score the two halves of the
+policy surface: `learn-effect` scores deltas, `policy-compact-report` scores
+audit rules. Pruning is half of getting better, and only these two commands can
+tell you what to cut.
+
+`policy-compact-report` lists every rule's firing count and names
+`demotion_candidates` — rules with zero firings across instrumented episodes. It
+proposes only; a human demotes. It also prints `unknown_slugs_recorded`, which
+is non-empty when a rule exists on some surfaces but not in `AUDIT_RULE_SLUGS`.
+Treat any entry there as a bug in the three-surface contract, not as data.
+
+For every cluster with a fix
 recorded against it, it prints occurrences before vs after `applied_at`, plus
 `episodes_since` — zero recurrence with zero episodes since is `untested`, not a
 win. Three verdicts: `held`, `recurred`, `untested`.
