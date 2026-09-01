@@ -32,6 +32,18 @@ Reference tables for picking specialized agents and skills. Loaded on demand by 
 | `/smoke-test` | Verifying frontend after deploys |
 | `/roll-check` | Check and fix futures contract roll adjustments |
 | `/publish-repo` | Bump version, update docs, build, test, npm publish, tag, push |
+| `/dev-framework` | Full 9-stage pipeline for a new feature or project |
+| `/dev-framework-rl` | RL episode orchestrator (critics, trajectory, learning); `loop <target>` = continuous-improvement mode |
+| `/model-improve` | Commodity model rebuild workflow (Quantamental) |
+| `/self-review` | Review own session changes before wrap-up |
+| `/ship-check` | Pre-push sanity: worth shipping? enough QA? |
+| `/think-hard` | Deep critical pass BEFORE answering a hard question |
+| `/grill-me` | Adversarial interrogation of my work/plan/verdict |
+| `/quiz-me` | Operator-knowledge quiz gate from a diff |
+| `/standards-check` | Codebase audit scorecard (six 0-10 dimensions) |
+| `/deep-research` | Multi-source fact-checked research report |
+| `/hippo-feature` | One hippo feature via the micro-eval TDD loop |
+| `/critique` | Brutal-honesty critique of completed work |
 
 ## gstack Skills (Dev Workflow)
 | Skill | Trigger |
