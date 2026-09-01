@@ -41,10 +41,11 @@
 /skills/**/*.idx
 /skills/**/*.zip
 /skills/**/*.gz
-/skills/**/*.old
-/skills/**/*.old-*
 /scripts/**/__pycache__/
 /scripts/**/__pycache__/**
 /scripts/**/*.pyc
-/scripts/**/*.old
-/scripts/**/*.old-*
+
+# pre-write-guard.js backups, in every permitted directory. The per-directory
+# forms missed /rules/, so 5 .old files were staged before this rule existed.
+**/*.old
+**/*.old-*

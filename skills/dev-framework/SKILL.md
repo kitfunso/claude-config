@@ -51,7 +51,7 @@ These BLOCK phase progression if missing. Speed directives DO NOT bypass.
 
 - **VERIFY**: runtime evidence required — drive the affected flow end-to-end and capture output (`/qa` for UI, real commands for CLIs/APIs, `/smoke-test` after deploys)
 - **REVIEW**: `/self-review` → `/review` → `/codex` on diff. `/cso` if sensitive. `/design-review` if UI.
-- **SHIP**: `/ship-check` clean, CHANGELOG entry, version bumped (libraries)
+- **SHIP**: `/ship-check` clean, CHANGELOG entry, version bumped (libraries), `/record-decision` evaluated (record filed or "no decision record needed" stated)
 - **DEPLOY**: `/land-and-deploy` + `/canary` clean
 
 Full rules in `ENFORCEMENT.md`.
@@ -180,7 +180,7 @@ Get-Content C:/Users/skf_s/.claude/skills/dev-framework/HOOK-SETUP.md
 4. EXECUTE    /full-power | TDD/EDD | framing pass on fix-it sub-tasks
 5. VERIFY     /verify | /qa | /smoke-test | /run            ← RUNTIME EVIDENCE REQUIRED
 6. REVIEW     /self-review → /review → /codex (diff) → /cso (sensitive) → /design-review (UI)
-7. SHIP       /ship-check → /sinking-ship → /commit or /ship → /publish-repo (library)
+7. SHIP       /ship-check → /record-decision (evaluate) → /sinking-ship → /commit or /ship → /publish-repo (library)
 8. DEPLOY     /land-and-deploy → /canary → Lighthouse (frontend)
 9. LEARN      /document-release → /retro → hippo outcome --good + hippo capture
 ```

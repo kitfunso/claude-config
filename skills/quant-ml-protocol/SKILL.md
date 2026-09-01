@@ -36,6 +36,12 @@ Instantiate `templates/EXPERIMENT-PROTOCOL.md` into the project as
    noise yardstick in the same sentence as its effect size.
 2. **Instrument mechanics.** Tenor/contract holdability measured, not
    assumed (a front contract that dies mid-horizon cannot carry the trade).
+   Every cost the tradable expression pays — spread, commission,
+   financing × calendar days held, borrow — lives INSIDE the net
+   primary metric from the first backtest. A known cost carried as a
+   caution flag instead of a number has flipped a verdict after
+   promotion (AF2 2026: +3.93 bps/day t 2.74 gross became ~+1.13 at
+   t ~0.8 once the stated 2 bp/calendar-day financing was applied).
 3. **Target decomposition.** Subtract everything the market already pays:
    carry, roll-down, basis. If a naive always-one-side strategy scores well
    on the raw target, the target is wrong, not the model good.
@@ -43,6 +49,9 @@ Instantiate `templates/EXPERIMENT-PROTOCOL.md` into the project as
    a ranking metric AND a money metric with costs), what breaks ties
    (parsimony), and what nulls are: vetoes or caution flags. This rule is
    itself attackable at the promotion gate.
+   The primary t uses autocorrelation-robust errors (Newey-West or a
+   stationary block bootstrap); a plain-SE t on overlapping or
+   autocorrelated returns is a diagnostic, never the verdict number.
 
 ## Stage 1 — data honesty
 
@@ -64,6 +73,12 @@ Instantiate `templates/EXPERIMENT-PROTOCOL.md` into the project as
   that cannot flip the verdict.
 - Every report carries a NOT-DONE table (what was declared but not run, and
   why). Silence about a skipped check reads as "passed."
+- **Trial ledger.** Keep a running count N of verdict lanes across the
+  campaign — every declared lane that could have produced a pass, plus
+  peeks at accruing lanes used to choose the next build. Every pass is
+  reported next to N × α (expected false passes) and the expected
+  maximum null Sharpe at N trials. A pass inside that noise ceiling is
+  a flag, not a result.
 
 ## Stage 3 — baselines before models
 
@@ -91,6 +106,12 @@ chart. A model that cannot name the naive strategy it beats has no result.
    ≥20 replays. Compare the real result to the null DISTRIBUTION of the
    process. A wide search manufactures large effects from pure noise; the
    null bar for a search is what the search finds in nothing.
+   Fewer kept replays than the declared floor = no null = NO verdict;
+   thin the null, lose the lane. Count the null's EFFECTIVE draws:
+   placements or replays that share most of their data (e.g.
+   overlapping windows on a circular clock) are one draw, not N — a
+   p95 over near-duplicates is not a 5% tail. Prefer a stationary
+   block bootstrap of the return series when placements must overlap.
 3. **Selection-honest hold-out**: choose the spec on early years only, judge
    on untouched late years. Report the haircut (as-run minus honest) as its
    own number.
@@ -100,12 +121,20 @@ chart. A model that cannot name the naive strategy it beats has no result.
 5. **Thin-window rule**: any candidate evaluated on n < 300 anchors goes to
    the pre-registered ACCRUAL LIST with a scheduled re-test date — never
    into the model, never forgotten.
+   The floor counts the anchors the VERDICT statistic rides (judged
+   rows after any tune/judge split), not the full sample.
 6. **Mandated self-audit** before any verdict: answer "what else is wrong
    with what you did?" with a numbered list of findings covering ALL FOUR
    categories — data, statistics, code, process. A category with no finding
    needs a written one-line defense of why it is clean; there is no minimum
    count (coverage, not quota — a quota manufactures filler findings). One
    pass, written down, in the report.
+7. **Independent process critique** before any Stage 6 surface: a
+   reviewer that did not build or run the campaign (different agent or
+   model, given artifacts not summaries) attacks the method — nulls,
+   multiplicity, cost model, selection. Its findings ride the gate
+   surface verbatim. The author never reviews alone; the same hands
+   authored, ran, and judged everything else.
 
 ## Stage 6 — THE PROMOTION GATE (hard user gate — never skip)
 
@@ -116,6 +145,8 @@ one surface:
    side by side, gap stated.
 2. EVERY metric with a paired interval — never a single-metric verdict.
    ("All tied" on one metric has been overturned by the money metric.)
+   Include the trial-ledger line: N trials this campaign, expected max
+   null Sharpe at N, observed Sharpe beside it.
 3. The decision rule restated, with the sentence: **"This verdict is only as
    good as this rule — attack the rule, not just the numbers."**
 4. All caution flags, openly (a null that fails is demoted to a flag only if
@@ -134,6 +165,13 @@ authorises skipping the gate — ship the surface as the deliverable instead.
   judged on its own date, NEVER edited. Old-spec rows are archived and
   labeled, not deleted (deleting one row makes every remaining row worthless).
 - Spec tags on every call; a spec change mid-stream is two track records.
+- **Numeric tripwires at declaration.** Every prospective lane declares,
+  before its first row: a REVIEW threshold and a KILL threshold derived
+  from the backtest's own return distribution, plus an operational kill
+  (skip/error rate). "Judgement stays with the user" gates promotion;
+  it is not a substitute for tripwires. A lane too thin to CONFIRM its
+  edge at its accrual rate is declared kill-only, with the detectable-
+  effect horizon stated.
 - Operational reality is part of the model: what time it runs, what price
   the entry is, what the backtest's marks actually are (settle vs intraday),
   what happens on holidays — measured, not assumed.

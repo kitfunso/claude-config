@@ -275,6 +275,8 @@ wc -w skills/path/SKILL.md
 - `creating-skills`, `testing-skills`, `debugging-with-logs`
 - Active, describes the action you're taking
 
+**Design vocabulary (cost model + diagnostics):** see [vocabulary.md](vocabulary.md) — model-invoked vs user-invoked (`disable-model-invocation: true`), context load vs cognitive load, router skills, the no-op test, completion-criterion axes, and leading words.
+
 ### 4. Cross-Referencing Other Skills
 
 **When writing documentation that references other skills:**
@@ -579,6 +581,10 @@ step2 [label="read file"];
 ### ❌ Generic Labels
 helper1, helper2, step3, pattern4
 **Why bad:** Labels should have semantic meaning
+
+### ❌ Undiagnosed Bloat
+Cutting length without naming the failure mode
+**Why bad:** Sediment (stale rules), duplication (same meaning twice), and sprawl (sheer length) need different fixes — delete, merge, restructure. See [vocabulary.md](vocabulary.md).
 
 ## STOP: Before Moving to Next Skill
 

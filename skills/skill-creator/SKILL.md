@@ -334,6 +334,8 @@ This is optional, requires subagents, and most users won't need it. The human re
 
 The description field in SKILL.md frontmatter is the primary mechanism that determines whether Claude invokes a skill. After creating or improving a skill, offer to optimize the description for better triggering accuracy.
 
+**Recall vs precision trade-off:** this loop and "pushy" descriptions optimize trigger recall. The opposite stance (see `writing-skills/vocabulary.md`) optimizes token economy and precision: one trigger per branch, cut identity already stated in the body, synonyms restating a branch are duplication. Default: pushy-recall for high-value skills with no near-duplicates; lean-precision for skills in a crowded cluster (e.g. qa/qa-only, review variants). Pick per skill and say which you picked.
+
 ### Step 1: Generate trigger eval queries
 
 Create 20 eval queries — a mix of should-trigger and should-not-trigger. Save as JSON:

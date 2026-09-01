@@ -20,3 +20,5 @@ Types: feat, fix, refactor, docs, test, chore, perf, ci
 - Run tests. Run linter. Check for secrets.
 - Stage specific files, not `git add -A` (prevents accidental includes).
 - Review diff before committing.
+- Write commit messages with the Write tool to a file and pass `git commit -F <file>` — PowerShell here-string pipes prepend a UTF-8 BOM into the subject.
+- Grep the message file for em dashes before committing (recurring slip; banned in commit messages per Stop Slop).
