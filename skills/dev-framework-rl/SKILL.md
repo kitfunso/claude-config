@@ -281,7 +281,7 @@ section when it fires or the plan matches its shape).
     rates (tie-break stress). Paste the outputs into the plan. Memory:
     `feedback_eval_prereg_dataset_invariant_audit`. (LC2-E1 2026-08-09: skipping
     this cost 2 protocol amendments + two 77-minute full reruns; a critic and codex
-    each found one of the missed invariants empirically.)
+    each found one of the missed invariants empirically.) → AUDIT-RULES.md #19
 
 Record the audit as a step:
 ```bash
@@ -315,15 +315,17 @@ Iterate the `stages` list from `stage-plan.json` (NOT a hardcoded 9). For each s
      ```bash
      python scripts/devrl.py critic-check <critic-name> <temp-file>
      ```
-   - **Exit 0 (pass)** → `step-record ... --critic-status pass --critic-score <n>`.
-   - **Exit 1 (fail)** → `step-record ... --critic-status fail --critic-score <n> --must-fix "..."`. Re-run the stage with the must-fix fed back, up to the per-stage cap (plan 3, execute 2, review 1, ship 1; `--retry-count <n+1> --retry-strategy revise_with_feedback`). Cap hit → **escalate to the human**. **Root-cause pass before the final retry (added
+   - **Exit 0 (pass)** → `step-record ... --critic <critic-name> --critic-status pass --critic-score <n>`.
+   - **Exit 1 (fail)** → `step-record ... --critic <critic-name> --critic-status fail --critic-score <n> --must-fix "..."`. Re-run the stage with the must-fix fed back, up to the per-stage cap (plan 3, execute 2, review 1, ship 1; `--retry-count <n+1> --retry-strategy revise_with_feedback`). Cap hit → **escalate to the human**. **Root-cause pass before the final retry (added
 2026-07-18):** when a stage's critic has failed twice consecutively AND the must-fix
 describes a DEFECT (failing test, wrong behavior, crash) rather than a plan/scope gap,
 run `/investigate` on the defect BEFORE the last permitted retry — the final attempt
 must be built on a named root cause, never a third revise-with-feedback guess (global
 rule: after 2 failed iterations, reconsider instead of retry). Record the
 investigation's one-line cause in the retry step's summary. **Cap-extension carve-out (learned 2026-06-02, hippo A7 recall-trace):** when a plan round returns score ≥ 75, 0 `crit`, and the SOLE remaining finding is a one-clause fix the orchestrator introduced in its OWN prior revision, a single one-round cap extension (with operator notification) is permitted before full escalation; escalate if that extension round also fails or introduces a new finding. The cap exists to stop thrashing on a broken plan, not to block a converged one over a self-inflicted typo.
-   - **Exit 2 (parse error)** → `step-record ... --critic-status error`, **escalate to the human**.
+   - **Exit 2 (parse error)** → `step-record ... --critic <critic-name> --critic-status error`, **escalate to the human**.
+
+   **`--critic` is mandatory on every `pass` and `fail`** and `step-record` exits 2 without it. Pass the same registry name you gave `critic-check`. A verdict with no critic named cannot be attributed, and `critic_pass_rate` and `critic-trust` both read exactly these rows. Between 2026-05 and 2026-09-01 the flag was optional and 548 of 658 graded steps went unattributed (all 47 of July's), which is why no per-critic trend can be reconstructed for that period.
    The stage advances only when all of its critics pass.
 
    **CI gate (`ship` / `deploy` stages) — a critic verdict is not the repo's CI.**
@@ -487,7 +489,7 @@ python scripts/devrl.py episode-friction $EID --note "<what was painful / what s
 
 Notes accumulate on a single `friction` step and are inert to the critic, reward, and budget math. A clean episode with friction has nothing for the critics to fail, so friction is the channel that carries that signal into the learn step.
 
-When triggered, read the report and propose **1-3** concrete deltas — each a change to a hippo memory, a skill prompt, or (rarely) a CLAUDE.md, per the 3-tier model under Learn mode — that would have prevented the observed failure or friction pattern. Present them as a consolidated-revisions blob: section reference, one-sentence issue, concrete fix.
+When triggered, read the report and propose **1-3** concrete deltas — each an audit rule, a hippo memory, a skill prompt, or (rarely) a CLAUDE.md, per the tier model under Learn mode, asking tier 0's "before X, check Y" question first — that would have prevented the observed failure or friction pattern. Present them as a consolidated-revisions blob: section reference, one-sentence issue, concrete fix.
 
 **Never auto-apply tier-2 (skill prompts) or tier-3 (CLAUDE.md) deltas** — even headless; wait for the human's explicit "apply" and the human makes the edit. **The single exception (B4, Keith-approved 2026-06-09): tier-1 hippo probation memories.** The per-episode learn step MAY write the hippo memory and register it without waiting:
 
@@ -505,15 +507,35 @@ The batch `learn` mode below does cross-episode failure-mode clustering and owns
 
 A separate mode from running an episode — the cross-episode pass. Run it periodically (weekly, or after a batch of episodes): cluster recurring failures, propose policy deltas, record what gets applied.
 
-### Where a delta lands — the 3-tier model
+### Where a delta lands — the tier model
 
 Pick the tier by how settled and how cross-cutting the lesson is:
 
-1. **Hippo memory** — the default. Small or tentative lessons. Cheap, decays, probation-gated (`--memory-added`). Reach here unless the lesson clearly belongs higher.
+0. **Audit rule** — reach here FIRST whenever the lesson can be written as "before X, check Y". An audit rule is a TRIGGER plus a concrete check that a later episode either runs or does not, and `audit-record` logs each firing. That makes it the only tier that produces its own evidence: 18 of the 19 rules have fired, 114 times across 34 episodes, and `version-bump-targets` alone recorded 30 prevented defects. Tiers 1 to 3 are prose, and prose cannot be counted. Adding one means editing three surfaces that must stay 1:1 — `episode_store.AUDIT_RULE_SLUGS`, the compact rule plus its `→ AUDIT-RULES.md #N` pointer and slug line in §3b of this file, and the numbered detail section in `AUDIT-RULES.md`. Run `pytest tests/test_audit_rules_sync.py` after; it fails on any surface you miss. A lesson that cannot be phrased as a pre-check is not an audit rule — send it to tier 1.
+1. **Hippo memory** — for lessons with no check to run. Small or tentative. Cheap, decays, probation-gated (`--memory-added`).
 2. **Skill prompt** — when a workflow or critic actually behaved wrong. Medium weight. Recorded with `--skill-changed <path>`.
 3. **CLAUDE.md (project or global)** — the top tier, deliberately rare. Only a lesson that recurred across many episodes, is a genuine cross-cutting rule, and would keep happening otherwise — a "law", not a tip. Tips go to tier 1.
 
 Tier 3's bar is high because a CLAUDE.md loads into every session: it costs tokens every run and is the highest-blast-radius place to be wrong. A cluster qualifies only when its `regression_rate` is non-trivial — it recurred *and* caused real post-deploy regressions — not merely high `occurrences`. Record it like a skill: `--skill-changed <path-to-that-CLAUDE.md>` (the audit trail hashes any path). Two guards apply automatically: the learn loop never auto-applies, and the global Hand-Maintained-Files rule forces show-content + explicit-apply + a `.old` backup before any CLAUDE.md edit. Episodes record `project_type`, not a project path — the human names the exact file at approval time.
+
+### 0. Score the deltas you already applied
+
+```bash
+python scripts/devrl.py learn-effect
+```
+
+Run this FIRST, before proposing anything new. For every cluster with a fix
+recorded against it, it prints occurrences before vs after `applied_at`, plus
+`episodes_since` — zero recurrence with zero episodes since is `untested`, not a
+win. Three verdicts: `held`, `recurred`, `untested`.
+
+This is the only falsifier the learn loop has. A delta that changed nothing
+recurs at the same rate, and without this step the loop proposes forever and
+never finds out. Read it as a brief: a `recurred` cluster means the previous
+delta was wrong, so propose a different KIND of fix, not the same one again.
+
+It also prints `policy updates: N total, M linked to no failure mode`. That M is
+the count of deltas nothing can ever score. Keep it near zero.
 
 ### 1. Recompute clusters
 
@@ -533,7 +555,7 @@ Prints the `pending` clusters — those with at least 5 occurrences — each wit
 
 ### 3. Propose deltas
 
-For each actionable cluster, propose **one** policy delta — a change to a hippo memory, a skill prompt, or (rarely) a CLAUDE.md, per the 3-tier model above — that would prevent that failure pattern. Weight attention by `regression_rate` first (clusters whose failures led to real post-deploy regressions), then by `occurrences`. Present all proposals as a single consolidated-revisions blob: cluster id, one-sentence pattern, concrete fix.
+For each actionable cluster, propose **one** policy delta per the tier model above. Ask tier 0's question first: can this be phrased as "before X, check Y"? If yes, propose an audit rule and say which of the cluster's occurrences the check would have caught. Only when the answer is no does the proposal become a hippo memory, a skill prompt, or (rarely) a CLAUDE.md. Weight attention by `regression_rate` first (clusters whose failures led to real post-deploy regressions), then by `occurrences`. Present all proposals as a single consolidated-revisions blob: cluster id, one-sentence pattern, concrete fix.
 
 **Never auto-apply** — even headless. Wait for the human's explicit "apply" / "reject" per cluster. (Tier-1 probation memories are the single auto-apply exception — but ONLY in the per-episode learn step, never in this weekly/batch mode: the weekly pass stays strictly propose-only, R8.)
 
@@ -545,7 +567,9 @@ On apply — the human (or you, with approval) makes the edit, then:
 python scripts/devrl.py learn-apply --summary "<what changed>" --failure-mode <id> [--failure-mode <id> ...] [--skill-changed <path> ...] [--memory-added <id> ...]
 ```
 
-Writes a `policy_updates` audit row, a `policy_skill_changes` row per edited skill file (with its post-edit SHA-256), and marks the addressed clusters `applied`.
+Writes a `policy_updates` audit row, a `policy_skill_changes` row per edited skill file (with its post-edit SHA-256), and marks the addressed clusters `applied` with an `applied_at` timestamp.
+
+`--failure-mode` is required. It is the join that makes the delta measurable by `learn-effect` later; without it the delta is invisible forever. For a genuine orphan edit — friction below the 5-occurrence cluster threshold, so there is no cluster to name — pass `--unlinked` instead, and accept that it can never be scored. Between 2026-05-24 and 2026-09-01 the flag was optional and all 44 recorded deltas omitted it, which is why nothing in the loop could ever be evaluated.
 
 A delta that adds a hippo memory passes `--memory-added <id>` — the memory enters on **probation**, not yet trusted. Probation memories DO recall into episodes: at episode init run `memory-list --status probation`, carry the relevant ones into stage briefs tagged `[PROBATION]` (an unconfirmed hint — weigh it accordingly, never as settled law), and record their ids via `step-record --memory-ref <id>` so the auto-confirm machinery sees them as active. (R9 fix, 2026-06-09: the old "keep out of episode context until promoted" rule was a deadlock — a memory that is never in context can never earn confirmations; 5 sat stuck with 0 promotions ever.) Promotion to `active` takes 3 QUALIFYING confirmations — auto-confirm only counts episodes that terminated `shipped` (`devrl.py memory-confirm <id>` for manual ones); `memory-deprecate <id>` retires one that is not helping; `memory-list --status probation` shows what is still on probation.
 
@@ -872,7 +896,8 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `budget-check <id> [--consecutive-fail-cap N]` | headless safety check | 0 continue / 1 stop / 2 missing |
 | `learn-cluster [--mode lexical\|embedding] [--threshold F]` | recompute failure-mode clusters (Tier 1) | 0 |
 | `learn-list` | list actionable clusters | 0 |
-| `learn-apply --summary S --failure-mode ID ...` | record an applied policy delta | 0 / 2 |
+| `learn-effect [--json] [--top-unfixed N]` | did applied fixes stop the failure recurring? | 0 |
+| `learn-apply --summary S (--failure-mode ID ... \| --unlinked)` | record an applied policy delta | 0 / 2 |
 | `learn-reject --failure-mode ID ...` | reject a cluster | 0 |
 | `apply-pending <id> [--clear]` | view or clear pending_apply/<id>.json (Tier 3) | 0 / 2 |
 | `embed-cache-prune [--older-than N]` | remove embed cache entries older than N days (Tier 1) | 0 |
