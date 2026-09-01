@@ -1,6 +1,6 @@
 ---
 name: content-hash-cache
-description: Pattern for caching expensive file operations using SHA-256 content hashes instead of file paths. Use when building data pipelines that process files (PDF parsing, OCR, image analysis, signal computation) and need caching. File rename = cache hit. Content change = auto-invalidation.
+description: Caches expensive file operations by SHA-256 content hash instead of path. Use for pipelines processing files needing caching.
 ---
 
 # Content Hash Cache Pattern

@@ -1,6 +1,6 @@
 ---
 name: alphanova
-description: "Playbook for the AlphaNova biweekly quant competition (season 1, cycles 2-5). Use whenever work touches C:/Users/skf_s/alphanova, an AlphaNova cycle, a Predictor submission, the overfitting gate, the leaderboard, or signal novelty. Carries the measured laws from cycle 1 so none of it is re-derived."
+description: Playbook for the AlphaNova quant competition (cycles 2-5). Use for AlphaNova repo work, Predictor submissions, or the overfitting gate.
 ---
 
 # AlphaNova playbook

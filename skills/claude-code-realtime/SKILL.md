@@ -1,6 +1,6 @@
 ---
 name: claude-code-realtime
-description: Use when the user wants a realtime or near-realtime bridge to Claude Code from another agent, script, terminal, or workflow. Provides a JSONL mailbox protocol and helper scripts for sending prompts to `claude -p` and reading responses.
+description: Bridges Claude Code to another agent, script, or workflow in realtime. JSONL mailbox protocol and helper scripts for `claude -p`.
 metadata:
   short-description: Realtime Claude Code mailbox bridge
 ---

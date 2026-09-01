@@ -1,6 +1,6 @@
 ---
 name: search-first
-description: Research-before-coding workflow. Use BEFORE implementing any significant feature to check for existing libraries, MCP servers, patterns, or solutions. Prevents reinventing the wheel. Use when adding new dependencies, building integrations, or starting features that might have existing solutions.
+description: Research-before-coding workflow. Use before implementing a feature to check for existing libraries, MCP servers, or patterns.
 ---
 
 # Search First

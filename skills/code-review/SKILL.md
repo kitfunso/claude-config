@@ -1,6 +1,6 @@
 ---
 name: code-review-2axis
-description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/PRD asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
+description: "Reviews a diff on two axes: repo standards and spec/PRD match, via parallel sub-agents. Use to review a branch, PR, or diff since X."
 ---
 
 Two-axis review of the diff between `HEAD` and a fixed point the user supplies:

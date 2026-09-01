@@ -1,6 +1,6 @@
 ---
 name: gsc-review
-description: Weekly GSC traffic review + improvement batch for boring-math.com. Use whenever Keith asks to check GSC data, review search traffic, improve boring-maths traffic, run the weekly SEO review, or invokes /gsc-review. Also use for any boring-maths question about rankings, clicks, impressions, or Search Console. Pulls fresh data, compares against the running checkpoint log, finds levers using the measured laws below, and (on "go") ships a one-PR improvement batch with all gates.
+description: Weekly GSC traffic review + improvement batch for boring-math.com. Use for GSC data, search traffic, rankings, clicks, or impressions.
 ---
 
 # GSC Review — boring-math.com

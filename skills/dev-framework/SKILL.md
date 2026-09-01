@@ -1,6 +1,6 @@
 ---
 name: dev-framework
-description: 9-stage dev workflow with auto project-type detection and phase-aware overlays. Routes through discover→scaffold→plan→execute→verify→review→ship→deploy→learn with gates appropriate to UI/AI/backend/quant/CLI/library/mobile projects. Use when starting a new project, beginning a major feature, or asked to "follow the full pipeline", "use the dev framework", "ship properly", "run the full chain", or "do this the right way".
+description: 9-stage dev workflow with project-type detection and gated overlays. Use to start a project or when asked to 'ship properly'.
 ---
 
 # Dev Framework

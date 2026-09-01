@@ -1,6 +1,6 @@
 ---
 name: wtf
-description: Plain-English debrief. Use when the user asks "wtf is X", "what did you do", "why did we build this", "do we need this", "explain what happened", "where are we", or invokes /wtf or /wtf status. Explains recent work, a named thing (repo, commit, page, plan, term, error), a decision, or the current state of the world — concisely, no jargon, straight answers.
+description: Plain-English debrief of recent work, a named thing, a decision, or project status. Use for 'wtf is X', '/wtf', '/wtf status'.
 ---
 
 # /wtf — plain-English debrief

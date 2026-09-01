@@ -1,6 +1,6 @@
 ---
 name: de-sloppify
-description: Two-pass development pattern for cleaner output. Use after implementing a large feature, complex refactor, or any substantial code change. Separates implementation from cleanup for better results. Two focused agents beat one constrained agent.
+description: "Two-pass pattern: implement, then clean up separately. Use after a large feature, complex refactor, or any substantial code change."
 ---
 
 # De-Sloppify Pattern

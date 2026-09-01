@@ -1,6 +1,6 @@
 ---
 name: framework-content-mixer
-description: Combine multiple content frameworks (viral hooks + title patterns + AI video structures) for compound engagement effects. Layers persuasion techniques to create long-form content, video scripts, or multi-platform campaigns. Use when single frameworks aren't enough or when creating flagship content requiring maximum impact.
+description: Combine content frameworks (hooks, titles, video structures) for compound engagement. Use for long-form content, scripts, campaigns.
 ---
 
 # Framework Content Mixer

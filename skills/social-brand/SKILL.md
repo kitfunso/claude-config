@@ -1,6 +1,6 @@
 ---
 name: social-brand
-description: Applies AUTOMATION Creators brand guidelines to social media content, presentations, and marketing materials. Use when creating content for AUTOMATION Creators that requires consistent branding including colors, typography, visual style, and brand voice. Particularly relevant for social media posts, lead magnets, guides, and promotional materials.
+description: Applies AUTOMATION Creators brand guidelines (colors, typography, voice) to social posts, lead magnets, guides, and marketing materials.
 ---
 
 # Social Brand Guidelines

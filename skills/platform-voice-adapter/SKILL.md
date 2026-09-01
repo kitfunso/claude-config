@@ -1,6 +1,6 @@
 ---
 name: platform-voice-adapter
-description: Adapt content tone, length, style, and formatting for specific social media platforms (Twitter, LinkedIn, Instagram, Threads, TikTok). Automatically adjusts voice from technical/casual to professional, optimizes for character limits, and applies platform-specific best practices. Use when reformatting content across channels or creating multi-platform campaigns.
+description: Adapt content tone, length, and format per platform (Twitter, LinkedIn, Instagram, Threads, TikTok). Use for multi-platform campaigns.
 ---
 
 # Platform Voice Adapter

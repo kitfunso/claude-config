@@ -1,6 +1,6 @@
 ---
 name: remove-dumb-comments
-description: Flag comments that merely restate the code instead of explaining why, and remove only those the user approves. Use when asked to remove dumb, redundant, or obvious comments, clean up comments, or invoke `/remove-dumb-comments [<number>|all]`.
+description: Flag comments that restate code instead of explaining why; remove approved ones. Use for 'remove dumb comments' or /remove-dumb-comments.
 ---
 
 # Remove Dumb Comments

@@ -1,6 +1,6 @@
 ---
 name: creator-style-mimic
-description: Analyze and mimic the writing style, hooks, voice, and patterns of successful creators from your Airtable database and content frameworks. Match creator voice based on audience, platform, and content type. Use when testing different voices, creating content in a specific influencer's style, or finding your unique voice through analysis.
+description: Analyzes and mimics a creator's writing style, hooks, and voice from Airtable data. Use to match creator voice by audience or platform.
 ---
 
 # Creator Style Mimic

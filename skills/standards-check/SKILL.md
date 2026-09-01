@@ -1,6 +1,6 @@
 ---
 name: standards-check
-description: Comprehensive audit of a codebase against software engineering, safety, and quality standards. Produces a structured scorecard with ratings (0-10) across six dimensions and actionable findings. Use this skill PROACTIVELY when the user asks to review code quality, audit an app, check engineering standards, assess security posture, evaluate code health, or asks anything like "does this meet high standards", "is this production-ready", "audit this codebase", "check quality", "engineering review", or "how good is this code". Also use when the user says /standards-check.
+description: Audits a codebase against engineering, security, and quality standards; scores six dimensions 0-10. Use for code or security review.
 ---
 
 # Standards Check

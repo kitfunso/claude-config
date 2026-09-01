@@ -1,6 +1,6 @@
 ---
 name: quant-report
-description: Use when presenting validation results, backtest metrics, model comparisons, or pipeline status. Formats output in consistent structured templates. Trigger on validation reports, model results, pipeline summaries, or when the user asks for a status check.
+description: Use when presenting validation results, backtest metrics, model comparisons, or pipeline status. Formats output in structured templates.
 ---
 
 # Quantamental Report Formats

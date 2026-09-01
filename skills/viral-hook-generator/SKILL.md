@@ -1,6 +1,6 @@
 ---
 name: viral-hook-generator
-description: Apply proven viral hook formulas (contrarian, benefit-driven, transformation, how-to) to transform content ideas into attention-grabbing openings. Use when creating social media posts, video scripts, headlines, or any content requiring high-engagement hooks. Based on Kallaway's 6 Power Words Framework.
+description: Applies proven viral hook formulas (contrarian, benefit-driven, transformation, how-to) to social posts, video scripts, and headlines.
 ---
 
 # Viral Hook Generator

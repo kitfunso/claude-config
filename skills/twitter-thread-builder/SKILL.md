@@ -1,6 +1,6 @@
 ---
 name: twitter-thread-builder
-description: Convert long-form content into engaging Twitter threads with hooks, numbered tweets, visual hierarchy, and strategic CTAs. Optimized for Twitter's algorithm and thread readability. Use when adapting blog posts, articles, or complex ideas for Twitter's 280-character format.
+description: Converts long-form content into Twitter threads with hooks, numbered tweets, visual hierarchy, and CTAs. Use to adapt posts into threads.
 ---
 
 # Twitter Thread Builder

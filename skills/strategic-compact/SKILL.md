@@ -1,6 +1,6 @@
 ---
 name: strategic-compact
-description: Guide for when to use /compact strategically. Use when context is getting large, when transitioning between task phases (research→planning→implementation), or when the user asks about compaction timing. Also use when tool call count is high or context feels stale.
+description: Guide for using /compact at phase transitions - research to planning to implementation - or when context is large or stale.
 ---
 
 # Strategic Compact

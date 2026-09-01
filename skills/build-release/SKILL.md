@@ -1,6 +1,6 @@
----
+﻿---
 name: build-release
-description: "Bump iOS/Android build numbers, build the Android .aab bundle, commit and push. Use this skill whenever the user says 'build release', 'bump build', 'build aab', 'bump and push', 'bump ios build number', 'build the aab file', or any combination of bumping build numbers, building Android bundles, and pushing. Also trigger when user says 'release build' or 'ship the build'."
+description: Bumps iOS/Android build numbers, builds the Android .aab, commits, and pushes. Use for 'build release', 'bump build', 'ship the build'.
 ---
 
 # Build Release
@@ -28,8 +28,8 @@ Confirm you're on `master`. If not, warn the user before proceeding.
 
 Read these two files to find the current build number:
 
-- **iOS**: `codemagic.yaml` — find the line `agvtool new-version -all N` and extract N
-- **Android**: `android/app/build.gradle` — find the line `versionCode N` and extract N
+- **iOS**: `codemagic.yaml` â€” find the line `agvtool new-version -all N` and extract N
+- **Android**: `android/app/build.gradle` â€” find the line `versionCode N` and extract N
 - Also extract `versionName` from build.gradle (e.g., "2.1.0") for the .aab filename
 
 Both should be the same number. The new build number = current + 1.
@@ -41,15 +41,15 @@ Edit both files, replacing the old number with the new one:
 - `codemagic.yaml`: `agvtool new-version -all {NEW}`
 - `android/app/build.gradle`: `versionCode {NEW}`
 
-### 4. Verify lockfile is in sync (CRITICAL — prevents Codemagic CI failure)
+### 4. Verify lockfile is in sync (CRITICAL â€” prevents Codemagic CI failure)
 
-**If any dependency changed this session** (`npm install`, `npm audit fix`, version bumps — even indirect ones), run a REAL clean install. `npm ci --dry-run` PASSES FALSELY on lockfiles that real `npm ci` rejects (proven 2026-06-10: dry-run green locally, Codemagic failed with 27 "Missing: <pkg> from lock file" errors):
+**If any dependency changed this session** (`npm install`, `npm audit fix`, version bumps â€” even indirect ones), run a REAL clean install. `npm ci --dry-run` PASSES FALSELY on lockfiles that real `npm ci` rejects (proven 2026-06-10: dry-run green locally, Codemagic failed with 27 "Missing: <pkg> from lock file" errors):
 
 ```bash
 cd "C:/Users/skf_s/phzse" && npm ci
 ```
 
-This wipes node_modules and installs strictly from the lockfile — exactly what Codemagic runs. Takes a few minutes; that is the price of a trustworthy gate. If no dependency changed this session, `npm ci --dry-run` is an acceptable fast path.
+This wipes node_modules and installs strictly from the lockfile â€” exactly what Codemagic runs. Takes a few minutes; that is the price of a trustworthy gate. If no dependency changed this session, `npm ci --dry-run` is an acceptable fast path.
 
 If `npm ci` reports "Missing: <pkg> from lock file": incremental `npm install`/`npm audit fix` against an existing node_modules can leave stale subtree references with their platform-binary entries pruned (known npm lockfile bug), and `npm install` will NOT repair it. Regenerate from scratch:
 
@@ -65,7 +65,7 @@ If a peer dependency keeps dropping (e.g. `@testing-library/dom` pulled in by `@
 npm install --save-dev <missing-pkg>@<version>
 ```
 
-Why this matters: `npm install` (local) tolerates lockfile drift. `npm ci` (Codemagic) does not. Adding or updating any dependency in a prior step in this session — even indirectly — can orphan peer-dep entries. Always verify, and never trust --dry-run after dependency changes.
+Why this matters: `npm install` (local) tolerates lockfile drift. `npm ci` (Codemagic) does not. Adding or updating any dependency in a prior step in this session â€” even indirectly â€” can orphan peer-dep entries. Always verify, and never trust --dry-run after dependency changes.
 
 ### 5. Build web assets
 
@@ -96,7 +96,7 @@ cp "C:/Users/skf_s/phzse/android/app/build/outputs/bundle/release/app-release.aa
    "C:/Users/skf_s/phzse/app-release-v{VERSION_NAME}-build{NEW_BUILD}.aab"
 ```
 
-The .aab is gitignored, so it won't be committed — it's just for local reference / Play Store upload.
+The .aab is gitignored, so it won't be committed â€” it's just for local reference / Play Store upload.
 
 ### 9. Stage, commit, and push
 
@@ -125,6 +125,6 @@ git push
 ### 10. Report
 
 Tell the user:
-- Build number bumped: {OLD} → {NEW}
+- Build number bumped: {OLD} â†’ {NEW}
 - .aab file: `app-release-v{VERSION}-build{NEW}.aab`
 - Committed and pushed to remote

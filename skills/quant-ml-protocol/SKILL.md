@@ -1,6 +1,6 @@
 ---
 name: quant-ml-protocol
-description: Rigorous development protocol for predictive models on market/time-series data (small samples, overlapping windows, point-in-time data). Use when building, validating, searching features for, or promoting any forecasting model on financial or time-series data; when running backtests that will be trusted; or when a model verdict ("best", "tied", "promote", "reject") is about to be issued. Enforces pre-registration, process-level nulls, selection honesty, and hard user gates at every promotion decision.
+description: Rigorous protocol for predictive models on time-series/financial data. Use when building, validating, or promoting a forecasting model.
 ---
 
 # Quant ML Protocol

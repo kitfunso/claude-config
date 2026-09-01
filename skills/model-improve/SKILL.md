@@ -1,6 +1,6 @@
 ---
 name: model-improve
-description: Full commodity model improvement workflow — from audit through exhaustive feature engineering, two-stage selection, Optuna optimization, multi-layer validation, data source verification, and production deployment. Use PROACTIVELY when the user asks to improve, rebuild, develop, upgrade, or remodel any commodity trading model. Also trigger when user mentions feature engineering, model performance, Sharpe improvement, or adding new features to a commodity model. Quantamental project ONLY — do not fire in other repos; for general time-series model rigor elsewhere use quant-ml-protocol.
+description: "Commodity model rebuild: audit, features, Optuna, validation, deployment. Quantamental only; elsewhere use quant-ml-protocol."
 ---
 
 # Commodity Model Improvement Workflow

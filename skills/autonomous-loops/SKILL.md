@@ -1,6 +1,6 @@
 ---
 name: autonomous-loops
-description: Patterns for autonomous agent loops — sequential pipelines, parallel generation, continuous PR loops, and de-sloppify passes. Use when setting up automated workflows, CI/CD agent loops, batch processing with Claude, or multi-agent orchestration. Covers loop architecture from simple sequential to RFC-driven DAG orchestration.
+description: "Patterns for autonomous agent loops: sequential pipelines, parallel generation, PR loops, DAG orchestration. Use for CI/CD workflows."
 ---
 
 # Autonomous Loop Patterns

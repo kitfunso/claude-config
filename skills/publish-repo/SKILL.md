@@ -1,6 +1,6 @@
 ---
 name: publish-repo
-description: "Ship an npm package release: bump version, update CHANGELOG/README/manifests, build, test, commit, tag, npm publish, push, create the GitHub Release with notes, and optionally install globally. Use when the user says 'publish', 'release', 'ship the package', 'bump version and push', or 'update docs and publish npm'. Works for any Node.js repo with a package.json."
+description: "Ship an npm release: bump version, update docs, build, test, publish, tag, push. Use for 'publish', 'release', 'ship the package'."
 ---
 
 # Publish Repo

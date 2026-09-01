@@ -1,6 +1,6 @@
 ---
 name: think-hard
-description: Deep, critical, first-principles pass on a hard question before answering. Use whenever Keith says "think deep and serious and critically and properly about this", "think deeply", "think seriously", "think critically", "think properly", "think hard about this", "really think about this", "think this through", "ultrathink" — any combination of those. It is his standing signal that the shallow answer will not do. Also use unprompted when a question is hard enough that the first answer is likely to be the pattern-matched one. This is a question, not a work order: answer it, do not start building.
+description: Deep, critical pass on a hard question before answering. Use for 'think hard/deeply/seriously', 'ultrathink'. Answers; does not build.
 ---
 
 # Think Hard

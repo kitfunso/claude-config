@@ -1,6 +1,6 @@
 ---
 name: issue-brief
-description: Fixed plain-English format for reporting ANY issue, blocker, or side-discovery found during work. Fires automatically whenever an issue must be told to the user, and whenever the user asks "what's left / what's remaining / what am I missing". Created 2026-08-13 after the user was blindsided by accumulated side-issues described in jargon.
+description: Fixed plain-English format for reporting any issue, blocker, or side-discovery. Use when telling the user an issue or what's left.
 ---
 
 # Issue Brief

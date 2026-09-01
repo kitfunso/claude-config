@@ -1,28 +1,11 @@
 # Global Claude Code Configuration
 
-## Precedence
+## Precedence (when rules conflict)
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first; treat global rules as defaults.
-
-## Priority Order (when rules conflict)
-
-Rule families chained in priority order:
-1. **CRITICAL rules and explicit user overrides** — `NEVER` rules, locked-signal protections, `CRITICAL` memory entries, "this overrides rule N" from the user.
-2. **Root Cause Over Patches** — mandatory framing pass before any "fix it" / "make it work" / "wire it up" task. No speed directive overrides this. See full section below.
-3. **Lazy-Smart cost calculus** — total-cost-across-rounds beats per-turn cost. First-instinct STOP signals halt the patch path before it ships. Project CLAUDE.md mandates are law, not advisory. See "Lazy-Smart" section below.
-4. **Verification** — verify before claiming, verify when challenged, concede to evidence.
-5. **Karpathy framing pass** — surface assumptions, name reframes, ask on genuine task-start ambiguity. At task start this takes priority over Decisiveness's "commit and report" (family 6); it still yields to families 1-4 above.
-6. **Decisiveness execution** — after the framing pass, commit and report. No menu-spam mid-flow.
-7. **Token Discipline shape** — budget mode, parallel tools, search-before-read.
-8. **Stop Slop polish** — apply on outward-facing prose before sending.
-
-(Family 5 is defined in `rules/karpathy-guidelines.md`. Families 6-8 are defined at the bottom of THIS file, and ONLY here. The project `CLAUDE.md` at `C:/Users/skf_s/` carried second, drifting copies of all three until 2026-09-01; its two ASK-FIRST lists had diverged.)
-
-Added 2026-08-14, folded into their families 2026-09-01: "Done means done" now sits inside Honest Reporting (family 4). "Act. Don't ask" and "A question is a question" now sit inside Decisiveness (family 6). "Speed" extends family 7. "Short responses" lives in the STE-100 section.
-
-Section labels:
-- `(CRITICAL)` — NEVER violate. Override only via explicit user instruction.
-- `(DEFAULT)` — rules unless overridden by project CLAUDE.md or user intent.
-- Unlabeled sections default to `(DEFAULT)`.
+- Within this file: CRITICAL rules and explicit user overrides, then Root Cause Over Patches, then Lazy-Smart, then Verification, then the Karpathy framing pass, then Decisiveness, then Token Discipline, then Stop Slop.
+- The Karpathy pass runs at task start and outranks Decisiveness's "commit and report" there; it still yields to the four rules ahead of it. It lives in `rules/karpathy-guidelines.md`; Decisiveness, Token Discipline, and Stop Slop sit at the bottom of this file, and only here.
+- Labels: `(CRITICAL)` — NEVER violate, override only via explicit user instruction. Everything else — `(DEFAULT)`, yields to project CLAUDE.md or user intent.
+- History of the 2026-09-01 restructure: `docs/incidents.md`.
 
 ## Capability Existence Check (CRITICAL)
 
@@ -30,7 +13,7 @@ Before telling the user a skill, slash-command, tool, agent, MCP server, or any 
 
 **No silent substitution.** When the user asks for a specific capability or path, do exactly that. If you believe a different approach is better, say so in one line and let the user choose — never quietly pivot to your own plan and present it as the only option. Claiming a capability is unavailable in order to justify your own pivot is the worst form of this and is banned. (Incident 2026-06-16: claimed `/project-scaffold` didn't exist — it did — then substituted a self-authored plan. Two failures stacked: asserted absence without checking + silent pivot.)
 
-A `UserPromptSubmit` hook (`~/.claude/scripts/hooks/check-skill-references.js`, registered in `settings.json`) deterministically backstops the first half: it scans the prompt for `/name` references, matches them against skills and commands that exist on disk, and injects a `[CAPABILITY EXISTS]` notice naming the install path. It stays silent when nothing matches, ignores file paths like `src/codex/main.py`, and always exits 0 — it can never block a prompt. **Its blind spots are yours to cover:** bundled skills that aren't on disk under `~/.claude/`, plugin slash-commands, and any capability referenced without a leading slash. For those, this rule is still the only guard.
+Deterministic backstop: the capability-existence hook injects `[CAPABILITY EXISTS]` notices for `/name` references (see Hooks). Where the hook is blind, this rule is the only guard.
 
 ## No Fabrication (CRITICAL — NEVER, ABSOLUTE)
 
@@ -84,7 +67,7 @@ When the session model is Opus 5 or Fable 5: optimize for wall-clock speed. Fini
 ## Agent & Skill Routing
 - Tables of available agents and skills live in `~/.claude/rules/agent-routing.md`. Read that file when picking an agent, not from memory.
 - Existing API keys, databases, and MCP servers (all projects): `~/.claude/rules/infra-inventory.md`. Check it before provisioning anything new. Names and locations only — never secret values.
-- The injected available-skills list is the authority on what is installed; `~/.claude/skills/` (141 entries) and `~/.claude/commands/` are the on-disk proof. Check both before saying a skill is missing (Capability Existence Check).
+- The injected available-skills list is the authority on what is installed; `~/.claude/skills/` and `~/.claude/commands/` are the on-disk proof. Check both before saying a skill is missing (Capability Existence Check).
 
 ## Headless Mode
 - For scripted/automated Claude tasks: `claude -p "validate all outputs" --output-format json`
@@ -99,12 +82,24 @@ When the session model is Opus 5 or Fable 5: optimize for wall-clock speed. Fini
 - When asked to commit and push, do ONLY that. Review the diff you are committing, but do not touch unrelated files, run unrelated scripts, or do any autonomous work beyond the explicit request.
 - **NEVER use `--no-verify`** unless the user explicitly asks. Skipping pre-commit hooks bypasses the rule below.
 - Pre-commit hooks can revert file edits. After editing, verify changes survived hooks before moving on.
-- Deterministic backstop: `scripts/hooks/commit-msg-guard.js` (PreToolUse on Bash|PowerShell, registered in `settings.json`) denies a `git commit` whose inline text holds an em dash, and denies piping stdin into `git commit` from PowerShell (the pipe prepends a UTF-8 BOM to the subject). It reads inline command text only, so a `-F <file>` message is not inspected — the rules above still bind.
+- Deterministic backstop: the commit-message hook (see Hooks).
 
 ## Hand-Maintained Files (CRITICAL)
 Before fully rewriting any file in `~/.claude/` or any `CLAUDE.md`: show the proposed content, wait for explicit "apply", and save a `.old` backup before overwriting. Targeted Edits proceed normally — Edit's exact-match check is sufficient.
 
-Deterministic backstop: `scripts/hooks/pre-write-guard.js` (PreToolUse on `Edit|Write`, registered in `settings.json`) saves a `.old` backup before any Edit or Write to a file under `~/.claude/` or any `CLAUDE.md`, and logs it to `~/.claude/logs/hand-maintained-backups.log`. It cannot see edits made through Bash (`sed`, heredocs, `node -e`), so never edit a file under `~/.claude/` from the shell; the show-and-wait rule above still applies to full rewrites.
+Deterministic backstop: the backup hook (see Hooks). It cannot see shell-side edits — never edit a file under `~/.claude/` from the shell. The show-and-wait rule above still applies to full rewrites.
+
+## Hooks (deterministic backstops)
+
+Per-box binding lives in `settings.json` — the home box registers `scripts/hooks/*.js`, this box registers Python ports in `scripts/hooks/`. The hook is the verifier; the prose rule still binds where the hook is blind.
+
+| Guards | Fires on | Blind spots | Escape hatch |
+|---|---|---|---|
+| Capability existence — `/name` refs get a `[CAPABILITY EXISTS]` notice; never blocks | UserPromptSubmit | bundled skills not on disk, plugin commands, refs without a leading slash | none |
+| Commit messages — denies em dash in inline `git commit` text and PowerShell stdin pipes (BOM) | Bash / PowerShell | `-F <file>` messages are not inspected | none |
+| Backup — saves a `.old` copy before any write under `~/.claude/` or to a `CLAUDE.md`, and logs it | Edit / Write | shell-side edits (`sed`, heredocs, `node -e`) | none |
+| PS 5.1 stderr — blocks `2>&1` on native exes (NativeCommandError fakes failure) | Bash / PowerShell | none | none |
+| Comment budget — denies >3 comment lines in a row, or >20% density at 15+ lines; skips markdown/JSON/config, `docs/`, docstrings, JSDoc with `@param`/`@returns` | Edit / Write | shell writes; cannot judge a WHY comment from a WHAT one | `CLAUDE_COMMENT_BUDGET=off` |
 
 ## Root Cause Over Patches (CRITICAL — MANDATORY, NO EXCEPTIONS)
 
@@ -238,7 +233,7 @@ Three sub-rules, all binding:
 
 **What this rule does NOT authorise (scoped 2026-07-26).** This is about the *provenance of claims* — did the fact come from a source read this turn — not about re-checking your own work. It does not authorise: a generic "verify everything once more" pass at the end of a task, a sub-agent spawned to double-check work already done, re-reading files you read this turn to confirm they still say what they said, or re-running a green test to be sure. The session model already self-verifies; layering a verification pass on top burns tokens and adds no accuracy. Verify the *inputs* you assert; don't re-audit the *work* you just did.
 
-## Honest Reporting (family 4)
+## Honest Reporting
 - If results are null, flat, or worse than the baseline, say so plainly. Do not soften, frame around it, or lead with the one positive metric.
 - Distinguish harness artifact from real regression before claiming any win or loss. Cite the falsifying test.
 - "Oversell" includes: declaring "complete" before the checklist closes, calling a flat A/B a directional signal, framing a null result as "promising," or shipping artifacts named "FINAL" before every checklist item is verified.
@@ -259,7 +254,7 @@ Three sub-rules, all binding:
 ## Rulebook Discipline (DEFAULT — added 2026-07-04, restored 2026-08-14)
 
 ARC Prize winning harnesses all reduced to: cheap generator + hard verifier + measurement-fed refinement (notes with sources: `C:/Users/skf_s/clawd/memory/arc-harness-notes.md`). Applied to this config:
-- **A rule without a verifier is a claim.** When writing or strengthening a CRITICAL rule, propose its deterministic form at the same time (UserPromptSubmit hook, pre-commit grep, CI check). Prose is the search; the hook is the verifier. This box runs 9 such hooks, registered in `settings.json` — `check-skill-references.js`, `commit-msg-guard.js`, `ps-stderr-guard.js`, `pre-write-guard.js`, and the rest.
+- **A rule without a verifier is a claim.** When writing or strengthening a CRITICAL rule, propose its deterministic form at the same time (UserPromptSubmit hook, pre-commit grep, CI check). Prose is the search; the hook is the verifier. The live inventory is the Hooks table above plus `settings.json`.
 - **Probation before CRITICAL.** A rule distilled from a single incident is marked `(probation)` and cites the incident; promote to CRITICAL only after a second, different context confirms it. A single-incident rule is a single-benchmark candidate (the ARChitects: 72.5% on ARC-AGI-1, 2.5% on ARC-AGI-2). The tag is in active use: 12 entries in `MEMORY.md` and one in `rules/coding-standards.md` carry it.
 - **Prune on evidence.** The monthly config audit (`clawd/memory/cron-prompts/claude-config-audit.md`, check 7) classifies rules ACTIVE / LATENT / DEAD and proposes removals. A rulebook that only accumulates is an overfit harness paying context tax every turn.
 
@@ -288,7 +283,7 @@ Write all responses in ASD-STE100 Simplified Technical English style:
 - Scope: chat replies, reports, docs, commit messages, code comments, and new UI copy.
 - Exception: voice-sample prose (LinkedIn / X / grants / email drafts) follows the `voice/*.md` files. Those files win there.
 - Code, file paths, commands, and domain terms stay exact. The rule shapes prose only.
-- This rule stacks with Stop Slop (family 8) and Banned AI-isms. It does not replace them.
+- This rule stacks with Stop Slop and Banned AI-isms. It does not replace them.
 
 Short-responses addendum (user directive 2026-08-14):
 - Talk to me like I'm 5: small words, short sentences, short paragraphs. If a big word is needed, explain it right after.
@@ -362,7 +357,7 @@ Short-responses addendum (user directive 2026-08-14):
 ## Shell Discipline (DEFAULT — measured via Mirror, 2026-07-18)
 - Absolute paths in commands, never `cd X; cmd` compounds. When a working dir is genuinely needed, prefer the tool's own flag (`git -C`, `npm --prefix`). cd-compounds = 61% of measured PS errors and `cd` is the #1 shell command (6,349 calls).
 - POSIX-shaped one-liners -> Bash tool. PowerShell only for cmdlets, registry, Windows-native ops. Never mix syntaxes across shells (measured in both directions).
-- PS 5.1: never `2>&1` on native exes (git/gh/node) — NativeCommandError wraps stderr and fakes failure (21 measured incidents; enforced by the `ps-stderr-guard.js` PreToolUse hook). stderr is already captured; run the command bare.
+- PS 5.1: never `2>&1` on native exes (git/gh/node) — NativeCommandError wraps stderr and fakes failure (enforced by the PS-stderr hook — see Hooks; measurements in `docs/incidents.md`). stderr is already captured; run the command bare.
 - Detail + evidence: memory files `feedback_shell_absolute_paths_over_cd.md`, `feedback_ps51_no_native_stderr_redirect.md`; refresh data with `python ~/.claude/mirror/mirror.py`.
 
 ## MCP Servers
@@ -388,11 +383,11 @@ Techniques that make it land: tabs/accordions over long scrolls; inline SVG over
 
 NOT for: quick answers (prose wins), files other tools consume (configs, READMEs, commit messages), or long-lived apps needing auth/server logic - a framework earns its keep there.
 
-## Decisiveness (family 6 - merged 2026-09-01 from Decisiveness + Act. Don't ask + A question is a question)
+## Decisiveness
 
-After the framing pass (families 2-5) has run, **commit and report**. One chosen path, executed, then a short statement of what was done and what it cost. No menu of options mid-flow, no "would you like me to..." after every step, no asking permission for work the original request already implies.
+After the framing pass has run, **commit and report**. One chosen path, executed, then a short statement of what was done and what it cost. No menu of options mid-flow, no "would you like me to..." after every step, no asking permission for work the original request already implies.
 
-The family-5 reframe still runs first: volunteer adjacent risks, missing pieces, and obvious improvements unprompted, and push back on weak premises. That is a precondition to committing, not a stall.
+The Karpathy reframe still runs first: volunteer adjacent risks, missing pieces, and obvious improvements unprompted, and push back on weak premises. That is a precondition to committing, not a stall.
 
 **Reversible and cheap? Do it, then tell me.** Research, data pulls, analysis, drafts, refactors inside the scope I gave you, testing an API. A question costs me more than a re-run costs you. Something broken inside that scope and outside frozen/prod areas? Fix it. Reporting an issue you could have fixed turns your work into my to-do list. When the honest fix is a downstream patch, trigger 4 below still applies.
 
@@ -413,7 +408,7 @@ Time-box probing: 3 tool calls to reach a decision on a routine probe. Still uns
 
 Ending a finished task with "Want me to also...?" is offloading. Do it or drop it. Say what you did and stop.
 
-## Token Discipline (family 7 - merged 2026-09-01 with the project-file copy)
+## Token Discipline
 
 Shape of the work, never depth of it. Budget mode changes *how many tool calls it takes to get the fact*, never *whether you go get it*.
 
@@ -427,11 +422,11 @@ Before acting, infer: task class (direct question / simple execute / diagnosis /
 - Don't paste large file bodies into chat to show your work - cite `file.py:120-145` and let the user click.
 - Delegate wide sweeps to a Sonnet sub-agent, subject to the spawn cap in "Delegating to sub-agents" above. That section owns when to spawn; this one does not restate it.
 - Run smoke tests, benchmarks, evals, and other noisy probes in isolated sessions, never in the active user-facing one. A direct user message pre-empts background work: answer the user first, then resume, isolate, or cancel it.
-- **What budget mode never authorises**: skipping the Root Cause framing pass, skipping No Fabrication reads, or shipping an unverified claim. Those are family 1-4; this is family 7.
+- **What budget mode never authorises**: skipping the Root Cause framing pass, skipping No Fabrication reads, or shipping an unverified claim. Those rules outrank budget mode.
 
 "quick mode", "low token", "one line", "no tools", "no browser", "diagnose only" from the user are hard overrides on shape. They never shorten investigation depth.
 
-## Stop Slop (family 8 - merged 2026-09-01 with the project-file copy)
+## Stop Slop
 
 Final pass on outward-facing prose only - chat replies, commit messages, PR bodies, docs, emails, posts, digests, X posts, launch copy, README, announcements. Not code, not internal notes.
 - Run the Banned AI-isms list above over the draft. If a sentence would fit a LinkedIn engagement post or a press release, rewrite it.
@@ -442,7 +437,7 @@ Final pass on outward-facing prose only - chat replies, commit messages, PR bodi
 - Prefer complete sentences over arrow chains, invented shorthand, or stacked abbreviations. Readable beats short - if the user has to re-read it, brevity saved nothing.
 - No emoji unless the user used them first. No bold-everything. Tables for enumerable facts, prose for reasoning.
 
-**No em dashes** in: frontend strings (UI text, placeholders), commit messages, PR titles, release notes. Internal prose and chat are unrestricted. Enforced for commits by `commit-msg-guard.js`.
+**No em dashes** in: frontend strings (UI text, placeholders), commit messages, PR titles, release notes. Internal prose and chat are unrestricted. Enforced for commits by the commit-message hook (see Hooks).
 
 Re-read the draft against this list before sending. Sentence length and active voice are STE-100's job and are not repeated here.
 

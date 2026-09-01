@@ -1,6 +1,6 @@
 ---
 name: youtube-title-optimizer
-description: Generate high-performing YouTube titles using 97+ proven patterns from viral AI/automation creators (Jack Roberts, Riley Brown). Optimizes for clicks, SEO, and engagement. Includes performance data and pattern matching for specific content types. Use when creating video titles, thumbnails, blog post headlines, or any content requiring maximum click-through rates.
+description: Generates high-performing YouTube titles from 97+ proven patterns. Use for video titles, thumbnails, or headlines optimized for CTR.
 ---
 
 # YouTube Title Optimizer

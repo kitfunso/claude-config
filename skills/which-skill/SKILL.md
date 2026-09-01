@@ -1,6 +1,6 @@
 ---
 name: which-skill
-description: Suggest which skill(s) to use for a task — a skill router. Use whenever the user asks "what skill should I use", "which skill", "is there a skill for X", "what's the right workflow for this", "how should I approach this", or describes a task and wants routing or process advice, even if they never say the word "skill". Also use at the start of a sizeable multi-step task when the right skill chain is not obvious.
+description: Skill router. Suggests which skill(s) fit a task. Use for 'which skill', 'is there a skill for X', or an unclear multi-step task.
 ---
 
 # Which Skill
@@ -12,7 +12,7 @@ Recommend the right skill, or a short chain of skills, for the task at hand.
 1. **Read the live list first.** The available-skills list injected in context is the only authority. Do not recommend from memory. Never say a skill "does not exist" without checking that list — an unfamiliar name means "look it up", not "it's not there". If the user named a capability and the list truly lacks it, say "I checked the list; it is not there", not "it doesn't exist".
 2. **Classify the task.** Pick its stage and domain: idea, plan, build, debug, verify, ship, QA, design, docs, content, safety, quant, meta.
 3. **Match against the map.** Read [references/routing-map.md](references/routing-map.md) for the stage tables, mandated skills, and common chains. The map is a point-in-time snapshot — when it disagrees with the live list, the live list wins.
-4. **Consider agents too.** If the work fits a sub-agent better than a skill, check `C:/Users/kit.sofun/.claude/rules/agent-routing.md`.
+4. **Consider agents too.** If the work fits a sub-agent better than a skill, check `C:/Users/skf_s/.claude/rules/agent-routing.md`.
 5. **Recommend.** One primary skill. Add a chain only when the task spans stages — one skill per stage, no padding.
 
 ## Ranking heuristics

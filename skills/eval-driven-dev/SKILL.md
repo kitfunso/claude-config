@@ -1,6 +1,6 @@
 ---
 name: eval-driven-dev
-description: Eval-Driven Development (EDD) — treating evals as unit tests for AI-assisted development. Use when building or modifying AI workflows, agent pipelines, prompt engineering, or any feature where output quality needs measurement. Define success criteria BEFORE implementing.
+description: "Eval-Driven Development: evals as unit tests for AI work. Use for AI workflows, agent pipelines, or prompt engineering quality checks."
 ---
 
 # Eval-Driven Development

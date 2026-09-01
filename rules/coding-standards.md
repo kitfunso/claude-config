@@ -18,13 +18,9 @@
   Without it a knowing tradeoff reads as a bug to the next person. One line, no
   story. (Convention from github.com/dietrichgebert/ponytail, adopted 2026-09-01.)
 - Applies to every language and every project, including new files.
-- Deterministic backstop: `scripts/hooks/comment-budget-guard.js` (PreToolUse on
-  `Edit|Write`, registered in `settings.json`) denies a payload with more than 3
-  comment lines in a row, or over 20% comment density across 15+ lines. It skips
-  markdown/JSON/config, `docs/`, Python docstrings, and JSDoc carrying `@param` /
-  `@returns`. `CLAUDE_COMMENT_BUDGET=off` disables it. Incident: aura
-  `src/decide.js`, 53 comment lines out of 106; a one-line change carried a 12-line
-  comment block.
+- Deterministic backstop: the comment-budget hook — thresholds, skips, and the
+  escape hatch live in the Hooks table in the global CLAUDE.md. (Incident: aura —
+  `docs/incidents.md`.)
 
 ## Immutability
 - Prefer immutable data structures. Return new copies with changes.

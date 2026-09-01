@@ -1,11 +1,13 @@
 ---
 name: click-steps
-description: Give clear, numbered, click-by-click instructions for doing something in a graphical interface — Windows, a browser, Outlook, Excel, VS Code, the Airflow web UI, Bitbucket, an internal web app, or any other GUI. Use this whenever the user asks "how do I ...", "where do I click", "where is the setting for ...", "walk me through ...", or "step by step" about an app or screen — even if they never say the word "click". Not for tasks done in a terminal or by editing code; those get commands, not clicks.
+description: Gives numbered click-by-click GUI instructions for Windows, browser, or apps. Use for 'how do I', 'where do I click', 'step by step'.
 ---
 
 # Click Steps
 
 The user wants a walkthrough they can follow with a mouse, one action at a time. The deliverable is a numbered list of clicks — not prose, not a command line, not "go to settings and configure it".
+
+Not for tasks done in a terminal or by editing code; those get commands, not clicks.
 
 ## Before writing the steps
 

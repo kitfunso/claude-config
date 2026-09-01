@@ -1,6 +1,6 @@
 ---
 name: record-decision
-description: Record a durable decision as a dated file in the repo (docs/decisions/). Use at ship time, or whenever work chose among real alternatives, abandoned a preferred design because evidence exposed a constraint, set a cross-component convention, or reversed an earlier decision. Also use when asked to "record this decision", "write an ADR", "why did we choose X" needs a durable home, or /record-decision.
+description: Record a durable decision as a dated file in docs/decisions/. Use at ship time or when asked to "record this decision" or "write an ADR".
 ---
 
 # Record Decision

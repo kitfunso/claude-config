@@ -1,6 +1,6 @@
 ---
 name: self-review
-description: Review all changes made in the current session for mistakes, missed requirements, and regressions. Use when the user asks to review changes, check work, or verify correctness before wrapping up — including any phrasing like "please review your changes and make sure there are no mistakes".
+description: Review all changes made this session for mistakes, missed requirements, and regressions. Use to review changes or verify correctness.
 ---
 
 # Self-Review

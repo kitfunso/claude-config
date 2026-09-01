@@ -1,6 +1,6 @@
 ---
 name: research-strat
-description: Research a new trading-strategy idea across the full data-available universe (all instruments x 5m/15m/1h/4h) through the locked horizon + shuffled-null gates and the 8-test battery, dedup vs the live book, and produce a promotion scorecard. Pure research - never touches the locked 21-strategy live book.
+description: Research a trading-strategy idea across instruments/timeframes through the locked gates and 8-test battery. Never touches the live book.
 ---
 
 # research-strat

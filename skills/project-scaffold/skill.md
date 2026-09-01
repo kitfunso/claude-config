@@ -1,6 +1,6 @@
 ---
 name: project-scaffold
-description: "Generate the four foundation documents for a new project: PRD, Architecture, AI Rules (CLAUDE.md), and Plan. Use when starting a new project, repo, or major initiative from scratch. Triggered by 'scaffold', 'new project', 'kickoff', 'project init', or 'set up a new project'."
+description: Generate PRD, Architecture, CLAUDE.md, and Plan docs for a new project. Use for 'scaffold', 'new project', 'kickoff', or 'project init'.
 ---
 
 # Project Scaffold

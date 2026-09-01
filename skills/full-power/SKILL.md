@@ -1,6 +1,6 @@
 ---
 name: full-power
-description: Maximize agent capability by spawning well-briefed sub-agents, using every available resource, and verifying everything before acceptance. Use when tackling complex or high-stakes tasks that demand thoroughness.
+description: "Maximize agent capability: spawn well-briefed sub-agents, use every resource, verify before accepting. For complex, high-stakes tasks."
 ---
 
 # Full Power Mode

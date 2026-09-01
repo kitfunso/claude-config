@@ -6,6 +6,8 @@
 # todos/, statsig/, shell-snapshots/, *.old backups, etc.
 *
 !/CLAUDE.md
+!/docs/
+!/docs/**
 !/rules/
 !/rules/**
 !/skills/

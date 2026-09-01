@@ -1,6 +1,6 @@
 ---
 name: linkedin-thought-leader
-description: Transform content into LinkedIn thought leadership posts using storytelling, personal anecdotes, professional insights, and algorithm-optimized formatting. Based on 100+ high-performing LinkedIn templates. Use for LinkedIn posts, articles, or professional content requiring authority positioning and engagement.
+description: "Transform content into LinkedIn thought leadership posts: storytelling, anecdotes, algorithm-optimized formatting."
 ---
 
 # LinkedIn Thought Leader

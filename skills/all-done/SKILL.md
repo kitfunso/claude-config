@@ -1,6 +1,6 @@
 ---
 name: all-done
-description: Answer a completion challenge with a hard YES or NO backed by fresh evidence. Use whenever the user asks "all done?", "no mistakes?", "yes or no", "are you sure?", "is it finished?", "did you break anything?", "did you do everything I asked?", "is that right?" — any short challenge asking whether the work is truly complete and correct. This is a question, not a work order: answer it, do not start fixing.
+description: Answer a completion challenge with YES or NO backed by fresh evidence. Use for 'all done?', 'are you sure?', 'is it finished?'.
 ---
 
 # All Done?

@@ -1,6 +1,6 @@
 ---
 name: dev-framework-rl
-description: Experiential-RL orchestrator that runs a problem from idea generation through ship with auto-critic gates, trajectory logging to SQLite, and per-episode learning. Wraps /dev-framework. Use when asked to "run an RL episode", "/dev-framework-rl", "solve this end-to-end with the learning loop", "run the orchestrator", or "/dev-framework-rl loop <target>" / "continuously improve <repo>" for the self-sourcing continuous-improvement loop.
+description: "RL orchestrator: runs a problem idea-to-ship with critic gates and trajectory logging. Use for 'run an RL episode' or 'loop <target>'."
 ---
 
 # /dev-framework-rl — Experiential-RL Orchestrator
