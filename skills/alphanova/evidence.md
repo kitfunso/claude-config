@@ -105,10 +105,11 @@ because everyone else correlates >0.5 with something ranked above them.
 **Prize mechanics** (`COMPETITION.md`). Pot = `100 + 2400·q^0.75` where
 `q = min(Q/13, 1)`, capped at $2,500/cycle, where Q is the number of quality
 signals. Top 3 split 60/25/15; unpaid shares roll into the next cycle's pot.
-Quality set = greedy: **statistically significant positive Sharpe**, ranked by
-Sharpe, each joining only if `|corr| ≤ 0.5` against every signal already
-occupying space (higher-ranked entries, the season legacy pot, and the fund's
-background signals).
+Quality set = greedy: **positive Sharpe** (cycle-2 rules dropped "statistically
+significant"), ranked by Sharpe, each joining only if `|corr| ≤ 0.5` against
+every signal already occupying space (higher-ranked entries and the season
+legacy pot; the fund's background signals no longer count). Cycle 1 closed at
+Q=36 under this rule; `otv_k25` was Q36. Source: `research/board_20260901/`.
 
 ---
 
@@ -349,3 +350,54 @@ These were adopted mid-campaign and none of them was later falsified.
   `pip install -r comp6_scientist_release/requirements.txt`. Run the runner from
   inside `comp6_scientist_release/`. Data (1.8 GB) is gitignored; re-extract from
   `Downloads/files.zip`.
+
+---
+
+## 9. Cycle 2 (Sep 1-2, 2026): the numbers the skill quotes, with sources
+
+Every figure here is regenerable from the repo (`C:/Users/skf_s/alphanova`) or the
+session transcript. Ledger line numbers are for `research/SCOREBOARD.md` as of Sep-2.
+
+**The yardstick** (`docs/EXPERIMENT-PROTOCOL.md` section 0):
+- 24,800 scored validation rows = 31 periods x 800 rows (`runner.py --full`).
+  Horizon overlap 120 h, so n_independent ~ 24,800 / 120 ~ **207**.
+- SE(mean hourly IC) ~ ic_std / sqrt(207) = 0.22 / 14.4 ~ **0.015**. Detectable
+  floor at 2 SE ~ **0.03**. The cycle-1 board leader read IC +0.028 on the server.
+- Sharpe noise bar **0.0127** on the 7-period confirm window (section 7 above).
+  The pooled 31-period bar is not measured; registry item P0 measures it.
+- Feature cap n_indep / 8 ~ **26**; the xsec input set is 22 columns.
+- Trial ledger: **116** family files (`ls research/families/*.py | wc -l`, Sep-2),
+  **66** uploads (34 + 32). Expected maximum of N = 116 standard-normal noise draws
+  ~ sqrt(2 ln 116) ~ **3.1 SE**.
+
+**Cycle-2 outcome** (skill section 11; ledger lines 2179 and 2262):
+- 32 uploads, 20 admitted, 12 rejected; 20/20 slots spent. 30 of the 32 were
+  parameter variants of one ridge construct.
+- Best: `rs_s96_win` **+0.0049**, rank 1, IC -0.0001 (line 2179; rank confirmed
+  on the leaderboard reload, line 2262). Every admitted signal sits inside the
+  0.0127 bar. Cycle-1 Q3 cutoff +0.0135; top scientists 0.045-0.080.
+
+**Local-vs-server laws** (ledger lines 1090, 1094, 2117-2119):
+- Local IC anti-correlated with server IC within one construct: **-0.78** (1090).
+- Local gauge-fixed concentration rank transfers: **+0.96** across trained models,
+  +0.88 inside one family (1094).
+- Fit-row levers: local Sharpe is non-evidence. `win` read -0.0091 locally and
+  +0.0049 on the server; the three fit-row variants were flat locally (spread
+  0.0028, inside the bar) and `rec` ranked last locally, first on the server (2117-2119).
+
+**The process record** (measured Sep-2 from the session transcript
+`~/.claude/projects/C--Users-skf-s/e48fb6f0-ceb8-4741-8881-c351cea91ed5.jsonl`):
+- Full runner runs: **47** shell tool calls invoking the full runner, 10 of them
+  for-loops, naming 36 distinct family files; **134** log files in
+  `research/board_20260901/runner_logs/` (`ls ... | wc -l`; one log per family
+  benched on the Sep-1 board, a re-run overwrites its log, so this is a floor on
+  runs). An earlier write-up said "155 runner calls"; that was a transcript line
+  count and is wrong. Regenerate the call count with
+  `python ~/.claude/scripts/hooks/resource_tripwire.py --count <transcript> <pattern>`
+  using the pattern in `alphanova/.claude/tripwires.json`.
+- Skill loads 3, Agent calls 0 during the campaign (the 2 in the transcript are the
+  post-mortem reviewers), Workflow 0, `hippo context --auto` 0.
+- The fix: the pinned hippo rule (`mem_1dae53698338`), the method block at the top
+  of the skill, and the resource-tripwire hook (`~/.claude/scripts/hooks/
+  resource_tripwire.py` with `alphanova/.claude/tripwires.json`: every 10 full runs
+  needs an `AUDIT <sid8> #N` line in the ledger; a missing protocol file denies).

@@ -91,7 +91,7 @@ Deterministic backstop: the backup hook (see Hooks). It cannot see shell-side ed
 
 ## Hooks (deterministic backstops)
 
-Per-box binding lives in `settings.json` — the home box registers `scripts/hooks/*.js`, this box registers Python ports in `scripts/hooks/`. The hook is the verifier; the prose rule still binds where the hook is blind.
+Per-box binding lives in `settings.json`. This box registers the `.js` guards via node and `resource_tripwire.py` via python; `.py` ports of the other guards sit in `scripts/hooks/` unregistered. The hook is the verifier; the prose rule still binds where the hook is blind.
 
 | Guards | Fires on | Blind spots | Escape hatch |
 |---|---|---|---|
@@ -100,6 +100,7 @@ Per-box binding lives in `settings.json` — the home box registers `scripts/hoo
 | Backup — saves a `.old` copy before any write under `~/.claude/` or to a `CLAUDE.md`, and logs it | Edit / Write | shell-side edits (`sed`, heredocs, `node -e`) | none |
 | PS 5.1 stderr — blocks `2>&1` on native exes (NativeCommandError fakes failure) | Bash / PowerShell | none | none |
 | Comment budget — denies >3 comment lines in a row, or >20% density at 15+ lines; skips markdown/JSON/config, `docs/`, docstrings, JSDoc with `@param`/`@returns` | Edit / Write | shell writes; cannot judge a WHY comment from a WHAT one | `CLAUDE_COMMENT_BUDGET=off` |
+| Resource tripwire — 40+ tool calls with 0 Skill/Agent/Workflow gets a `[RESOURCE TRIPWIRE]` notice; a command matching a rule in the nearest `.claude/tripwires.json` is denied while the protocol file is missing, and run N×every is denied until `AUDIT <sid8> #N` is in the rule's audit file (added 2026-09-02, alphanova cycle 2) | UserPromptSubmit; Bash / PowerShell | matches by regex on the command text: a loop over many files counts once, a quoted invocation inside an echo can count, denied attempts still count; repos without `tripwires.json` | none |
 
 ## Root Cause Over Patches (CRITICAL — MANDATORY, NO EXCEPTIONS)
 
