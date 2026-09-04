@@ -78,7 +78,8 @@ function codeOnly(text, token) {
 module.exports = { LINE_TOKENS, MAX_RUN, MAX_DENSITY, DENSITY_FLOOR, classify, longestRun, countComments, codeOnly };
 if (require.main !== module) return;
 
-const { record } = require('./lib/record-component');
+let record = () => {};
+try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));

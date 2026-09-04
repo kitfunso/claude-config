@@ -6,7 +6,8 @@
  * - Warns before destructive commands (rm -rf, git reset --hard)
  */
 const fs = require('fs');
-const { record } = require('./lib/record-component');
+let record = () => {};
+try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
 function main() {
   let input = '';

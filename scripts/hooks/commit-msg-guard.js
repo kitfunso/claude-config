@@ -9,7 +9,8 @@
 // Scope: inline command text only; cannot inspect -F file contents.
 // Emits modern PreToolUse permissionDecision JSON; silent exit 0 = allow.
 
-const { record } = require('./lib/record-component');
+let record = () => {};
+try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));

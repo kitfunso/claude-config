@@ -19,6 +19,13 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+try:
+    from record_component import record
+except Exception:  # the recorder is optional, the deny is not
+    def record(**_: object) -> None:
+        return None
+
 TOOL_CALL_FLOOR = 40
 SHELL_TOOLS = {"Bash", "PowerShell"}
 LEVERAGE_TOOLS = ("Skill", "Agent", "Workflow")
@@ -211,6 +218,10 @@ def main() -> None:
     else:
         out = None
     if out:
+        decision = out.get("hookSpecificOutput") or {}
+        if decision.get("permissionDecision") == "deny":
+            record(kind="hook", name=Path(__file__).name, session_id=payload.get("session_id"),
+                   cwd=payload.get("cwd"), blocked=True, notes=decision.get("permissionDecisionReason"))
         print(json.dumps(out))
 
 

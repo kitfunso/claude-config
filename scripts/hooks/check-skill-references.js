@@ -19,6 +19,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+let record = () => {};
+try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep going */ }
+
 function skillDirs() {
   const cfg = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
   const dirs = [path.join(cfg, 'skills')];
@@ -66,6 +69,14 @@ function main() {
         if (p) found.push({ token: t, path: p });
       }
       if (found.length === 0) { process.exit(0); }
+
+      // A prompt that STARTS with /skill expands in place and never becomes a Skill
+      // tool call, so PostToolUse cannot count it. A mention mid-sentence does not expand.
+      const typed = prompt.trimStart().match(/^\/([a-zA-Z][a-zA-Z0-9_:-]*)/);
+      const typedSkill = typed && found.find(f => f.token === typed[1]);
+      if (typedSkill) {
+        record({ kind: 'skill', name: typedSkill.token, sessionId: data.session_id, cwd: data.cwd, notes: 'typed' });
+      }
 
       const reminder = [
         '',

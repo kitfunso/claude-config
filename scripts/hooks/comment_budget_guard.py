@@ -100,6 +100,14 @@ def check(content: str, ext: str) -> str | None:
     return None
 
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+try:
+    from record_component import record
+except Exception:  # the recorder is optional, the deny is not
+    def record(**_: object) -> None:
+        return None
+
+
 def main() -> None:
     if os.environ.get("CLAUDE_COMMENT_BUDGET", "").lower() == "off":
         return
@@ -116,6 +124,8 @@ def main() -> None:
     content = tool_input.get("content") or tool_input.get("new_string") or ""
     reason = check(content, ext)
     if reason:
+        record(kind="hook", name=os.path.basename(__file__), session_id=payload.get("session_id"),
+               cwd=payload.get("cwd"), blocked=True, notes=reason)
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",

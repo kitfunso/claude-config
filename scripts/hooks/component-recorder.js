@@ -6,14 +6,15 @@ const { record } = require('./lib/record-component');
 
 const KINDS = {
   Skill: (ti) => ['skill', ti.skill],
-  Agent: (ti) => ['agent', ti.subagent_type],
+  // No subagent_type means the tool ran general-purpose; 14% of live calls omit it.
+  Agent: (ti) => ['agent', ti.subagent_type || 'general-purpose'],
 };
 
 function handle(input) {
   const resolve = KINDS[input && input.tool_name];
-  if (!resolve) return;
+  if (!resolve || !input.tool_input) return;
 
-  const [kind, name] = resolve(input.tool_input || {});
+  const [kind, name] = resolve(input.tool_input);
   record({ kind, name, sessionId: input.session_id, cwd: input.cwd });
 }
 
