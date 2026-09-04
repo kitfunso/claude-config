@@ -14,8 +14,20 @@ function git(args) {
   return execFileSync('git', ['-C', REPO, ...args], { encoding: 'utf8', timeout: 20000 });
 }
 
+// A path a local commit deleted still reads as an origin-side 'A'. Checking it out
+// resurrects it, so ask the merge base which side actually did the deleting.
+function locallyDeleted() {
+  const base = git(['merge-base', 'HEAD', 'origin/main']).trim();
+  return new Set(
+    git(['diff', '--name-only', '--diff-filter=D', `${base}..HEAD`, '--', 'skills/', 'commands/'])
+      .split('\n')
+      .filter(Boolean)
+  );
+}
+
 try {
   git(['fetch', '--quiet', 'origin']);
+  const deleted = locallyDeleted();
   const adds = git(['diff', '--name-status', 'HEAD..origin/main'])
     .split('\n')
     .map((line) => line.split('\t'))
@@ -23,6 +35,7 @@ try {
       status === 'A' &&
       file &&
       (file.startsWith('skills/') || file.startsWith('commands/')) &&
+      !deleted.has(file) &&
       !fs.existsSync(path.join(REPO, file)) // guard: additions must not clobber anything on disk
     )
     .map(([, file]) => file);
