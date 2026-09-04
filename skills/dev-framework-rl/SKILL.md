@@ -282,6 +282,13 @@ section when it fires or the plan matches its shape).
     `feedback_eval_prereg_dataset_invariant_audit`. (LC2-E1 2026-08-09: skipping
     this cost 2 protocol amendments + two 77-minute full reruns; a critic and codex
     each found one of the missed invariants empirically.) → AUDIT-RULES.md #19
+20. **Researched-dataset verifier pass** — TRIGGER: the plan builds a facts table
+    (vendor terms, prices, fees, perks) by sub-agent research from web sources. The
+    plan must add a separate READ-ONLY verifier task: a second sub-agent re-opens each
+    row's cited source and reports MATCH / MISMATCH per field before the execute
+    manifest emits; the producer never grades its own rows. (boring-maths card
+    rewards 2026-09-02: a 5-row spot-check of a 22-row Sonnet dataset found 3 field
+    errors.) → AUDIT-RULES.md #20
 
 Record the audit as a step:
 ```bash
@@ -295,7 +302,7 @@ python scripts/devrl.py audit-record $EID \
   --caught <slug>[:what-it-found]         # ran and found something (repeatable)
 ```
 A rule that runs every episode and never once catches anything costs tokens forever and scores highest on firing count alone, so `--rule` vs `--caught` is the whole measurement. Passing the same slug to both exits 2. Only the FIRST colon splits, so a note may contain `file.ts:42`.
-Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`. `policy-compact-report` proposes two kinds of retirement, both propose-only, and absence alone never demotes: `demotion_candidates` never fire at all, `never_caught_candidates` fire but have never found anything across at least `--min-scored` scored firings. Firings recorded before migration 0017 carry no verdict and count as `unscored`, never as clean, so they can never retire a rule.
+Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`, 20=`researched-dataset-verify`. `policy-compact-report` proposes two kinds of retirement, both propose-only, and absence alone never demotes: `demotion_candidates` never fire at all, `never_caught_candidates` fire but have never found anything across at least `--min-scored` scored firings. Firings recorded before migration 0017 carry no verdict and count as `unscored`, never as clean, so they can never retire a rule.
 
 If the audit surfaces a reproduce-check WIN, jump to finalize (skip plan/execute/verify/review/ship). The win IS the deliverable.
 
@@ -310,7 +317,7 @@ Iterate the `stages` list from `stage-plan.json` (NOT a hardcoded 9). For each s
    ```
    Validation failure → record the step with `--critic-status error` and **escalate to the human**.
 3. If the stage has critic(s) — `critic_registry.STAGE_CRITICS` maps each gated stage to its critics (`plan` → `plan-eng-critic` + `plan-design-critic`, `execute` → `code-review-critic`, `review` → `independent-review-critic` + `codex-review-critic`, `ship` → `ship-readiness-critic`, `deploy` → `canary-monitor`). These are the exact names `critic-check` accepts — pass them verbatim (every critic carries the `-critic` suffix except `canary-monitor`). For each critic of this stage:
-   - Launch a `senior-code-reviewer` sub-agent. Brief it with the full contents of that critic's briefing (`prompts/critic-<role>.md`) plus the milestone goal and the stage's artifacts from the manifest. (`plan-design-critic` runs only for UI projects.) **Exception: `independent-review-critic` gets NO sub-agent wrapper** — the orchestrator runs `/code-review` directly and grades its findings into the critic contract (see the `review` bullet in §4a); the zero-tool-calls check below applies to sub-agent critics only.
+   - Launch a `senior-code-reviewer` sub-agent. Brief it with the full contents of that critic's briefing (`prompts/critic-<role>.md`) plus the milestone goal and the stage's artifacts from the manifest. Pass the briefing's findings shape through verbatim — `{"severity", "message", "location"}` per finding, extra keys forbidden — and never restate the output contract in your own words: a brief that asked for `{severity, section, issue, fix}` made `critic-check` reject a real plan-eng verdict and cost a round (2026-09-02, boring-maths `01M1H905JWGMPA1GGC9PR24JBB`). (`plan-design-critic` runs only for UI projects.) **Exception: `independent-review-critic` gets NO sub-agent wrapper** — the orchestrator runs `/code-review` directly and grades its findings into the critic contract (see the `review` bullet in §4a); the zero-tool-calls check below applies to sub-agent critics only.
    - **If the plan artifact is an existing repo doc** (e.g. `docs/.../plans/<date>-<name>.md`) rather than an in-episode draft, brief the critic explicitly that any `Status: Draft` or `not yet reviewed` marker means the doc has NOT been engineering-reviewed yet; fresh-eyes scrutiny is the point. A pre-existing plan author's reasoning is not pre-vetted, and the orchestrator should not defer to its existing prose. (Incident 2026-05-23, resona Phase A: fresh-eyes briefing caught a cross-org schema leak in a 5-day-old draft.)
    - **For the `plan` stage specifically: pre-stage brainstorm concerns must be carried forward into the revised plan.** When entering `plan`, re-read the brainstorm step's `summary` field (via `episode-steps`). Each concern surfaced there must be either explicitly addressed in the revised plan artifact OR explicitly noted as out-of-scope in the plan manifest. Don't let brainstorm-stage framing dissolve before the plan-eng-critic runs — the critic only judges what's IN the revised plan, not what was flagged during brainstorm. (Incident 2026-05-23, resona Phase B: brainstorm-flagged rate-limiting never reached the revised plan; the gap surfaced at review and cost a retry.)
    - **Confirm the sub-agent actually read the artifacts.** If its result reports zero tool calls, it produced a verdict from the prompt text without opening the diff / plan / files — discard it, do NOT `step-record` it, and re-launch the critic. If a re-launched critic again returns zero tool calls, record `--critic-status error` and escalate. A critic that read nothing has not reviewed; the critic briefings mandate file reads for the same reason.
@@ -339,6 +346,15 @@ investigation's one-line cause in the retry step's summary. **Cap-extension carv
    the base branch before this episode) or fixed first. Never tell the human
    "all gates passed" meaning the critic gates while repo CI is red — they are
    different gates; report both.
+
+   **Stacked PRs on a squash-merge repo (2026-09-02, boring-maths #25 → #26 → #27).**
+   Squashing the base PR rewrites the commits the next PR still carries, so GitHub
+   reports that PR CONFLICTING the moment it is retargeted. For each next PR, BEFORE
+   `gh pr edit <N> --base master`: `git rebase --onto origin/master <old-base-tip>
+   <branch>`, confirm `git diff --stat <old-tip> <branch>` is empty, then
+   `git push --force-with-lease=refs/heads/<branch>:<old-sha>`. Never
+   `--delete-branch` on an intermediate merge — GitHub auto-closes every PR stacked
+   on a deleted base (memory `feedback_gh_pr_merge_delete_branch_cascade`).
 4. If the stage has no critic → `step-record $EID <stage> --critic-status n/a --summary "..."`, advance.
 5. Heartbeat the lock.
 

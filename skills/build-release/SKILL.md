@@ -24,22 +24,31 @@ cd "C:/Users/skf_s/phzse" && git branch
 
 Confirm you're on `master`. If not, warn the user before proceeding.
 
-### 2. Read current build numbers
+### 2. Read current versions
 
-Read these two files to find the current build number:
+- **Android**: `android/app/build.gradle` holds `versionCode N` and `versionName "X.Y.Z"`.
+- **iOS**: `ios/App/App.xcodeproj/project.pbxproj` holds `MARKETING_VERSION` in
+  BOTH build configs. Its `CURRENT_PROJECT_VERSION` is dead weight.
+- **In the app**: `src/lib/config.ts` holds `APP_VERSION`, the number the settings
+  screen prints. It read 2.1.0 while 2.1.10 shipped, because nothing bumped it.
 
-- **iOS**: `codemagic.yaml` â€” find the line `agvtool new-version -all N` and extract N
-- **Android**: `android/app/build.gradle` â€” find the line `versionCode N` and extract N
-- Also extract `versionName` from build.gradle (e.g., "2.1.0") for the .aab filename
+There is no iOS build number to read anywhere. Since commit d736ad4 the CI step
+uses `PROJECT_BUILD_NUMBER`, Codemagic's own per-project build count, which only
+ever goes up. Do not put one back in `codemagic.yaml` and do not go back to
+`get-latest-build-number`: hardcoding caused two duplicate-cfBundleVersion 409s,
+and the App Store Connect query caused a third by answering with the highest
+build in the highest TestFlight train instead of the one being shipped.
 
-Both should be the same number. The new build number = current + 1.
+### 3. Bump versions
 
-### 3. Bump build numbers
+- `android/app/build.gradle`: `versionCode` + 1, and `versionName` to the new release.
+- `ios/App/App.xcodeproj/project.pbxproj`: `MARKETING_VERSION` to the same release,
+  in both configs. Nothing else. The iOS build number sets itself in CI.
+- `src/lib/config.ts`: `APP_VERSION` to the same release.
 
-Edit both files, replacing the old number with the new one:
-
-- `codemagic.yaml`: `agvtool new-version -all {NEW}`
-- `android/app/build.gradle`: `versionCode {NEW}`
+If any image changed, run `npm run icons` and commit what it writes.
+`scripts/convert-icons.mjs` owns the icons, the eleven Android splash PNGs, the
+three iOS ones and `public/icons/moon.png`. Nothing else may write those files.
 
 ### 4. Verify lockfile is in sync (CRITICAL â€” prevents Codemagic CI failure)
 
@@ -98,12 +107,20 @@ cp "C:/Users/skf_s/phzse/android/app/build/outputs/bundle/release/app-release.aa
 
 The .aab is gitignored, so it won't be committed â€” it's just for local reference / Play Store upload.
 
-### 9. Stage, commit, and push
+### 9. Write the App Store release notes
+
+Rewrite `store-assets/release-notes/en-GB.txt` to describe THIS release, in plain
+words a user reads on the store page. Apple refuses a review submission when the
+default locale has no `whatsNew`, and Codemagic's `publishing:` block has no key
+for it, so the CI publish step reads this file. Build #172 died on a stale-empty
+one. Show Keith the text before committing: it is public copy.
+
+### 10. Stage, commit, and push
 
 Stage all modified files (not untracked directories like `.gstack/` or `prototypes/`):
 
 ```bash
-git add codemagic.yaml android/app/build.gradle
+git add android/app/build.gradle ios/App/App.xcodeproj/project.pbxproj
 ```
 
 Also stage any OTHER unstaged modified files from the current session (check `git status` first). Do NOT stage untracked directories unless they're clearly part of the work.
@@ -111,10 +128,13 @@ Also stage any OTHER unstaged modified files from the current session (check `gi
 Commit with:
 
 ```
-chore: bump build {NEW_BUILD} and release .aab
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+chore: bump to {VERSION_NAME} (Android build {NEW_BUILD})
 ```
+
+Write the message with the Write tool and pass `git commit -F <file>`. Never use a
+heredoc: the commit-msg hook denies the WHOLE compound command if any part of it
+holds an em dash, so the heredoc never runs and `git commit -F` picks up a stale
+file from an earlier session. That shipped a wrong message on 6e4a3f6 (2026-09-04).
 
 Then push:
 
@@ -122,7 +142,41 @@ Then push:
 git push
 ```
 
-### 10. Report
+### 11. Upload to the stores
+
+- **iOS**: start the `ios-release` workflow in Codemagic. There is no
+  `triggering:` block, so the push does NOT start a build. Press Start new build
+  on the app SETTINGS page,
+  https://codemagic.io/app/69ab40d4cb7ed3e0ae357c3e/settings. That page renders
+  the dialog; the Applications list and the Builds row menu both offer the same
+  button and silently do nothing, and `/app/<id>` renders blank and can freeze
+  the renderer (seen 2026-09-04). The settings page also prints the
+  codemagic.yaml Codemagic actually read, so it doubles as the check that your
+  push landed. Since 46c90a9 the workflow submits
+  for App Store review on its own and Apple releases on approval, so no manual
+  App Store Connect step is left. It does not ask for TestFlight beta review:
+  that submission runs first and 422s while the version train already holds a
+  build in review, which cost build #171 its store submission. Removed in
+  a2905ab. Do not add `submit_to_testflight` back. The submission runs from a
+  script step, not a `publishing:` block, because only the script can pass the
+  release notes (`--whats-new "@file:..."`), and Apple rejects a submission
+  without them (8b7ff74). There is no Codemagic API token on this box,
+  so the Start new build press is Keith's.
+- **Android**: start the `android-release` workflow the same way, from the same
+  settings page. It builds the bundle and uploads it to the Play production
+  track as a draft (`submit_as_draft: true`), so nothing reaches users until
+  Keith presses the button. It needs two secrets in Codemagic that only he can
+  install: an Android keystore named `phzse_upload_keystore`, and an environment
+  group `google_play` holding `GCLOUD_SERVICE_ACCOUNT_CREDENTIALS`. Check both
+  exist before starting the build; without them it dies at signing.
+  `publishing.google_play` has no key for release notes, so Keith types those in
+  the console when he reviews the draft.
+  If the secrets are still missing, fall back: drive the browser to the Prepare
+  release page, pre-fill the release name and notes, and hand over the .aab path
+  for Keith to drag. Do not try to upload it. The classifier denies app-binary
+  uploads and `file_upload` caps at 10 MB against an ~11 MB bundle.
+
+### 12. Report
 
 Tell the user:
 - Build number bumped: {OLD} â†’ {NEW}

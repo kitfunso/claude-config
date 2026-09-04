@@ -1,0 +1,29 @@
+{
+  "skill_name": "frontend-mix",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Make a landing page for hippo, an npm package for agent memory that actually deletes stale memories (decay + forgetting). Make it look amazing, not generic.",
+      "expected_output": "A rolled round (manifest.json with seed and 5 distinct recipes), 5 single-file HTML variants using the rolled tech for real, a contact sheet, a board.html, and a five-line summary that stops for the user's pick. No Inter, no purple gradient, real install line and real product claims.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We have a DESIGN.md (cinematic dark, JetBrains Mono). Give me hero options for the crude oil arb dashboard that look like nothing else on the desk.",
+      "expected_output": "palette and type locked from DESIGN.md via roll.py --design, remaining slots rolled, 5 variants that all keep the locked palette/type and differ in hero/material/motion/layout, each builder briefed from assets/builder-brief.md with a direction phrase and dials, every variant passes the review gate in references/design-standards.md before the board, $/bbl and tenor vernacular present, human gate reached.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Make the landing page for our crude datalake look amazing. There is no DESIGN.md yet.",
+      "expected_output": "No variant is built first. The skill runs the short-form /design-consultation: product context pre-filled from the repo, the memorable-thing question, one complete proposal with SAFE/RISK, then stops for the user's approval. Only after approval does it write DESIGN.md, roll with --design, build, gate, and board.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Launch video for the hippo 1.0 release, 12 seconds, for X.",
+      "expected_output": "Video-mode roll (1 recipe), routed through /hyperframes with flow automation, one composition with 2-3 scenes, previewed (not rendered), snapshot sheet looked at, then a stop asking render / re-roll / change story.",
+      "files": []
+    }
+  ]
+}
