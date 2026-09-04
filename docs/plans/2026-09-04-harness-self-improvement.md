@@ -145,6 +145,26 @@ value from the same observation that supplied the `max(acted_at)`.
 
 **Step 6: Commit.** `fix: carry fix_applied_to through occurrence-level cluster recovery`
 
+**DONE 2026-09-04, commit `cd45511`.** Two corrections to the analysis above, both found during
+execution:
+
+1. The churn is worse than "one new occurrence can change the id". `_cluster_id` breaks top-3 token
+   frequency ties by iterating a set, whose order is hash-randomised per process. An unchanged
+   cluster gets a different id in a different process: PYTHONHASHSEED 0 and 2 give
+   `markdown-parser-unit`, 1 and 3 give `markdown-tests-unit`. Every `learn-cluster` run is a fresh
+   process, so the `elif` fallback is the normal path. A determinism fix for `_cluster_id` is worth
+   doing but must land *after* A0b, because making ids stable shifts every tied cluster's id exactly
+   once, and without A0b that one shift drops every link.
+2. Live `episodes.db` before the fix: 44 occurrences marked `applied`, **0** failure modes carrying
+   `applied` status, **0** carrying a fix link, against 45 policy updates. `learn-effect` had nothing
+   to score at all. Reproduce with
+   `python -c "import sqlite3;c=sqlite3.connect('episodes.db');print(c.execute('SELECT status,COUNT(*) FROM acted_observations GROUP BY status').fetchall(),c.execute('SELECT COUNT(*) FROM failure_modes WHERE fix_applied_to IS NOT NULL').fetchone())"`
+   from `C:/Users/skf_s/.claude/dev-framework`.
+
+The historical 44 stay unlinked: `acted_observations.fix_applied_to` is NULL for every pre-migration
+row and the policy update that acted on each one is not recoverable from the schema. A2's backfill is
+the only route to them, and it must not guess.
+
 ---
 
 ### Task A0c: Close the auto-tier1 bypass (CRIT)
@@ -474,6 +494,37 @@ Run the cron manually and confirm `lastRunStatus: ok` and `lastDelivered: true`.
 
 **Step 4: Commit the prompt change** in the `clawd` repo (check `git -C C:/Users/skf_s/clawd branch` first).
 
+**DONE 2026-09-04. The diagnosis above was wrong and the prompt needed no change.**
+
+The reproduction cleared check 5: `hippo status`, `hippo dedup --dry-run --threshold 0.85` and
+`hippo conflicts --status open` all exit 0 today. So the failing session was read directly:
+`C:/Users/skf_s/.openclaw/agents/main/sessions/f56b949b-8d7a-44e1-9b4e-7b6880e43e7a.jsonl`, 79 rows,
+08:01:41Z to 08:11:22Z on 2026-09-01. **All eight checks completed and the full report was written**,
+ending "No audit changes were made, so no commit was created." The run did not crash on a command.
+
+The report never left the machine. `openclaw cron list` shows every healthy cron delivering
+`announce -> telegram:7853053271 (explicit)`; this one alone read
+`(resolved from last, main session)`, because its `delivery.channel` was `"last"` rather than a named
+channel, and it carried no `agentId`. Resolution failed, openclaw recorded
+`Process: quiet-meadow failed` against both the delivery and the run, and a completed audit was
+reported as a crash Keith never saw.
+
+Fix applied to the job, not the prompt:
+
+```bash
+openclaw cron edit 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50 --channel telegram --to 7853053271 --agent main
+```
+
+`openclaw cron list` now shows `(explicit)` and agent `main`, matching the eleven crons that work.
+**Verification is outstanding and is Keith's to trigger**: proving delivery means running the real
+audit, which sends a Telegram message to his phone, so it is not something to fire unasked. The
+command is `openclaw cron run 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50`, and `openclaw cron list` should
+then read `ok` with `lastDelivered: true`.
+
+Read this before trusting the next cron diagnosis: the plan asserted a failing shell command from
+`lastError` plus a plausible suspect, and the session transcript said the opposite. Read the
+transcript first.
+
 ---
 
 ### Task A6: The memory consolidation loop is a silent no-op
@@ -538,6 +589,50 @@ Separate commit, separate repo, lower priority than steps 1-3.
 **Step 5: While the store is readable, note the decay number.** clawd's store reports 223 of 630
 memories at risk (strength <0.2) and avg strength 0.44. That is a Part B input, not an A6 fix —
 record it, do not act on it here.
+
+**DONE 2026-09-04. Both premises above are wrong. Corrected below.**
+
+Wrong claim 1: "all three commands exit 0". They exit **1**. The plan measured
+`hippo status 2>&1 | tail -12; echo "exit=$?"`, so `$?` was `tail`'s status, not hippo's.
+`requireInit` in `hippo/src/cli.ts:288-293` prints the message and calls `process.exit(1)`.
+Step 4 (raise the exit-code issue upstream) is therefore moot and is dropped.
+
+Wrong claim 2: "`~/.hippo` is the global store and the resolver deliberately does not treat home
+as a project store." The opposite is true. Reproduce:
+
+```
+$ (cd C:/Users/skf_s        && hippo status)   -> Total memories: 1665   exit 0
+$ (cd C:/Users/skf_s/.claude && hippo status)  -> No .hippo directory found   exit 1
+$ (cd C:/Users/skf_s/clawd   && hippo status)  -> Total memories: 630    exit 0
+```
+
+Home works. Every subdirectory fails. Hippo resolves the store as `<cwd>/.hippo` with no
+upward walk, and `status`, `dedup` and `conflicts` ignore both `--global` and `HIPPO_HOME`
+even though `init` and `remember` accept them. That selector gap is the real root cause.
+
+Wrong claim 3: "check 5 of the config audit is a no-op". It runs. The preflight sets
+`--workspace C:\Users\skf_s\clawd`, which has its own store, so check 5 has been auditing
+clawd's 630 memories every month while the 1665-memory home store was never audited. The
+2026-09-01 report's "627 memories" is clawd's number, which is what made this look healthy.
+
+**Fixed:** `clawd/memory/cron-prompts/claude-config-audit.md` check 5 now pins both store
+directories with `Push-Location`, reports a count per store, and treats the not-found line or a
+non-zero exit as a FLAG rather than a silent PASS.
+
+**Not fixed, for Keith:**
+1. `status`, `dedup` and `conflicts` should honour `--global` / `HIPPO_HOME` like `init` and
+   `remember` do. That is a change in `C:/Users/skf_s/hippo`, a published npm package. The repo
+   working tree is on `antislop-migration` at 1.29.0 while the installed CLI is 1.38.0, so this
+   needs its own branch and release cycle.
+2. `hippo session-end` (the SessionEnd hook, `settings.json:113`) inherits the session's cwd, so
+   the consolidation silently does nothing for any session started outside a directory that has a
+   `.hippo`. That is what wrote `consolidating memory... No .hippo directory found` into the
+   SessionStart banner at 2026-09-04T12:00:38Z. Until item 1 lands there is no flag to pin it,
+   and wrapping the hook in a `cd` is a downstream patch, so it waits.
+3. `session-end` is not listed in `hippo --help`.
+
+Step 5 stands: the decay numbers are a Part B input. Home store: 1665 memories, 472 at risk
+(<0.2), avg strength 0.56, 686 stale. clawd store: 630 memories, 223 at risk, avg strength 0.44.
 
 ---
 

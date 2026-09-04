@@ -606,7 +606,7 @@ python scripts/devrl.py learn-apply --summary "<what changed>" --failure-mode <i
 
 Writes a `policy_updates` audit row, a `policy_skill_changes` row per edited skill file (with its post-edit SHA-256), and marks the addressed clusters `applied` with an `applied_at` timestamp.
 
-`--failure-mode` is required. It is the join that makes the delta measurable by `learn-effect` later; without it the delta is invisible forever. For a genuine orphan edit — friction below the 5-occurrence cluster threshold, so there is no cluster to name — pass `--unlinked` instead, and accept that it can never be scored. Between 2026-05-24 and 2026-09-01 the flag was optional and all 44 recorded deltas omitted it, which is why nothing in the loop could ever be evaluated.
+`--failure-mode` is required. It is the join that makes the delta measurable by `learn-effect` later; without it the delta is invisible forever. For a genuine orphan edit — friction below the 5-occurrence cluster threshold, so there is no cluster to name — pass `--unlinked --unlinked-reason "<why no cluster fits>"` instead, and accept that it can never be scored. Between 2026-05-24 and 2026-09-01 the flag was optional and all 44 recorded deltas omitted it, which is why nothing in the loop could ever be evaluated. `--unlinked-reason` became mandatory on 2026-09-04 so that count stops growing by accident; the reason is the only record an unlinked delta leaves behind.
 
 A delta that adds a hippo memory passes `--memory-added <id>` — the memory enters on **probation**, not yet trusted. Probation memories DO recall into episodes: at episode init run `memory-list --status probation`, carry the relevant ones into stage briefs tagged `[PROBATION]` (an unconfirmed hint — weigh it accordingly, never as settled law), and record their ids via `step-record --memory-ref <id>` so the auto-confirm machinery sees them as active. (R9 fix, 2026-06-09: the old "keep out of episode context until promoted" rule was a deadlock — a memory that is never in context can never earn confirmations; 5 sat stuck with 0 promotions ever.) Promotion to `active` takes 3 QUALIFYING confirmations — auto-confirm only counts episodes that terminated `shipped` (`devrl.py memory-confirm <id>` for manual ones); `memory-deprecate <id>` retires one that is not helping; `memory-list --status probation` shows what is still on probation.
 
@@ -934,7 +934,7 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `learn-cluster [--mode lexical\|embedding] [--threshold F]` | recompute failure-mode clusters (Tier 1) | 0 |
 | `learn-list` | list actionable clusters | 0 |
 | `learn-effect [--json] [--top-unfixed N]` | did applied fixes stop the failure recurring? | 0 |
-| `learn-apply --summary S (--failure-mode ID ... \| --unlinked)` | record an applied policy delta | 0 / 2 |
+| `learn-apply --summary S (--failure-mode ID ... \| --unlinked --unlinked-reason R)` | record an applied policy delta | 0 / 2 |
 | `learn-reject --failure-mode ID ...` | reject a cluster | 0 |
 | `apply-pending <id> [--clear]` | view or clear pending_apply/<id>.json (Tier 3) | 0 / 2 |
 | `embed-cache-prune [--older-than N]` | remove embed cache entries older than N days (Tier 1) | 0 |
