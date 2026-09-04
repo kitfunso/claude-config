@@ -15,6 +15,20 @@ loads** (verified 2026-09-04), so the Part B hook writes SQLite with no new depe
 are now Tasks A0b and A0c, and both must ship before anything else in Part A. Revision 0 would have
 created `fix_applied_to` links that normal use silently erased, then reported the loop closed.
 
+**Revision 2 (2026-09-04):** the rest of the consolidated eng review, applied. Nine items:
+
+| # | Section | Change |
+|---|---|---|
+| 1 | A0b | new task: carry `fix_applied_to` through a recompute |
+| 2 | A0c | new task: close the auto-tier1 bypass |
+| 3 | Tech Stack | Node is v24.13.0 and `node:sqlite` loads; the review's "no SQLite driver" CRIT was based on my own wrong "Node 20" line |
+| 4 | B1 | explicit WAL and `busy_timeout` step, with the failing-first test that proves it |
+| 5 | A3 | names `_tokens` (`clustering.py:62`) and `_jaccard` (`clustering.py:67`) instead of a grep that finds neither |
+| 6 | B4 | reuse the scoring discipline, write new SQL; `compute_trust_counts` is not callable on component rows |
+| 7 | A0a | per-task fixture consumer table; B2 dropped from its prerequisite list |
+| 8 | B5 | retires `log-gate.ps1` and `telemetry-report.ps1`, not just the JSONL |
+| 9 | Verification | `learn-effect` twice around a `learn-cluster`, to prove the links survive a recompute |
+
 ---
 
 ## Evidence this plan is built on
@@ -42,7 +56,7 @@ after 20 instrumented episodes carry a scored `caught` value.
 
 ## Part A — close the apply arm
 
-### Task A0a: Test fixtures (prerequisite for A1, A3, A4, B2)
+### Task A0a: Test fixtures (prerequisite for A0b, A1, A3, A4)
 
 `tests/conftest.py` defines only `db_path`, `migrated_db` and `conn`. The fixtures the later tasks
 use do not exist anywhere in `tests/` — verify with
@@ -56,6 +70,22 @@ missing fixture rather than on the behaviour under test.
 - `tmp_db_with_pending_clusters` — `tmp_db` plus at least two `failure_modes` rows with
   `status='pending'` and distinguishable `pattern` text, so A3's similarity suggestion has something
   real to rank. Seed through the store API, not raw INSERTs, so the fixture cannot drift from schema.
+
+**Which task consumes which fixture.** Both fixtures must satisfy every consumer below, so read this
+list before deciding their shape. A fixture that only fits A1 forces a rewrite at A3.
+
+| Fixture | Used by | Needs |
+|---|---|---|
+| `tmp_db` | A0b `test_link_survives_a_recompute_that_changes_cluster_id` | at least one `acted_observations` row carrying a non-null `fix_applied_to`, reachable through the store API |
+| `tmp_db` | A1 `test_unlinked_without_reason_is_rejected`, `test_unlinked_with_reason_is_accepted` | nothing beyond a migrated empty DB |
+| `tmp_db` | A4 `test_dry_run_writes_nothing`, `test_apply_requires_confidence_threshold` | at least one unlinked `policy_updates` row, so `_count_linked` has a real before-value |
+| `tmp_db_with_pending_clusters` | A3 `test_missing_link_prints_candidate_clusters` | two-plus pending `failure_modes` whose `pattern` text differs enough that `_jaccard` ranks them apart |
+
+A0b and A4 each need seeded rows that a bare `tmp_db` does not have. Either add the rows inside those
+tests, or add two more named fixtures here. Decide now and write it down; do not leave it to execute.
+
+**B2 does not use these.** Its test drives a Node hook through stdin against its own temp SQLite
+file, so it never imports `conftest.py`. That is why B2 is off this task's prerequisite list.
 
 Commit before starting A0b.
 
@@ -309,10 +339,16 @@ The escape hatch was taken because linking means looking up an integer. Remove t
 - Reuse: `C:/Users/skf_s/.claude/dev-framework/scripts/clustering.py` (existing lexical similarity; do NOT write a new one)
 - Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_learn_apply_linking.py`
 
-**Step 1: Grep for the existing similarity helper before writing one**
+**Step 1: Use the two helpers that already exist**
 
-Run: `grep -n "def .*similar\|def .*score\|difflib\|SequenceMatcher" C:/Users/skf_s/.claude/dev-framework/scripts/clustering.py`
-Use what is there. A second similarity function is the DRY violation the eng critic catches.
+`clustering.py:62` defines `_tokens(text) -> frozenset[str]` (lowercases, strips words of 2 chars or
+less and a stopword list). `clustering.py:67` defines `_jaccard(a, b) -> float` over two token sets.
+Together they are the scorer, and `_cluster_id` at line 73 already uses `_tokens` the same way.
+
+Import both into `devrl.py` and score with `_jaccard(_tokens(summary), _tokens(pattern))`. Do not
+write a `difflib` or `SequenceMatcher` variant beside them; a second similarity function is the DRY
+violation the eng critic catches. Both are underscore-private inside `clustering.py`, so either
+import them directly or promote one thin public wrapper. Do not copy the bodies.
 
 **Step 2: Write the failing test**
 
@@ -520,7 +556,27 @@ backfill has landed and `learn-effect` reports a non-zero `applied fixes` count.
 **Design note (read before writing the DDL):** this goes in `episodes.db`, not a new file.
 `critic_trust_scores`, `audit_rule_firings` and `policy_updates` already live there, and the
 weekly cron already opens it. A second database would split the exact join the scoreboard needs.
-Enable WAL so the hook's insert never blocks a devrl run.
+
+**Concurrency step, do this before B2 registers the hook.** `episode_store.py` sets exactly one
+PRAGMA today, `foreign_keys = ON`, at line 77 in `_write` and line 92 in `_read`. There is no WAL
+and no busy timeout. `_write` opens with `BEGIN IMMEDIATE`, which takes the write lock for the
+whole block, so in rollback-journal mode a devrl run holds the database and the hook's insert fails
+instantly with `database is locked` rather than waiting. Under WAL the same insert proceeds.
+
+Add to both context managers, next to the existing PRAGMA:
+
+```python
+conn.execute("PRAGMA journal_mode = WAL")
+conn.execute("PRAGMA busy_timeout = 3000")
+```
+
+`journal_mode` is persistent once set and is a no-op on later connections; `busy_timeout` is
+per-connection and must be set every time. The hook in B2 sets both itself, because it opens its
+own connection and never goes through this class.
+
+Its test: open a `_write` block against a temp DB, hold it, and from a second connection insert one
+`component_outcomes` row. Expect the insert to succeed. Run that test against the pre-PRAGMA code
+first and watch it fail with `database is locked`, or the test is not proving anything.
 
 ```sql
 -- 0019_component_outcomes.sql
@@ -614,15 +670,28 @@ fix all instances in one pass), verify each still denies correctly, commit.
 
 **Files:**
 - Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py` (new `component-report` subcommand)
-- Reuse: `C:/Users/skf_s/.claude/dev-framework/scripts/critic_trust.py`
+- Read as a pattern, do not call: `C:/Users/skf_s/.claude/dev-framework/scripts/critic_trust.py`
 - Modify: `C:/Users/skf_s/clawd/memory/cron-prompts/devrl-weekly-learn.md`
 
-**Defining "helped" honestly.** `used` is free. `helped` is an attribution problem, and
-`critic_trust.py` already solves it for critics with the pass-then-regressed / pass-then-clean shape.
-Reuse that shape rather than inventing a metric: for a component used inside an episode, join to that
-episode's `post_deploy_clean`. Components used outside an episode get `used` counts only and an
-explicit `trust: null`. **Report null, never a made-up score.** The same rule that governs
-`policy_compact_report` governs this: absence never demotes.
+**Reuse the pattern, write new SQL.** `compute_trust_counts` (`critic_trust.py:138`) is not callable
+here. It walks `steps` JOIN `episodes` (line 178-179) and counts critic verdicts, retry caps and
+linkage cells. A component invocation has none of those: `component_outcomes` has no verdict and
+usually no `episode_id` at all. Calling it would mean forcing component rows into a critic shape,
+which is the wrapping-a-broken-thing patch smell.
+
+What to copy is the scoring discipline in `TrustCounts.trust_score` (`critic_trust.py:79-92`), which
+is three rules worth reusing verbatim:
+1. Return `None` below `MIN_OBS_FOR_SCORE`, never a score from two data points.
+2. Score as matches over matches-plus-mismatches with the same Beta prior constants.
+3. Keep raw counts in the row beside the score, so a null is auditable.
+
+Write a separate `component_counts` aggregation with its own SQL over `component_outcomes`. Put the
+shared prior constants in one place rather than retyping the numbers.
+
+**Defining "helped" honestly.** `used` is free. `helped` is an attribution problem. For a component
+used inside an episode, join to that episode's `post_deploy_clean`. Components used outside an
+episode get `used` counts only and an explicit `trust: null`. **Report null, never a made-up score.**
+The same rule that governs `policy_compact_report` governs this: absence never demotes.
 
 Output shape:
 
@@ -642,10 +711,34 @@ propose-only for pruning; the same reasoning as the audit rules.
 ### Task B5: Fold the manual telemetry sink into the same table
 
 `C:/Users/skf_s/.claude/skills/dev-framework/logs/telemetry.jsonl` is a hand-written gate log
-(`{timestamp, project, gate, phase, outcome, notes}`, 4KB, last written 2026-09-02). It is a third
-sink for the same question. Import it as `kind='cron'`/`kind='gate'` rows, then change
-`skills/dev-framework/SKILL.md` to write to the store instead of the JSONL. One sink, or the join
-in B4 lies by omission.
+(`{timestamp, project, gate, phase, outcome, notes}`, 4055 bytes, last written 2026-09-02). It is a
+third sink for the same question. One sink, or the join in B4 lies by omission.
+
+**Files:**
+- Create: `C:/Users/skf_s/.claude/dev-framework/scripts/import_gate_telemetry.py` (one-shot importer)
+- Delete: `C:/Users/skf_s/.claude/skills/dev-framework/scripts/log-gate.ps1` (1251 bytes)
+- Delete: `C:/Users/skf_s/.claude/skills/dev-framework/scripts/telemetry-report.ps1` (3237 bytes)
+- Modify: `C:/Users/skf_s/.claude/skills/dev-framework/SKILL.md` (lines 91-115 and 138-141)
+
+**Step 1: Import the history.** Read the JSONL, write one `component_outcomes` row per entry with
+`kind='gate'`, `name=<gate>`, `invoked_at=<timestamp>`, `cwd=<project>`. Map `outcome` to the
+existing columns: `caught` and `failed` are the blocking outcomes, so set `blocked=1` for those and
+0 for `passed` and `skipped`. Keep `notes` by adding one nullable `notes TEXT` column in 0019 rather
+than dropping the text; the "you've never used /cso but caught 3 auth bugs" read in B4 depends on it.
+
+**Step 2: Retire the two PowerShell scripts.** They are the writer and the reader for a sink that no
+longer exists. `log-gate.ps1` appends to the JSONL; `telemetry-report.ps1` aggregates it. Leaving
+either in place means a future session logs a gate outcome into a file nothing reads, which is the
+same silent no-op as A6. Delete both, and delete `logs/telemetry.jsonl` and `telemetry.jsonl.old`
+only after the importer's row count matches the file's line count.
+
+**Step 3: Repoint SKILL.md.** Its "Telemetry: log which gates caught real issues" section (lines
+91-115) documents both scripts with worked examples, and the file list at lines 138-141 names all
+three artifacts. Replace with the `devrl.py` equivalents. This file is hand-maintained: the edits are
+targeted, so they proceed, but do not rewrite the file wholesale.
+
+**Retirement is a deletion, so it is ASK-FIRST.** Show Keith the two script paths and the row-count
+proof before removing anything.
 
 ---
 
@@ -656,6 +749,8 @@ Done means all of these, run in one pass:
 ```bash
 python -m pytest C:/Users/skf_s/.claude/dev-framework/tests/ -q
 python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-effect
+python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-cluster
+python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-effect
 python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py component-report
 openclaw cron get 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50
 ```
@@ -663,7 +758,16 @@ openclaw cron get 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50
 Pass conditions:
 1. Full devrl suite green.
 2. `learn-effect` reports a non-zero `applied fixes` count, so the loop can finally be scored.
-3. `component-report` lists real skill and agent rows recorded by the hook, not by hand.
-4. `claude-config-audit` shows `lastRunStatus: ok`.
+3. **The two `learn-effect` runs report the same count.** `learn-cluster` between them recomputes
+   clusters and calls `replace_failure_modes`, the exact path A0b fixes. A count that drops across a
+   recompute means the links are not durable and A0b did not hold, whatever its unit test says. This
+   is the gate that matters: a one-shot backfill that a routine recompute silently erases is worth
+   nothing, and the count-before / count-after pair is the only check that catches it.
+4. `component-report` lists real skill and agent rows recorded by the hook, not by hand.
+5. `claude-config-audit` shows `lastRunStatus: ok`.
 
 If 2 still reads `applied fixes: 0` after A4, Part A has not landed and Part B must not start.
+If 3 fails, Part A has half-landed, which is worse: the report reads healthy right after a backfill
+and decays on its own. Fix A0b before touching Part B.
+
+Take a `.bak` of `episodes.db` before this pass. `learn-cluster` writes.
