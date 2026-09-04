@@ -33,19 +33,19 @@ created `fix_applied_to` links that normal use silently erased, then reported th
 
 ## Execution status (2026-09-04, end of session)
 
-Part A shipped. Part B shipped B1 through B5 except the deletions, which are Keith's call.
+All of Part A and Part B shipped. Keith cleared the three gated items on 2026-09-04.
 
 | Task | State | Where |
 |---|---|---|
 | A0a-A0c, A1-A3 | shipped | see the A6 correction block after Step 5 |
-| A4 backfill | needs Keith: pick a `--min-score` (0.5 links the two good rows) or decline |
-| A5 cron | needs Keith: `openclaw cron run 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50`, expect `ok` + `lastDelivered: true`. Not fired here because it sends Telegram |
+| A4 backfill | shipped | `--min-score 0.5`, 2 of 45 linked (`failure_modes` 11527, 11644), 43 left alone |
+| A5 cron | shipped | manual run enqueued `ok: true`; the config edit predates the last failing run, so the error state was stale |
 | A6 | shipped, but all three of the plan's premises were wrong. Read the correction block before trusting this section |
 | B1 migration 0020 | shipped | dev-framework `67fa8d0` |
 | B2 recorder + B3 guards | shipped | ~/.claude `76a2ed6`; registered in `settings.json`, which is gitignored, so THIS BOX ONLY |
 | B4 component-report | shipped | dev-framework `07f62bd`, clawd `9f613ee` |
 | B5 producer + import | shipped | dev-framework `6e89fec`, ~/.claude `c29ecae` |
-| B5 deletions | ASK-FIRST, waiting | `log-gate.ps1`, `telemetry-report.ps1`, `logs/telemetry.jsonl`, `logs/telemetry.jsonl.old` |
+| B5 deletions | shipped | ~/.claude `81912c7`, all four files gone |
 
 Two corrections to the plan as written, both found by running it:
 
