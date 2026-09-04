@@ -1,11 +1,6 @@
----
+﻿---
 name: roll-check
-description: |
-  Check and fix futures contract roll adjustments. Detects when active contracts
-  have rolled since signal entry, adjusts signal_price by the roll spread to
-  maintain PnL continuity, and updates Supabase + local files. Use when asked to
-  "check rolls", "contract roll", "roll check", "roll adjustment", or when
-  investigating price jumps on active positions.
+description: "Check and fix futures contract roll adjustments. Use when asked to \"check rolls\", \"contract roll\", \"roll check\", \"roll adjustment\", or when investigating price jumps on active positions."
 ---
 
 # Contract Roll Check
@@ -19,7 +14,7 @@ Detect and apply futures contract roll adjustments for active commodity position
 Always start with a dry run to detect pending rolls without applying changes.
 
 ```bash
-cd C:/Users/skf_s/Quantamental/production && python check_contract_rolls.py --dry-run
+cd C:/Users/kit.sofun/Quantamental/production && python check_contract_rolls.py --dry-run
 ```
 
 ### Step 2: Report Results
@@ -60,7 +55,7 @@ If `--force` was passed as an argument to the skill, skip confirmation and proce
 After confirmation (or if `--force`):
 
 ```bash
-cd C:/Users/skf_s/Quantamental/production && python check_contract_rolls.py
+cd C:/Users/kit.sofun/Quantamental/production && python check_contract_rolls.py
 ```
 
 ### Step 5: Verify
@@ -82,7 +77,7 @@ Use the Supabase MCP to run this query directly.
 2. Check that local `live_signal.json` files were updated:
 
 ```bash
-cat C:/Users/skf_s/Quantamental/outputs/<commodity>/live_signal.json
+cat C:/Users/kit.sofun/Quantamental/outputs/<commodity>/live_signal.json
 ```
 
 3. Report final verification:
@@ -100,8 +95,8 @@ All rolls verified.
 
 ## Arguments
 
-- `--force` — Skip user confirmation, apply immediately after dry run
-- No arguments — Interactive mode with confirmation prompt
+- `--force` - Skip user confirmation, apply immediately after dry run
+- No arguments - Interactive mode with confirmation prompt
 
 ## Safety Notes
 

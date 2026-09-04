@@ -1,6 +1,6 @@
 ---
 name: project-scaffold
-description: Generate PRD, Architecture, CLAUDE.md, and Plan docs for a new project. Use for 'scaffold', 'new project', 'kickoff', or 'project init'.
+description: Generate PRD, Architecture, CLAUDE.md, and Plan docs when starting a new project from scratch.
 ---
 
 # Project Scaffold
@@ -17,37 +17,12 @@ Generate four foundation documents that turn AI-assisted development into struct
 
 **Purpose:** Define what the app IS and what it IS NOT. This is the scope guard. Without it, every session drifts into "wouldn't it be cool if..." territory.
 
-```markdown
-# [Project Name] - Product Requirements Document
-
-## One-Line Description
-[What this product does in one sentence]
-
-## Problem Statement
-[2-3 sentences: what pain exists, who feels it, why current solutions fail]
-
-## Target Users
-[Specific user personas with context about their technical level and needs]
-
-## Core Features (MVP)
-[Numbered list of must-have features for first release]
-
-## What This Product IS NOT
-[Explicit exclusions - features, markets, or capabilities that are OUT OF SCOPE]
-[This section is the most important. Be specific. "We do NOT build X because Y."]
-
-## Success Metrics
-[How do you know this is working? Numbers, not vibes.]
-
-## Constraints
-[Budget, timeline, team size, technical limitations, regulatory requirements]
-```
+Template: see [`references/prd-template.md`](references/prd-template.md).
 
 **Rules:**
 - The "IS NOT" section must have at least 5 items
 - Every feature in "Core Features" must map to a problem in "Problem Statement"
 - No feature gets added without updating this document first
-- If someone says "can we also..." - check the PRD before saying yes
 
 ### 2. Architecture Document
 
@@ -55,36 +30,7 @@ Generate four foundation documents that turn AI-assisted development into struct
 
 **Purpose:** Tell the AI exactly how to organize folders, data, and services. This prevents spaghetti code and ensures consistency across sessions.
 
-```markdown
-# [Project Name] - Architecture
-
-## System Overview
-[Component diagram in ASCII or description of major pieces]
-
-## Tech Stack
-| Layer | Technology | Rationale |
-|-------|-----------|-----------|
-| Backend | ... | ... |
-| Frontend | ... | ... |
-| Database | ... | ... |
-| Cache | ... | ... |
-| Deploy | ... | ... |
-
-## Repository Structure
-[Complete directory tree with comments explaining each directory's purpose]
-
-## Data Model
-[Database schema with table names, key columns, relationships]
-
-## API Design
-[Key endpoint groups with example paths]
-
-## Service Boundaries
-[Which code lives where. Clear ownership lines.]
-
-## Data Flow
-[How data moves through the system for the primary use case]
-```
+Template: see [`references/architecture-template.md`](references/architecture-template.md).
 
 **Rules:**
 - Every directory in the repo structure must have a one-line comment
@@ -98,30 +44,7 @@ Generate four foundation documents that turn AI-assisted development into struct
 
 **Purpose:** Non-negotiable rules for any AI session working on this project. Quality control. Coding standards. Safety rails. Things that should never be violated regardless of what the prompt says.
 
-```markdown
-# CLAUDE.md - [Project Name]
-
-## Project Overview
-[2-3 sentences: what this is, what it does]
-
-## Architecture
-[Brief summary pointing to docs/ARCHITECTURE.md for details]
-
-## Non-Negotiable Rules
-[Numbered list of absolute constraints - things that must ALWAYS or NEVER happen]
-
-## Coding Conventions
-[Language-specific patterns, naming, formatting, testing expectations]
-
-## Critical Files
-[Files that should be read before making changes in their area]
-
-## Safety Rules
-[Security, data handling, deployment constraints]
-
-## Common Mistakes to Avoid
-[Patterns that have caused bugs before - save future sessions from repeating them]
-```
+Template: see [`references/claude-md-template.md`](references/claude-md-template.md).
 
 **Rules:**
 - Keep under 100 lines. Long CLAUDE.md files get skimmed, short ones get read.
@@ -135,24 +58,7 @@ Generate four foundation documents that turn AI-assisted development into struct
 
 **Purpose:** Step-by-step roadmap. Work on one step at a time. Don't move to the next until the current one is complete and verified. This prevents getting lost in complexity.
 
-```markdown
-# [Feature/Phase Name] Implementation Plan
-
-**Goal:** [One sentence]
-**Prerequisites:** [What must exist before starting]
-**Estimated scope:** [Number of steps, rough time]
-
----
-
-## Step 1: [Name]
-**Files:** [exact paths to create/modify]
-**What:** [Specific deliverable]
-**Verify:** [How to confirm this step is done - test command, expected output]
-**Commit:** [Commit message]
-
-## Step 2: [Name]
-...
-```
+Template: see [`references/plan-template.md`](references/plan-template.md).
 
 **Rules:**
 - Each step must be independently verifiable (test, build, or visual check)

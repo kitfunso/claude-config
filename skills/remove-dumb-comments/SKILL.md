@@ -1,6 +1,7 @@
 ---
 name: remove-dumb-comments
-description: Flag comments that restate code instead of explaining why; remove approved ones. Use for 'remove dumb comments' or /remove-dumb-comments.
+description: "Flag comments that restate code instead of explaining why, and remove the ones you approve."
+disable-model-invocation: true
 ---
 
 # Remove Dumb Comments
@@ -15,7 +16,7 @@ Flag comments that say *what* the code already says; keep every comment that exp
 | `/remove-dumb-comments <number>` | Find that many lowest-value comments. |
 | `/remove-dumb-comments all` | Find every low-value comment. |
 
-## Never Remove
+## Always Keep
 
 Keep any comment that carries a *why* the code cannot convey:
 

@@ -13,23 +13,18 @@ When you ask for implementation + quality in one pass, you get neither done well
 ## The Pattern
 
 ### Pass 1: Implement
-Focus entirely on making it work. Get the feature done, tests passing, logic correct. Don't worry about:
-- Console.log statements
-- Commented-out code
-- Verbose variable names
-- Tests that test language behavior rather than business logic
-- Overly defensive error handling
+Focus only on: feature done, tests passing, logic correct. Console.log statements, commented-out code, verbose names, and defensive error handling all wait for Pass 2.
 
 ### Pass 2: De-Sloppify
 Fresh review of all changes. Check for and fix:
 
-1. **Dead code** — Remove commented-out code, unused imports, unreachable branches
-2. **Debug artifacts** — Remove console.log, print(), debugger statements
-3. **Test quality** — Remove tests that test the type system or framework behavior, not your code
-4. **Over-engineering** — Simplify abstractions that only have one implementation
-5. **Naming** — Rename vague variables (`data`, `result`, `temp`, `x`)
-6. **Error handling** — Remove catch blocks that just re-throw, add handling where it's actually needed
-7. **Consistency** — Match existing code style and patterns in the codebase
+1. **Dead code**: Remove commented-out code, unused imports, unreachable branches
+2. **Debug artifacts**: Remove console.log, print(), debugger statements
+3. **Test quality**: Remove tests that test the type system or framework behavior, not your code
+4. **Over-engineering**: Simplify abstractions that only have one implementation
+5. **Naming**: Rename vague variables (`data`, `result`, `temp`, `x`)
+6. **Error handling**: Remove catch blocks that just re-throw, add handling where it's actually needed
+7. **Consistency**: Match existing code style and patterns in the codebase
 
 ## Usage
 After implementing a feature:

@@ -10,7 +10,7 @@ built the deployed 21-strategy book. Search everything, then filter. Output is a
 scorecard for a human promotion decision - this skill changes nothing that trades.
 
 ## Firebreak (NEVER violate)
-- NEVER edit `data/tournament/final_universe.json` or `deploy_book.json` (the live book).
+- NEVER edit `data/tournament/final_universe.json` or `deploy_book.json` (the live book): promotion into it is a human edit at a re-lock point (see below), not something this skill does.
 - NEVER edit `engine/families.py` (the live registry). New ideas go in `engine/families_candidates.py`.
 - All output stays under `data/tournament/candidates/<date>/` (the driver asserts this).
 - Promotion into the live book is a HUMAN edit of `final_universe.json` at a re-lock point,
@@ -28,8 +28,10 @@ scorecard for a human promotion decision - this skill changes nothing that trade
    ```
    Defaults to every data-available instrument x {5m,15m,1h,4h}. Use `--symbols` /
    `--freqs` to scope, `--null-trials N` to trade speed for null precision.
-3. **Read** `data/tournament/candidates/<date>/<name>.html`. Report which `(instrument,
-   freq)` cells clear the deploy bar and their correlation vs the live book.
+3. **Read** `data/tournament/candidates/<date>/<name>.html`. Report every swept
+   `(instrument, freq)` cell's verdict (PASS / ADD-READY / FAIL / cost-unverified /
+   skipped-missing-data), not only the ones that clear the deploy bar, plus their
+   correlation vs the live book.
 4. **STOP.** Present the scorecard. Do not promote, do not touch the live book.
 
 ## The gates (locked - docs/CONSTRUCTION_SPEC.md + RESEARCH_PLAN.md s4)
@@ -48,9 +50,8 @@ scorecard for a human promotion decision - this skill changes nothing that trade
   that passes the bar but is redundant or cost-unverified shows `PASS (...)`, not ADD-READY.
 
 ## Notes / known limitations
-- **Causality is your job in `make_signal`.** The preflight + CI catch obvious leaks, but write
-  causal signals: any rolling stat used as a threshold must `.shift()` so bar t is excluded from
-  its own gate.
+- **Causality is your job in `make_signal`**: see Step 1's shift() rule; the preflight + CI only
+  catch obvious leaks.
 - **ML candidate contract**: an ML family (name in the ridge/logreg set, or grid carrying
   `alpha`/`registry_names`/`C`/`l1_ratio`) must expose the `registry_names` feature list so T4/T5
   (feature perturbation + ablation) can run. If they cannot be computed, the cell FAILS the bar.

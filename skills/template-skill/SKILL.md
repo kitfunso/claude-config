@@ -1,6 +1,14 @@
 ---
 name: template-skill
-description: Replace with description of the skill and when Claude should use it.
+description: "Starter scaffold: copy this directory to skills/<new-name>/ and fill in the frontmatter and body before shipping a new skill."
+disable-model-invocation: true
 ---
 
-# Insert instructions below
+# <Skill Name>
+
+<One-paragraph purpose and the branch(es) that trigger it.>
+
+## Steps
+
+1. ...
+2. ...

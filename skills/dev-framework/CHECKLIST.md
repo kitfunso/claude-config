@@ -1,6 +1,6 @@
-# Dev Framework Checklist
+﻿# Dev Framework Checklist
 
-One-page reference. Read top to bottom on every non-trivial project.
+One-page reference. Read top to bottom on every non-trivial project. Stage definitions: PIPELINE.md.
 
 ## 1. DISCOVER
 - [ ] Problem one-liner
@@ -47,8 +47,8 @@ One-page reference. Read top to bottom on every non-trivial project.
 - [ ] `/self-review` (FIRST)
 - [ ] `/review`
 - [ ] `/codex` review on diff
-- [ ] `/cso` (if sensitive — REQUIRED)
-- [ ] `/design-review` (if UI — REQUIRED)
+- [ ] `/cso` (if sensitive: REQUIRED)
+- [ ] `/design-review` (if UI: REQUIRED)
 - [ ] `/standards-check`
 - [ ] All findings fixed or explicitly deferred
 
@@ -78,9 +78,9 @@ One-page reference. Read top to bottom on every non-trivial project.
 
 ## Anti-erosion reminder
 
-**Speed directives do not skip gates.** `/fast`, `/full-power`, `/ship`, "just do it" accelerate WITHIN a gate. They never replace one. If you're tempted to skip VERIFY, REVIEW, or DEPLOY, STOP — that's the failure mode.
+Speed directives never skip a gate: see ENFORCEMENT.md.
 
-## Sensitivity → required gates
+## Sensitivity -> required gates
 
 | Detected | Add to REVIEW |
 |---|---|
@@ -92,10 +92,10 @@ One-page reference. Read top to bottom on every non-trivial project.
 
 ## Per-project mandatory chains
 
-- **hippo**: `/self-review` → `/review` → `/ship-check` → `/publish-repo`
+- **hippo**: `/self-review` -> `/review` -> `/ship-check` -> `/publish-repo`
 - **Quantamental**: `/roll-check` before signal commits; NEVER overwrite locked signals
 - **synth**: sub-agents for extraction
-- **All in `C:/Users/skf_s`**: Root Cause Over Patches framing pass
+- **All in `C:/Users/kit.sofun`**: Root Cause Over Patches framing pass
 
 ## Quick gate reference
 

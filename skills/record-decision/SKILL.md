@@ -1,6 +1,6 @@
 ---
 name: record-decision
-description: Record a durable decision as a dated file in docs/decisions/. Use at ship time or when asked to "record this decision" or "write an ADR".
+description: "Recording a durable decision: at ship time, or when asked to 'record this decision' or 'write an ADR'."
 ---
 
 # Record Decision
@@ -56,7 +56,6 @@ Links: <PR / issue / eval doc / plan file>
 ## Rules
 
 - Terse and scannable: bullets over paragraphs; the whole record under ~40 lines.
-- Evidence over opinion: cite the measurement, incident, or failed attempt that drove the choice (No Fabrication rule applies — only cite what was actually read/run).
-- STE-100 prose, no banned AI-isms, no em dashes if the repo's Stop Slop scope covers docs.
+- Evidence over opinion: cite the measurement, incident, or failed attempt that actually drove the choice.
 - This skill is advisory judgment, not a hook-enforceable gate. The ship-time prompt lives in /ship-check item 10 and the dev-framework SHIP gate.
 - Memory writeback: when a record captures something a memory file also tracks, point the memory at the record instead of restating it.

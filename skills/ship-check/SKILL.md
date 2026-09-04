@@ -1,4 +1,5 @@
 ---
+name: ship-check
 description: Pre-push sanity check — what did we achieve, is it worth shipping, did we do enough QA
 ---
 
@@ -71,11 +72,8 @@ Check each item by actually verifying, not assuming. Mark `[x]` PASS or `[ ]` SK
 
 - If tests fail or secrets are exposed, verdict is **Not yet** regardless of everything else.
 - If the work is incomplete (TODO comments, placeholder logic, half-implemented features), say so directly.
-- Don't inflate significance to make the work feel more important than it is.
 - If you didn't actually run tests or build, mark those items SKIPPED — don't pretend.
 
 ---
 
-Target: $ARGUMENTS
-
-If no target specified, check the current branch against the default branch.
+Resolve the target: the branch name if the user named one, else the current branch.

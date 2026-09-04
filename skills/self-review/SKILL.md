@@ -1,6 +1,6 @@
 ---
 name: self-review
-description: Review all changes made this session for mistakes, missed requirements, and regressions. Use to review changes or verify correctness.
+description: "Review all changes made this session for mistakes, missed requirements, and regressions before wrap-up."
 ---
 
 # Self-Review
@@ -27,6 +27,6 @@ Review every change made in this session. Be thorough and honest — the goal is
 ## Rules
 
 - Review ALL changed files, not just the last one touched.
-- Do not add unrelated improvements, refactors, or style changes — only fix actual mistakes.
+- Fix only actual mistakes; leave unrelated improvements, refactors, or style changes alone.
 - If uncertain whether something is a bug, flag it to the user rather than silently changing it.
 - Run any relevant tests or validation scripts after applying fixes.

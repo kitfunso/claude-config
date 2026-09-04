@@ -5,44 +5,27 @@
 - Organize by feature/domain, not by type.
 - Functions under 50 lines. Nesting under 4 levels.
 
-## Comments (CRITICAL — Keith 2026-08-30, all projects)
+## Comments (CRITICAL)
 - One line. Two at most. A file-header block may run to 3.
 - Say WHY a non-obvious choice was made. Never say WHAT the code does.
-- Measurement notes, dates, benchmark numbers, incident history, and "we tried X
-  first" stories go in `docs/ARCHITECTURE.md` or the project `CLAUDE.md`. Never in
-  a source file. They bury the code and rot in place — nobody edits a comment when
-  they change the line under it.
-- Over 20% comment lines in a file means cut. Delete the story, keep the sentence.
+- Measurements, dates, incident history and "we tried X first" stories go to
+  `docs/ARCHITECTURE.md` or `docs/incidents.md`; a comment nobody edits rots in place.
 - Mark a deliberate shortcut with one `SHORTCUT:` line naming its ceiling and the
   upgrade path: `# SHORTCUT: global lock, per-account locks if throughput matters`.
-  Without it a knowing tradeoff reads as a bug to the next person. One line, no
-  story. (Convention from github.com/dietrichgebert/ponytail, adopted 2026-09-01.)
+  Without it a knowing tradeoff reads as a bug to the next person.
 - Applies to every language and every project, including new files.
-- Deterministic backstop: the comment-budget hook — thresholds, skips, and the
-  escape hatch live in the Hooks table in the global CLAUDE.md. (Incident: aura —
-  `docs/incidents.md`.)
 
 ## Immutability
-- Prefer immutable data structures. Return new copies with changes.
 - Python: use `@dataclass(frozen=True)`, `NamedTuple`, `tuple` over `list` for fixed collections.
 - TypeScript: use `readonly`, `as const`, spread operators.
 
 ## Error Handling
-- Handle errors explicitly at every level. Never silently swallow.
-- User-friendly messages in UI code, detailed context server-side.
-- Fail fast with clear messages at system boundaries.
+- Surface every error; a bare `except` / `catch` that swallows is the one banned
+  shape. Detailed context server-side, plain messages in the UI.
 
-## Naming
-- Functions: verb_noun (`calculate_pnl`, `fetch_prices`)
-- Booleans: is/has/should prefix (`is_valid`, `has_data`)
-- Constants: UPPER_SNAKE (`MAX_RETRIES`, `DEFAULT_TIMEOUT`)
-- No abbreviations except well-known ones (URL, API, ID)
-
-## Dependencies & Compatibility (probation — added 2026-07-31, no incident yet)
-- Prefer established, well-maintained libraries over custom implementations.
-  Hand-roll only when the dependency is heavier than the problem.
-- Internal / unshipped code: do not preserve backward compatibility. Replace
-  the old path and delete it — no shims, no deprecated re-exports, no _v2 suffixes.
-- Published surfaces keep compat: npm packages (hippo), live APIs (RamSky),
-  DB schemas, locked signal files. Breaking changes there need explicit
-  sign-off (semver major / migration path).
+## Dependencies & Compatibility
+- Internal / unshipped code: do not preserve backward compatibility. Replace the old
+  path and delete it: no shims, no deprecated re-exports, no _v2 suffixes.
+- Published surfaces keep compat: npm packages (hippo), live APIs (RamSky), DB
+  schemas, locked signal files. Breaking changes there need explicit sign-off
+  (semver major / migration path).

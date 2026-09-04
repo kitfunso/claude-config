@@ -1,6 +1,6 @@
 ---
 name: frontend-mix
-description: "Build frontend that looks like nothing the world has seen, from the tech people are actually going viral with on X in 2026: Three.js/WebGPU heroes, Gaussian splats (Spark), Paper Shaders, Canvas-UI-style GPU effects over live DOM, liquid glass, gooey/metal materials, GSAP+Lenis, native scroll-driven CSS, kinetic type, bento vs anti-grid layouts, plus the Claude design-skill stack (frontend-design, taste dials, anti-slop). It ROLLS a seeded random tech mix per variant so techs collide in new ways, builds 5 single-file HTML mockups (web/app) or one HTML-preview MVP video composition (launch/demo video via HyperFrames), then stops for human review. Taste is locked BEFORE the dice roll through the house pipeline folded in here: DESIGN.md via /design-consultation, one committed direction via /frontend-design, a /design-review gate before anything is shown, in /frontend-build order. Dice choose technology, never taste. Use whenever the user asks for a landing page, hero, app UI, mockup, 'make it look amazing', 'viral', 'wow', 'not generic', a launch video, demo video, promo, or says 'surprise me' about visuals - even if they don't name a library."
+description: "Build 5 wildly different frontend variants (Three.js, Gaussian splats, Paper Shaders, liquid glass, kinetic type: seeded random mix) or one launch-video preview, gated by locked taste and human review. Use for a landing page, hero, app UI, mockup, or 'make it look amazing / viral / wow / surprise me'."
 ---
 
 # frontend-mix

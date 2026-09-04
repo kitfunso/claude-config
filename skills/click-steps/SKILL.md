@@ -1,18 +1,18 @@
 ---
 name: click-steps
-description: Gives numbered click-by-click GUI instructions for Windows, browser, or apps. Use for 'how do I', 'where do I click', 'step by step'.
+description: Gives numbered click-by-click GUI instructions for Windows, browser, or app walkthroughs. Use for 'how do I click X' style requests.
 ---
 
 # Click Steps
 
-The user wants a walkthrough they can follow with a mouse, one action at a time. The deliverable is a numbered list of clicks — not prose, not a command line, not "go to settings and configure it".
+The user wants a walkthrough they can follow with a mouse, one action at a time. The deliverable is a numbered list of clicks, not prose, not a command line, not "go to settings and configure it".
 
-Not for tasks done in a terminal or by editing code; those get commands, not clicks.
+Terminal and code-editing tasks get a command, not a click list. Route those elsewhere.
 
 ## Before writing the steps
 
 - Pin down the exact app, and the version or edition if the layout differs across them. If the user's message doesn't say and the paths genuinely diverge, ask one short question; otherwise pick the likeliest and note the assumption in one line.
-- If you can verify the real labels, do it before writing: read the app's own source if it's in a repo you can see (page code, menu definitions), or fetch the official docs. Wrong labels are worse than no answer — the user gets stuck at step 3 and stops trusting the whole list.
+- If you can verify the real labels, do it before writing: read the app's own source if it's in a repo you can see (page code, menu definitions), or fetch the official docs. Wrong labels are worse than no answer: the user gets stuck at step 3 and stops trusting the whole list.
 - If you can't verify and a label is uncertain, still give the step, but flag it in place: "the button is named **Save** or **Apply** depending on version."
 - If any step needs admin rights, an account, a VPN, or a licence, say so before step 1. Don't let the user discover it at step 8.
 
@@ -30,7 +30,7 @@ Open with the entry point: which app or URL to open and what state to start from
 
 Close with:
 - **Verify:** what the screen should show when it worked. Make it concrete and observable.
-- **Undo:** how to reverse it — only when the change is risky and the reverse path isn't just the same steps backwards.
+- **Undo:** how to reverse it (only when the change is risky and the reverse path isn't just the same steps backwards).
 
 ## Style
 
@@ -55,4 +55,4 @@ Start in Outlook (classic desktop app), any folder.
 5. Untick **Display a Desktop Alert**.
 6. Click **OK** (bottom-right). The dialog closes.
 
-**Verify:** send yourself a test email — no popup appears. New-mail sounds are a separate tick box in the same section.
+**Verify:** send yourself a test email, no popup appears. New-mail sounds are a separate tick box in the same section.

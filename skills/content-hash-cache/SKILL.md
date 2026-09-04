@@ -1,6 +1,6 @@
 ---
 name: content-hash-cache
-description: Caches expensive file operations by SHA-256 content hash instead of path. Use for pipelines processing files needing caching.
+description: Caches expensive file operations by SHA-256 content hash instead of path. Use when a pipeline needs to cache file-processing results.
 ---
 
 # Content Hash Cache Pattern
@@ -12,7 +12,6 @@ Cache by **content** (SHA-256), not by path. Rename = cache hit. Content change 
 ```python
 import hashlib
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -23,13 +22,6 @@ def compute_file_hash(path: Path) -> str:
         while chunk := f.read(65536):  # 64KB chunks
             sha256.update(chunk)
     return sha256.hexdigest()
-
-
-@dataclass(frozen=True)
-class CacheEntry:
-    file_hash: str
-    source_path: str
-    result: Any  # The cached computation result
 
 
 def extract_with_cache(
@@ -54,7 +46,7 @@ def extract_with_cache(
         except (json.JSONDecodeError, KeyError):
             pass  # Corrupted cache, recompute
 
-    # Cache miss — compute and store
+    # Cache miss: compute and store
     result = process_fn(file_path)
 
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -65,10 +57,9 @@ def extract_with_cache(
 ```
 
 ## Design Decisions
-- **O(1) lookup**: `{hash}.json` — no index file to maintain or corrupt
-- **Corruption tolerance**: Returns `None` on bad cache, recomputes silently
+- **O(1) lookup**: `{hash}.json`, no index file to maintain or corrupt
+- **Corruption tolerance**: a bad cache file is skipped, not raised. The value is recomputed via `process_fn` and returned normally.
 - **Lazy directory creation**: Cache dir created only when first entry is written
-- **Frozen dataclass**: Immutable cache entries prevent accidental mutation
 - **Pure function wrapping**: `process_fn` stays pure; caching is a separate concern
 
 ## When to Use

@@ -1,6 +1,6 @@
 ---
 name: strategic-compact
-description: Guide for using /compact at phase transitions - research to planning to implementation - or when context is large or stale.
+description: Compact at phase transitions (research to planning, planning to implementation, milestone done), not by token count.
 ---
 
 # Strategic Compact

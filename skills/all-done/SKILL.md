@@ -1,6 +1,6 @@
 ---
 name: all-done
-description: Answer a completion challenge with YES or NO backed by fresh evidence. Use for 'all done?', 'are you sure?', 'is it finished?'.
+description: Answer a completion challenge with YES or NO backed by fresh evidence. Use when asked 'all done?' or similar completion checks.
 ---
 
 # All Done?
@@ -29,7 +29,7 @@ Run these in one parallel batch. Skip a line only when the project has no such t
    with an unchanged caller is a NO.
 
 Scale the work to the change. A one-line edit needs step 1, 2 and 5. A feature
-needs all six. Do not turn a small question into an audit.
+needs all six.
 
 ## Answer format
 
@@ -54,9 +54,9 @@ List every defect you found. Not the worst one. All of them.
 
 ## Rules
 
-- Do not start fixing. He asked a question. Answer it, then wait. If he says go, fix
-  every item in one pass.
-- Never soften a NO into a YES with caveats. Caveats are a NO.
+- Answer the question and wait. Fix only after he says go, then fix every item in
+  one pass.
+- Caveats are a NO. Do not soften one into a YES.
 - If you cannot run a check (no test suite, no network, a tool failed), say NO and
   name the check you could not run.
 - Quote real output. "Tests pass" without a number is not evidence.
