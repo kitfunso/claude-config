@@ -11,13 +11,13 @@ Strict structural review for a body of markdown. Combination of
 aihero.dev's `/improve-codebase-architecture` (survey → deletion test →
 candidate cards → grilling). Docs rot like code: facts get two homes and
 drift, stories bury rules, indexes restate content, and always-loaded files
-tax every session. Do not collect nits. Hunt for "doc judo" moves — restructurings
+tax every session. Do not collect nits. Hunt for "doc judo" moves: restructurings
 that keep every load-bearing fact while making the corpus dramatically
 smaller, flatter, and harder to contradict.
 
 ## Scope and modes
 
-- **Survey mode (default):** the whole corpus the user names — a `.claude/`
+- **Survey mode (default):** the whole corpus the user names: a `.claude/`
   config tree, a `docs/` dir, a repo's markdown, a skill fleet.
 - **Diff mode:** when the user names a branch, PR, or file, review only that
   change against the standards below, thermo-nuclear style.
@@ -37,17 +37,17 @@ without opening three other files; an index that is only pointers; a story
 that lives in an archive nobody loads. A **shallow** doc has a surface as wide
 as its content. The three shallowness forms to hunt:
 
-1. **Split meaning** — one policy smeared across files so the real rule lives
+1. **Split meaning:** one policy smeared across files so the real rule lives
    in the orchestration ("read A, unless B, see priority order in C").
-2. **Boundary leaks** — machine-specific facts in a shared doc, project facts
+2. **Boundary leaks:** machine-specific facts in a shared doc, project facts
    in a global doc, incident history in a rulebook, content in an index.
-3. **Five-file concepts** — a thing you cannot understand without opening five
+3. **Five-file concepts:** a thing you cannot understand without opening five
    files that point at each other.
 
 ## The deletion test
 
 Every candidate must pass: **if this file or section were deleted or merged,
-would its job concentrate into one existing home — or would readers lose
+would its job concentrate into one existing home, or would readers lose
 something no other file provides?** Only "concentrates" qualifies. This kills
 generic cleanup advice before it reaches the report.
 
@@ -57,56 +57,42 @@ generic cleanup advice before it reaches the report.
    meta-rules disappear. If a precedence table exists to referee overlapping
    rules, the judo move is merging the rules, not polishing the table.
 1. **One home per fact.** The same rule, path, count, or convention stated in
-   two files is a drift bomb — one copy will rot silently. Flag every
+   two files is a drift bomb; one copy will rot silently. Flag every
    duplicate; name the surviving home.
 2. **Size gates.** A doc drifting past ~300-400 lines is a decompose-or-cut
    candidate. An always-loaded corpus has a token budget; state the current
-   total and the target. An index entry is one line — an index holding
+   total and the target. An index entry is one line; an index holding
    paragraphs has become a second copy of the content.
 3. **No stories in source.** Dates, incident history, benchmark numbers, and
    "we tried X first" belong in an archive file (`docs/incidents.md`,
-   ADRs) — never in an always-loaded rule. Keep the one-line rule, move
+   ADRs), never in an always-loaded rule. Keep the one-line rule, move
    the story. (Same law as the Comments rule in coding-standards.)
 4. **Contradictions are severity-one.** Two docs disagreeing on a fact is
-   worse than either being missing — the reader cannot tell which is live.
+   worse than either being missing; the reader cannot tell which is live.
    Stale dated claims ("as of", versions, model names, counts) are
    contradictions in waiting: verify or delete them.
 5. **Verifier over prose.** Where a hook, lint, or CI check enforces a rule,
    shrink the prose to one line naming the verifier. Prose is taxed every
    load; the hook is free.
 6. **No wrapper docs.** Files that only point at other files, headers over a
-   single bullet, meta-sections about how to read the sections — indirection
+   single bullet, meta-sections about how to read the sections: indirection
    must buy clarity or die.
 7. **Scoped exceptions, not scattered ones.** "Does NOT fire on" patches,
    per-file carve-outs, and special-case notes bolted on after the fact are
    spaghetti growth. Reframe the rule so the exceptions disappear.
 
-## What to flag aggressively
+## Standards, symptoms, and moves
 
-- A fact, rule, or path with two or more homes — especially across
-  always-loaded files.
-- A rulebook that needed an internal priority system to referee its own
-  overlapping sections.
-- Incident narratives inside rules that fire every session.
-- Indexes whose entries have grown into paragraphs.
-- Dated claims that no longer match the system they describe.
-- Docs whose job a deterministic check already does.
-- A concept that takes five files to understand.
-- A shared doc carrying machine- or project-specific facts.
-- Merges that move text around without reducing the number of places a
-  reader must look.
-
-## Preferred moves
-
-- Merge overlapping sections into one and delete the referee.
-- Move the story to the archive; keep the sentence.
-- Collapse an index entry to one line; the detail already lives in the file
-  it points to.
-- Replace enforced prose with one line naming the hook.
-- Relocate the fact to its owning layer (machine → local file, project →
-  project CLAUDE.md, shared → the shared repo file).
-- Delete the wrapper file; point the one reference at the real home.
-- Fix or delete every stale dated claim in the same pass.
+| Standard | Symptom to flag | Preferred move |
+|---|---|---|
+| 0. Be ambitious | A rulebook needed an internal priority system to referee its own overlapping sections; a merge shuffled text without reducing how many places a reader must look | Merge overlapping sections into one and delete the referee |
+| 1. One home per fact | A fact, rule, or path with two or more homes, especially across always-loaded files; a shared doc carrying machine- or project-specific facts | Relocate the fact to its owning layer (machine to local file, project to project CLAUDE.md, shared to the shared repo file) |
+| 2. Size gates | Indexes whose entries have grown into paragraphs | Collapse an index entry to one line; the detail already lives in the file it points to |
+| 3. No stories in source | Incident narratives inside rules that fire every session | Move the story to the archive; keep the sentence |
+| 4. Contradictions are severity-one | Dated claims that no longer match the system they describe | Fix or delete every stale dated claim in the same pass |
+| 5. Verifier over prose | Docs whose job a deterministic check already does | Replace enforced prose with one line naming the hook |
+| 6. No wrapper docs | A concept that takes five files to understand | Delete the wrapper file; point the one reference at the real home |
+| 7. Scoped exceptions, not scattered ones | "Does NOT fire on" patches and per-file carve-outs bolted on after the fact | Reframe the rule so the exceptions disappear |
 
 ## Report
 
@@ -129,7 +115,7 @@ total, duplicate-fact count). Then one card per candidate:
 | **Speculative** | Surfaced for completeness; safe to ignore |
 
 End with one top recommendation. Then **halt and ask which candidate to
-explore**. One candidate per session — a full-corpus rewrite in one pass is
+explore**. One candidate per session; a full-corpus rewrite in one pass is
 how load-bearing lines get lost.
 
 ## Grilling session
@@ -142,7 +128,7 @@ For the chosen candidate, pressure-test before any edit is proposed:
   destination. A fact with no destination blocks the move.
 - **Hidden coupling:** who else loads this file (hooks, tools, other boxes,
   CI)? A shared repo file changes on every machine that pulls it.
-- **Deepened shape:** write the after-outline — headings and one-liners only.
+- **Deepened shape:** write the after-outline: headings and one-liners only.
 
 The output of the grilling is a decision, not an edit.
 
@@ -158,11 +144,11 @@ uncommitted unless asked.
 
 ## Tone and output bar
 
-Direct, serious, demanding — never rude. Do not soften a structural problem
+Direct, serious, demanding, never rude. Do not soften a structural problem
 into a mild suggestion. Prioritize: contradictions and duplicate homes, then
 missed judo moves, then boundary leaks, then size, then style. A small number
 of high-conviction candidates beats a long list of cosmetic notes. Do not
 approve a docs change merely because the words are accurate: no new second
 home for an existing fact, no new story in an always-loaded file, no new
-wrapper, no size gate crossed without a stated reason — treat these as
+wrapper, no size gate crossed without a stated reason; treat these as
 presumptive blockers unless justified.

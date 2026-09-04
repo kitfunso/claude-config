@@ -11,11 +11,11 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 
 ### DISCOVER
 - Reference 2-4 UI comps or visual references before sketching (per `workflow_design_md_pipeline` memory: lock taste first)
-- `/design-shotgun` if no taste anchor exists — generates multiple variants for comparison
+- `/design-shotgun` if no taste anchor exists: generates multiple variants for comparison
 - Read `MEMORY.md` voice samples if any prose copy will be involved
 
 ### SCAFFOLD
-- **`/design-consultation` REQUIRED** — produces `DESIGN.md` covering aesthetic, typography, color, layout, spacing, motion
+- **`/design-consultation` REQUIRED**: produces `DESIGN.md` covering aesthetic, typography, color, layout, spacing, motion
 - `DESIGN.md` is a required artifact alongside PRD/ARCH/CLAUDE/PLAN
 - For existing sites: `/plan-design-review` instead to infer the system
 
@@ -32,18 +32,18 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 - Build section-by-section or component-by-component against the locked DESIGN.md reference
 - Component sources: shadcn + tweakcn (primitives), magicui + aceternity + 21st.dev (effects)
 - Pattern research: mobbin, pageflows
-- No em dashes in UI text (per `feedback_no_em_dashes` — use hyphens/colons/commas)
+- No em dashes in UI text (per `feedback_no_em_dashes`: use hyphens/colons/commas)
 
 ### VERIFY
-- **`/qa` REQUIRED** — browser QA + auto-fix loop
-- **`/smoke-test` REQUIRED** — Playwright smoke tests
+- **`/qa` REQUIRED**: browser QA + auto-fix loop
+- **`/smoke-test` REQUIRED**: Playwright smoke tests
 - Test on actual browser, not just headless
 - Responsive check at 3 breakpoints (mobile/tablet/desktop)
 - `/devex-review` if dev-facing
 - `/browse` for targeted assertions
 
 ### REVIEW
-- **`/design-review` REQUIRED** — visual QA, AI slop check, hierarchy, spacing, motion
+- **`/design-review` REQUIRED**: visual QA, AI slop check, hierarchy, spacing, motion
 - Pattern check against locked DESIGN.md
 - Component diff vs DESIGN.md tokens (colors, spacing, typography)
 
@@ -54,7 +54,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 
 ### DEPLOY
 - **Lighthouse REQUIRED post-deploy** (per project memory: "run lighthouse after deploys")
-- Lighthouse score ≥ 90 mobile per project memory
+- Lighthouse score >= 90 mobile per project memory
 - `/canary` for console errors, perf regressions, page failures
 - `/smoke-test` against production URL
 
@@ -62,25 +62,24 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 - Component patterns captured for reuse
 - Variant patterns added to DESIGN.md if new
 
-## Tools — UI build pipeline
+## Tools: UI build pipeline
 
-- `/frontend-build` — production builds, bundle analysis
-- `/frontend-design` — generative component design
-- `/design-html` — Pretext-native HTML/CSS finalization
-- `/design-consultation` — DESIGN.md authoring
-- `/design-shotgun` — variant exploration
-- `/design-review` — visual QA + iterative fixes
-- `/plan-design-review` — pre-implementation design plan critique
-- `/qa` — browser QA loop
-- `/qa-only` — browser QA report only
-- `/smoke-test` — Playwright tests
-- `/browse` — headless browser commands (~100ms each)
-- `/setup-browser-cookies` — auth-required testing
+- `/frontend-build`: production builds, bundle analysis
+- `/frontend-design`: generative component design
+- `/design-html`: Pretext-native HTML/CSS finalization
+- `/design-consultation`: DESIGN.md authoring
+- `/design-shotgun`: variant exploration
+- `/design-review`: visual QA + iterative fixes
+- `/plan-design-review`: pre-implementation design plan critique
+- `/qa`: browser QA loop
+- `/qa-only`: browser QA report only
+- `/smoke-test`: Playwright tests
+- `/browse`: headless browser commands (~100ms each)
+- `/setup-browser-cookies`: auth-required testing
 
 ### Component sources
-- shadcn/ui + tweakcn for primitives
-- magicui, aceternity, 21st.dev for effects
-- mobbin, pageflows for pattern research
+
+Component sources: see frontend-build Stage 4.
 
 ### Performance
 - Lighthouse CI in pipeline
@@ -103,4 +102,4 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 
 ## Per-project notes
 
-If working in `shiny`, `phzse`, `mure`, `resona`, `luminus`, `turntables`, `boring-maths`: these are existing UI projects — read their existing design tokens / DESIGN.md before scaffolding new pages.
+If working in `shiny`, `phzse`, `mure`, `resona`, `luminus`, `turntables`, `boring-maths`: these are existing UI projects, read their existing design tokens / DESIGN.md before scaffolding new pages.

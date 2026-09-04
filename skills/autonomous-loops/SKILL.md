@@ -1,6 +1,6 @@
 ---
 name: autonomous-loops
-description: "Patterns for autonomous agent loops: sequential pipelines, parallel generation, PR loops, DAG orchestration. Use for CI/CD workflows."
+description: "Architect an autonomous claude -p loop: sequential, parallel, PR-fix, or DAG orchestration. Use for CI/CD automation design."
 ---
 
 # Autonomous Loop Patterns
@@ -60,16 +60,6 @@ Most sophisticated: decompose spec into tiered work units with dependency DAG.
 - Merge queue with eviction recovery
 
 **Use when:** Large features with multiple interdependent components.
-
-## Decision Flow
-
-```
-Need strict CI/PR control?      → Continuous PR loop
-Need RFC decomposition?          → DAG orchestration
-Need exploratory parallel gen?   → Parallel generation
-Simple linear task?              → Sequential pipeline
-Any implementation task?         → Always add de-sloppify pass
-```
 
 ## Failure Modes to Watch
 - Loop churn without measurable progress → freeze, audit, reduce scope

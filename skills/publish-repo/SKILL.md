@@ -1,6 +1,6 @@
 ---
 name: publish-repo
-description: "Ship an npm release: bump version, update docs, build, test, publish, tag, push. Use for 'publish', 'release', 'ship the package'."
+description: "Ship an npm release end to end: version bump, docs, build, test, publish, tag, push. Use when asked to ship this package."
 ---
 
 # Publish Repo
@@ -38,7 +38,7 @@ Check the current version from `package.json`. Determine the bump type:
 
 ### 2. Bump version in ALL manifests
 
-**NEVER use `npm version` — it only bumps `package.json` and `package-lock.json`.** Always bump manually with Edit to catch every manifest.
+**NEVER use `npm version`: it only bumps `package.json` and `package-lock.json`.** Always bump manually with Edit to catch every manifest.
 
 Search for the old version string across the repo:
 
@@ -54,9 +54,7 @@ Typical files to bump (edit each one):
 
 After bumping all manifests, run `npm install` to sync `package-lock.json` to the new version.
 
-**Verify all manifests match** after bumping — grep again and confirm zero hits for the old version (excluding package-lock.json and node_modules).
-
-Update ALL of them. Do NOT leave any behind. This has caused version desync bugs before.
+**Verify all manifests match** after bumping, grep again and confirm zero hits for the old version (excluding package-lock.json and node_modules).
 
 ### 3. Update CHANGELOG.md
 
@@ -81,7 +79,7 @@ grep -c "What's new in v" README.md
 
 If count > 0, adding a new "What's new in vNEW" section is **required**, not optional. Insert immediately above the most recent entry. Use 2-5 bullet points that summarize user-visible behavior, not internal refactors.
 
-**Critical: do not describe features that were reverted in this session.** If you or the user removed functionality between releases, the release notes must reflect what actually shipped, not what was prototyped. Before writing the section, scan the session history for reverts / checkouts / branch deletions — if any named feature was removed, it must not appear in release notes.
+**Critical: do not describe features that were reverted in this session.** If you or the user removed functionality between releases, the release notes must reflect what actually shipped, not what was prototyped. Before writing the section, scan the session history for reverts / checkouts / branch deletions; if any named feature was removed, it must not appear in release notes.
 
 After editing, verify the section exists:
 
@@ -152,7 +150,7 @@ git push origin vX.Y.Z
 
 ### 11. Create GitHub Release (MANDATORY if `gh` is available and the repo has a GitHub remote)
 
-The CHANGELOG entry is the source of truth — extract it and ship it as the release body so anyone landing on the GitHub Releases page sees the same notes that ship in the repo.
+The CHANGELOG entry is the source of truth: extract it and ship it as the release body so anyone landing on the GitHub Releases page sees the same notes that ship in the repo.
 
 First, confirm `gh` is installed and the repo has a GitHub remote:
 
@@ -160,7 +158,7 @@ First, confirm `gh` is installed and the repo has a GitHub remote:
 gh release list --limit 1 2>/dev/null && git remote -v | grep -i github
 ```
 
-If neither command produces output, the repo has no GitHub remote — skip this step and note it in the final report. Otherwise:
+If neither command produces output, the repo has no GitHub remote, skip this step and note it in the final report. Otherwise:
 
 Extract the new version's CHANGELOG section (everything between `## X.Y.Z` and the next `## ` heading):
 
@@ -169,20 +167,20 @@ awk '/^## X\.Y\.Z/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md > /tmp/vX.Y.Z
 wc -l /tmp/vX.Y.Z-notes.md
 ```
 
-If the file is empty or only a few lines, the CHANGELOG section is missing — go fix Step 3 first.
+If the file is empty or only a few lines, the CHANGELOG section is missing, go fix Step 3 first.
 
 Create the release with a one-line headline title that captures the user-visible win, and the extracted CHANGELOG body:
 
 ```bash
 gh release create vX.Y.Z \
-  --title "vX.Y.Z — <one-line headline>" \
+  --title "vX.Y.Z: <one-line headline>" \
   --notes-file /tmp/vX.Y.Z-notes.md \
   --latest
 ```
 
 Use `--latest` only if this version is the newest stable. If shipping a backport / hotfix to an older line, omit `--latest` so the highest semver stays the GitHub default. Add `--prerelease` for alpha/beta/rc tags.
 
-**Headline format:** start with the version, then a brief user-visible reason ("vX.Y.Z — fixed Y leak", "vX.Y.Z — added Z transport"). Don't paraphrase the CHANGELOG body in the title; the body has the detail.
+**Headline format:** start with the version, then a brief user-visible reason ("vX.Y.Z: fixed Y leak", "vX.Y.Z: added Z transport"). Don't paraphrase the CHANGELOG body in the title; the body has the detail.
 
 **Verify the release landed:**
 
@@ -228,19 +226,13 @@ grep -rn '"version".*"OLD_VERSION"' --include='*.json' . | grep -v node_modules 
 gh release view vX.Y.Z --json tagName,name,isLatest 2>&1 | head -5
 ```
 
-If CHANGELOG or README missed the new version, create a follow-up docs commit IMMEDIATELY — do not defer. The user should never have to point out missing release notes.
+If CHANGELOG or README missed the new version, create a follow-up docs commit IMMEDIATELY. Do not defer. The user should never have to point out missing release notes.
 
-If `gh release view` returns "release not found", run Step 11 now. The release notes are the user-facing artifact most likely to be missed because it's the only step that lives outside the local repo — never skip it on the assumption "the tag is enough."
+If `gh release view` returns "release not found", run Step 11 now. The release notes are the user-facing artifact most likely to be missed because it's the only step that lives outside the local repo; never skip it on the assumption "the tag is enough."
 
 If release notes describe features the user rejected or reverted during the session, rewrite them before pushing the commit. Shipped software must match published description.
 
 ## Rules
 
-- Never publish without passing tests.
-- **NEVER use `npm version` to bump.** It misses plugin manifests and causes version desync. Always edit each file manually.
-- Never skip the version bump in any manifest. Grep to find them all.
-- After bumping, verify with grep that no manifest still has the old version.
-- If `package-lock.json` is stale, run `npm install` to regenerate it before committing.
 - Do not amend previous commits. Always create new commits.
-- **NEVER ship a release without creating the GitHub Release entry** (Step 11) when `gh` and a GitHub remote exist. The git tag alone is not the release artifact — the GitHub Release page is. Skipping it makes the CHANGELOG invisible to anyone browsing the repo's Releases page.
 - Report what was published at the end: package name, version, npm URL, tag, **and GitHub Release URL**.

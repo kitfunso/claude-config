@@ -5,7 +5,7 @@ description: Audits a codebase against engineering, security, and quality standa
 
 # Standards Check
 
-You are performing a comprehensive engineering audit. The goal is to give the user an honest, calibrated assessment of their codebase across six dimensions, with specific evidence and actionable next steps. Not a rubber stamp, not a nitpick festival. A senior engineer's honest read.
+You are performing a comprehensive engineering audit. Give the user an honest, calibrated, senior-engineer assessment of their codebase across six dimensions, with specific evidence and actionable next steps.
 
 ## How to run the audit
 
@@ -126,25 +126,19 @@ Use this exact structure:
 
 ### Code Quality (X/10)
 
-- [SEVERITY] file:line — description of finding
+- [SEVERITY] file:line: description of finding
 - ...
 
 ### Security (X/10)
 
-- [SEVERITY] file:line — description of finding
+- [SEVERITY] file:line: description of finding
 - ...
 
 [...repeat for each dimension...]
 
 ## Priority Actions
 
-1. [Most impactful fix, referencing specific finding]
-2. [Second most impactful]
-3. [Third most impactful]
+1-3. [Fix, ranked by impact (3-5 items, most impactful first, concrete enough to start on)]
 ```
 
 The **Overall** score is the weighted average: Security gets 1.5x weight (because security failures have outsized consequences), all others 1x.
-
-## Priority Actions
-
-End with 3-5 prioritized actions. Rank by impact: a critical security finding outranks a code style issue. Each action should reference the specific finding and be concrete enough that someone could start working on it immediately.

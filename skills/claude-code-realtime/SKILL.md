@@ -1,8 +1,7 @@
 ---
 name: claude-code-realtime
-description: Bridges Claude Code to another agent, script, or workflow in realtime. JSONL mailbox protocol and helper scripts for `claude -p`.
-metadata:
-  short-description: Realtime Claude Code mailbox bridge
+description: Bridge Claude Code to another agent, script, or workflow via a JSONL mailbox for `claude -p`.
+disable-model-invocation: true
 ---
 
 # Claude Code Realtime

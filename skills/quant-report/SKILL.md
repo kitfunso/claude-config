@@ -1,11 +1,11 @@
 ---
 name: quant-report
-description: Use when presenting validation results, backtest metrics, model comparisons, or pipeline status. Formats output in structured templates.
+description: "Presenting validation results, backtest metrics, model comparisons, pipeline status, or current signals: use the matching structured template."
 ---
 
 # Quantamental Report Formats
 
-When presenting results, ALWAYS use the matching template below. Do not free-form these outputs.
+When presenting results, always use the matching template below.
 
 ## Template 1: Validation Report
 

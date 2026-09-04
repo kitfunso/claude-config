@@ -1,12 +1,7 @@
 ---
-name: Git Commit Helper
-description: Generate descriptive commit messages from git diffs. Use for writing commit messages or reviewing staged changes.
-hooks:
-  PostToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "echo \"[$(date)] Git Commit Helper: Analyzed git diff for commit message\" >> ~/.claude/git-commit-helper.log"
+name: git-commit-helper
+description: Generate descriptive commit messages from git diffs and review staged changes before committing (message quality only; /commit does the stage-and-push).
+disable-model-invocation: true
 ---
 
 # Git Commit Helper
@@ -25,10 +20,8 @@ git diff --staged
 
 ## Commit message format
 
-Follow conventional commits format:
-
 ```
-<type>(<scope>): <description>
+<type>: <description>
 
 [optional body]
 
@@ -39,17 +32,18 @@ Follow conventional commits format:
 
 - **feat**: New feature
 - **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, missing semicolons)
 - **refactor**: Code refactoring
+- **docs**: Documentation changes
 - **test**: Adding or updating tests
 - **chore**: Maintenance tasks
+- **perf**: Performance improvement
+- **ci**: CI/CD changes
 
 ### Examples
 
 **Feature commit:**
 ```
-feat(auth): add JWT authentication
+feat: add JWT authentication
 
 Implement JWT-based authentication system with:
 - Login endpoint with token generation
@@ -59,7 +53,7 @@ Implement JWT-based authentication system with:
 
 **Bug fix:**
 ```
-fix(api): handle null values in user profile
+fix: handle null values in user profile
 
 Prevent crashes when user profile fields are null.
 Add null checks before accessing nested properties.
@@ -67,28 +61,10 @@ Add null checks before accessing nested properties.
 
 **Refactor:**
 ```
-refactor(database): simplify query builder
+refactor: simplify query builder
 
 Extract common query patterns into reusable functions.
 Reduce code duplication in database layer.
-```
-
-## Analyzing changes
-
-Review what's being committed:
-
-```bash
-# Show files changed
-git status
-
-# Show detailed changes
-git diff --staged
-
-# Show statistics
-git diff --staged --stat
-
-# Show changes for specific file
-git diff --staged path/to/file
 ```
 
 ## Commit message guidelines
@@ -111,7 +87,7 @@ git diff --staged path/to/file
 When committing multiple related changes:
 
 ```
-refactor(core): restructure authentication module
+refactor: restructure authentication module
 
 - Move auth logic from controllers to service layer
 - Extract validation into separate validators
@@ -121,26 +97,12 @@ refactor(core): restructure authentication module
 Breaking change: Auth service now requires config object
 ```
 
-## Scope examples
-
-**Frontend:**
-- `feat(ui): add loading spinner to dashboard`
-- `fix(form): validate email format`
-
-**Backend:**
-- `feat(api): add user profile endpoint`
-- `fix(db): resolve connection pool leak`
-
-**Infrastructure:**
-- `chore(ci): update Node version to 20`
-- `feat(docker): add multi-stage build`
-
 ## Breaking changes
 
 Indicate breaking changes clearly:
 
 ```
-feat(api)!: restructure API response format
+feat!: restructure API response format
 
 BREAKING CHANGE: All API responses now follow JSON:API spec
 
@@ -157,10 +119,9 @@ Migration guide: Update client code to handle new response structure
 
 1. **Review changes**: `git diff --staged`
 2. **Identify type**: Is it feat, fix, refactor, etc.?
-3. **Determine scope**: What part of the codebase?
-4. **Write summary**: Brief, imperative description
-5. **Add body**: Explain why and what impact
-6. **Note breaking changes**: If applicable
+3. **Write summary**: Brief, imperative description
+4. **Add body**: Explain why and what impact
+5. **Note breaking changes**: If applicable
 
 ## Interactive commit helper
 
@@ -174,10 +135,12 @@ git add -p
 git diff --staged
 
 # Commit with message
-git commit -m "type(scope): description"
+git commit -m "type: description"
 ```
 
 ## Amending commits
+
+Only when the user explicitly asks to amend: otherwise create a new commit (global rule).
 
 Fix the last commit message:
 
@@ -192,16 +155,15 @@ git commit --amend --no-edit
 
 ## Best practices
 
-1. **Atomic commits** - One logical change per commit
-2. **Test before commit** - Ensure code works
-3. **Reference issues** - Include issue numbers if applicable
-4. **Keep it focused** - Don't mix unrelated changes
-5. **Write for humans** - Future you will read this
+1. **Atomic commits**: One logical change per commit
+2. **Test before commit**: Ensure code works
+3. **Reference issues**: Include issue numbers if applicable
+4. **Keep it focused**: Don't mix unrelated changes
+5. **Write for humans**: Future you will read this
 
 ## Commit message checklist
 
 - [ ] Type is appropriate (feat/fix/docs/etc.)
-- [ ] Scope is specific and clear
 - [ ] Summary is under 50 characters
 - [ ] Summary uses imperative mood
 - [ ] Body explains WHY not just WHAT

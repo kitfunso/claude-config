@@ -1,11 +1,6 @@
----
+﻿---
 name: roll-check
-description: |
-  Check and fix futures contract roll adjustments. Detects when active contracts
-  have rolled since signal entry, adjusts signal_price by the roll spread to
-  maintain PnL continuity, and updates Supabase + local files. Use when asked to
-  "check rolls", "contract roll", "roll check", "roll adjustment", or when
-  investigating price jumps on active positions.
+description: "Check and fix futures contract roll adjustments. Use when asked to \"check rolls\", \"contract roll\", \"roll check\", \"roll adjustment\", or when investigating price jumps on active positions."
 ---
 
 # Contract Roll Check
@@ -100,8 +95,8 @@ All rolls verified.
 
 ## Arguments
 
-- `--force` — Skip user confirmation, apply immediately after dry run
-- No arguments — Interactive mode with confirmation prompt
+- `--force` - Skip user confirmation, apply immediately after dry run
+- No arguments - Interactive mode with confirmation prompt
 
 ## Safety Notes
 

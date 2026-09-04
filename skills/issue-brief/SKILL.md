@@ -1,31 +1,24 @@
 ---
 name: issue-brief
-description: Fixed plain-English format for reporting any issue, blocker, or side-discovery. Use when telling the user an issue or what's left.
+description: Fixed plain-English format for reporting any issue, blocker, or leftover work to the user.
 ---
 
 # Issue Brief
 
-Why this exists (user directive 2026-08-13, verbatim complaint): "this keeps
-happening where you point out something completely unrelated to my ask and
-accumulate multiple small issues and I'm blindsided by it and do not
-understand why any of them happens."
-
-The failure mode: during a task, side-issues get discovered, half-mentioned
-in passing with project jargon, and pile up. The user then meets them later
-as a wall of unexplained problems.
+Exists because side-issues surfaced mid-task used to pile up and blindside the user later (2026-08-13 directive).
 
 ## The rules
 
 1. **One brief per issue.** Never mention an issue in passing. If it is
    worth saying, it gets the full template below. If it is not worth the
-   template, do not raise it — fix it silently or drop it.
+   template, do not raise it; fix it silently or drop it.
 2. **Plain English first.** Assume the reader did NOT follow the session.
    Define every term of art in parentheses on first use ("medoid (the one
    representative day we picked for the month)"). No acronyms without
    expansion. No referring to internal codenames as if they explain
    themselves.
 3. **Numbers carry meaning.** Never state a number without saying what it
-   means for the user ("$0.25/bbl — about the bid/offer noise on a diff").
+   means for the user ("$0.25/bbl, about the bid/offer noise on a diff").
 4. **Keep a running open-issues list** during any long task. When the user
    asks "what's left / remaining / anything else?", answer FROM that list,
    every item in short-brief form, including the ones you hoped to handle
@@ -55,5 +48,5 @@ as a wall of unexplained problems.
 - Chat replies, reports, and summaries. Applies to newly found problems,
   failed checks, degraded results, deferred work, and anything the user
   will later discover changed.
-- Does NOT apply to routine progress ("tests green", "deployed") — only to
+- Does NOT apply to routine progress ("tests green", "deployed"). It applies only to
   things that are wrong, risky, deferred, or surprising.

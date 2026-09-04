@@ -1,6 +1,6 @@
 ---
 name: quant-ml-protocol
-description: Rigorous protocol for predictive models on time-series/financial data. Use when building, validating, or promoting a forecasting model.
+description: "Building, validating, or promoting a time-series/financial forecasting model: the rigorous nulls/holdout/selection-honesty protocol (model-improve defers here for non-Quantamental work)."
 ---
 
 # Quant ML Protocol
@@ -52,6 +52,9 @@ Instantiate `templates/EXPERIMENT-PROTOCOL.md` into the project as
    The primary t uses autocorrelation-robust errors (Newey-West or a
    stationary block bootstrap); a plain-SE t on overlapping or
    autocorrelated returns is a diagnostic, never the verdict number.
+   Stage 0 is done when every `<...>` placeholder in
+   docs/EXPERIMENT-PROTOCOL.md sections 0-3 is a real number or an
+   explicit N/A, not before.
 
 ## Stage 1 — data honesty
 
@@ -152,12 +155,11 @@ one surface:
 4. All caution flags, openly (a null that fails is demoted to a flag only if
    the declared decision rule says so — and it rides every future report).
 5. Then ask the user the steering bank's gate questions
-   (`references/steering-bank.md` §Gate) and WAIT. Explicitly invite domain
-   knowledge the model cannot have: "what market structure, regime change,
-   or venue mechanics could explain or refute this?"
+   (`references/steering-bank.md` §Gate) and WAIT.
 
-No promotion without explicit user sign-off. Being unattended never
-authorises skipping the gate — ship the surface as the deliverable instead.
+Promotion requires explicit user sign-off, every time. Being unattended
+never authorises skipping the gate — ship the surface as the deliverable
+instead.
 
 ## Stage 7 — prospective discipline (the real judge)
 
@@ -183,10 +185,7 @@ authorises skipping the gate — ship the surface as the deliverable instead.
 
 ## Cadence of self-audits
 
-Run the Stage 5.6 self-audit: before every verdict, after every campaign,
-and whenever the user pushes back on ANY claim (verify first, never defend
-first). When the same kind of fix appears three times, stop and fix the
-producer, not a fourth instance.
+Run the Stage 5.6 self-audit: before every verdict, and after every campaign.
 
 ## References
 
@@ -195,3 +194,8 @@ producer, not a fourth instance.
   genericized war stories behind every rule above.
 - `templates/EXPERIMENT-PROTOCOL.md` — the protocol file to instantiate at
   Stage 0.
+- `references/physical-diff-addendum.md` — READ when the target is a
+  physical differential to a PRA benchmark (grade diffs, OSP diffs, regional
+  spreads): regime register, reset-clean targets, min-operator benchmarks,
+  structure decomposition, physical expression cost, domain baselines,
+  non-statistical tripwires.

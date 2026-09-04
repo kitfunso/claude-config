@@ -1,10 +1,12 @@
 ---
-description: Pre-ship checklist — audit security, DB, deployment, and code before production
+name: sinking-ship
+description: "Pre-production checklist: verify security, database, deployment, and code readiness before shipping."
+disable-model-invocation: true
 ---
 
-Run the **SINKING SHIP checklist** against the current codebase/project. This is a pre-production audit. Don't take anyone's word for it — verify each item by reading code, config, and infra.
+Run the **SINKING SHIP checklist** against the current codebase/project. This is a pre-production audit. Verify each item yourself by reading code, config, and infra; don't take anyone's word for it.
 
-For each item: mark `[x] PASS`, `[ ] FAIL`, or `[?] UNKNOWN` and cite the file:line or config proving it. Don't mark PASS without evidence.
+For each item: mark `[x] PASS`, `[ ] FAIL`, or `[?] UNKNOWN` and cite the file:line or config proving it. Mark PASS only when you can cite the file:line or config proving it.
 
 ## SECURITY
 
@@ -14,7 +16,7 @@ For each item: mark `[x] PASS`, `[ ] FAIL`, or `[?] UNKNOWN` and cite the file:l
   - List every route/handler and confirm auth middleware applies. Flag any public-by-default routers.
 - [ ] HTTPS enforced everywhere, HTTP redirected
   - Check load balancer / reverse proxy config; confirm HSTS header; confirm 301 from http → https
-- [ ] CORS locked to your domain — not wildcard
+- [ ] CORS locked to your domain, not wildcard
   - Find CORS config; flag any `*` or overly permissive origins
 - [ ] Input validated and sanitized server-side
   - Schema validation (Pydantic, Zod, etc.) on every endpoint accepting input
@@ -31,7 +33,7 @@ For each item: mark `[x] PASS`, `[ ] FAIL`, or `[?] UNKNOWN` and cite the file:l
 
 - [ ] Backups configured and tested (test RESTORE, not just backup)
   - Confirm backup schedule AND last successful restore test
-- [ ] Parameterized queries everywhere — no string concatenation
+- [ ] Parameterized queries everywhere, no string concatenation
   - Grep for string-built SQL, f-string SQL, `+` concatenation in query construction
 - [ ] Separate dev and production databases
   - Confirm distinct connection strings per environment; no shared prod DB
@@ -85,7 +87,7 @@ End with:
 
 ## Rule
 
-If any critical SECURITY or DATABASE item fails, the verdict is **not ready** regardless of other scores. Post-launch patches cost 10x more than pre-launch fixes.
+If any critical SECURITY or DATABASE item fails, the verdict is **not ready** regardless of other scores.
 
 ---
 

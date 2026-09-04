@@ -1,12 +1,13 @@
 ---
-description: Audit and improve codebase architecture — structure, coupling, cohesion, boundaries
+name: improve-codebase-architecture
+description: Audit codebase architecture and propose concrete structural fixes: coupling, cohesion, boundaries, testability.
 ---
 
 Audit the codebase's **architecture** and propose concrete improvements. This is structural work, not style nitpicking.
 
-## Phase 1 — Survey
+## Phase 1: Survey
 
-Map the codebase before critiquing it. Don't skip this.
+Map the codebase before critiquing it.
 
 - Entry points and data flow (where do requests/events enter, how do they propagate)
 - Module boundaries and their dependencies (who imports whom)
@@ -17,7 +18,9 @@ Map the codebase before critiquing it. Don't skip this.
 
 Report the map in 5-10 bullet points. If the codebase is huge, pick the subsystem most relevant to the user's request.
 
-## Phase 2 — Diagnosis
+## Phase 2: Diagnosis
+
+Check the mapped subsystem against every category below; silence on a category means checked-and-clean, not skipped.
 
 Identify real architectural problems. Focus on these categories:
 
@@ -25,7 +28,7 @@ Identify real architectural problems. Focus on these categories:
 - Modules that shouldn't know about each other but do
 - Circular dependencies
 - Shared mutable state across boundaries
-- "God objects" — one class/module that touches everything
+- "God objects": one class/module that touches everything
 
 **Cohesion issues**
 - Modules that mix unrelated responsibilities
@@ -55,11 +58,11 @@ Identify real architectural problems. Focus on these categories:
 
 For each issue: **what** is wrong, **where** it lives (file:line), **why** it matters (what it costs the team), and **severity** (critical / high / medium / low).
 
-## Phase 3 — Recommendations
+## Phase 3: Recommendations
 
 Propose changes in order of impact-to-effort ratio. For each:
 
-- **Change:** concrete description (not "improve modularity" — "extract `PricingService` from `OrderController`")
+- **Change:** concrete description (not "improve modularity", but "extract `PricingService` from `OrderController`")
 - **Why:** what problem it fixes
 - **Blast radius:** how many files/callers change
 - **Risk:** what could break, how to mitigate
@@ -67,26 +70,25 @@ Propose changes in order of impact-to-effort ratio. For each:
 - **Scope:** small (1-2 files), medium (single subsystem), large (cross-cutting)
 
 Group into:
-- **Do now** — high impact, low risk
-- **Plan for next sprint** — high impact, higher risk or effort
-- **Don't do** — tempting but not worth it (explain why)
+- **Do now:** high impact, low risk
+- **Plan for next sprint:** high impact, higher risk or effort
+- **Don't do:** tempting but not worth it (explain why)
 
-## Phase 4 — Execution plan
+## Phase 4: Execution plan
 
 If the user wants to proceed, pick the top 1-3 changes and outline the step-by-step execution. Prefer:
 
 1. Characterization tests first (lock in current behavior)
 2. Incremental refactors with tests passing at each step
 3. One PR per logical change, not one mega-PR
-4. Reversibility — each step should be independently mergeable and revertible
+4. Reversibility: each step should be independently mergeable and revertible
 
 ## Ground rules
 
-- **Don't rewrite what you don't understand.** If a module looks "weird," it may encode a hidden constraint. Investigate before recommending removal.
-- **Respect Chesterton's Fence.** Ask why a structure exists before proposing to remove it.
-- **Don't chase purity.** The goal is a codebase that's easier to change, not one that matches a pattern from a book.
+- **Respect Chesterton's Fence.** A module that looks "weird" may encode a hidden constraint; ask why it exists before proposing to remove or rewrite it.
+- **Aim for a codebase that's easier to change, not a textbook-pure one.**
 - **Measure, don't guess.** If you claim something is slow or complex, show the evidence (profiler, cyclomatic complexity, churn data).
-- **No speculative flexibility.** "We might need X later" is not a reason to add X now.
+- **Justify every abstraction by a need that exists now, not a speculative future one.**
 
 ---
 

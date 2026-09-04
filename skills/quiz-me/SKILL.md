@@ -1,17 +1,6 @@
 ---
 name: quiz-me
-description: |
-  Forcing function for learning what just shipped. Reads a recent diff,
-  generates 5 multiple-choice questions plus 1 explain-back prompt, quizzes
-  Keith, grades, and gates future feature work on a passing score. Use when
-  asked to "quiz me", "test my understanding", "/quiz-me", "force me to
-  learn", or as a mandatory hook at the ship stage of /dev-framework-rl.
-triggers:
-  - quiz me
-  - quiz-me
-  - test my understanding
-  - force me to learn
-  - learning gate
+description: "Learning-gate quiz on a recent diff or shipped feature. Use for 'quiz me', 'test my understanding', 'force me to learn', or as the mandatory ship-stage hook in /dev-framework-rl."
 allowed-tools:
   - Bash
   - Read
@@ -25,8 +14,8 @@ allowed-tools:
 # /quiz-me — Learning Gate
 
 You are administering a **closed-book quiz** to Keith on code that was just built.
-The point is to surface gaps before they compound. Don't help. Don't hint. Don't
-reveal answers until after the attempt is recorded.
+The point is to surface gaps before they compound. Run this closed-book: withhold
+help, hints, and answers until the attempt is recorded.
 
 The CLI lives at `~/.claude/skills/quiz-me/scripts/quiz.py` and stores data in
 `~/.claude/quiz-me/{deck,results}.jsonl`. Always invoke via:
@@ -114,7 +103,6 @@ For each MC card (in the order created), use AskUserQuestion:
 - 4 options = the card's `options` (in original order — do NOT reshuffle, and
   do NOT mark the correct one)
 - header: short concept label
-- Do not preface the question with hints, code excerpts, or "this is about X"
 
 After the user answers:
 1. Compare to the correct index. Score = `1.0` if match, else `0.0`.
@@ -209,12 +197,12 @@ to `ship_check_summary`).
 
 ## Hard rules
 
-- **Never reveal an MC answer before the user attempts.** Not in the question,
-  not in the options ordering, not in any preamble.
-- **Never grade-inflate the explain-back.** A vague answer scores 0.3 even if
-  it sounds confident. The forcing function only works if the grade is honest.
-- **Never auto-pass the gate.** If a card was failed, the user re-attempts it.
-- **Don't pad to N questions if the diff doesn't support N real ones.** Better
-  to ask 2 deep questions than 5 surface ones.
-- **Source refs are mandatory.** Every card points to `file:line` so the user
-  can go read the answer after failing.
+- Reveal the MC answer only after the user attempts it, never before, not in
+  the question, options order, or preamble.
+- Grade the explain-back honestly against the rubric; a vague answer scores
+  0.3 even if confident-sounding, never inflate.
+- Let a failed card gate the user into re-attempting it, never auto-pass.
+- Ask only as many questions as the diff genuinely supports (2 deep beats 5
+  surface); don't pad to hit a count.
+- Every card points to file:line so the user can go read the answer after
+  failing.

@@ -1,6 +1,9 @@
-# Commit and Push Skill
-1. Stage ONLY the files the user specifies (or all changed files if unspecified)
-2. Do NOT investigate diffs, touch unrelated files, or run any scripts
-3. Write a concise commit message
-4. Push to the current branch
-5. If pre-commit hooks fail, ask user if they want --no-verify
+---
+name: commit
+description: Stage, commit, and push changes with a plain message, no diff review. Use for 'commit this' or 'commit and push'.
+---
+
+1. Stage only the files the user specifies (default: all changed files); commit and push without reviewing diffs or touching anything else.
+2. Write a concise commit message.
+3. Push to the current branch.
+4. If pre-commit hooks fail, ask user if they want --no-verify.
