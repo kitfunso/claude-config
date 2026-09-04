@@ -90,29 +90,41 @@ State persisted at `~/.claude/dev-framework-state.txt` (one project per line).
 
 ### Telemetry: log which gates caught real issues
 
+Gate outcomes go to `component_outcomes` in `episodes.db`, the same table skills,
+agents and hooks write to. That is the point: a gate can only be compared against
+the rest of the harness if it lands in the same place.
+
 Log a gate outcome:
-```powershell
-powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/log-gate.ps1 `
-  -Project "C:/Users/skf_s/hippo" `
-  -Gate "/cso" `
-  -Phase "REVIEW" `
-  -Outcome "caught" `
-  -Notes "found XSS in markdown render"
+```bash
+python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py component-record \
+  gate /cso --outcome caught --phase REVIEW \
+  --cwd "C:/Users/skf_s/hippo" --notes "found XSS in markdown render"
 ```
 
 Outcomes: `passed` | `caught` (gate earned its keep) | `failed` (blocked progression) | `skipped`
 
+`caught` and `failed` are stored as blocked, because both mean the gate stopped
+the work. The word itself is kept in `notes`, so the four outcomes never collapse
+into one bit.
+
 Report aggregated insights:
-```powershell
-powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/telemetry-report.ps1 -Days 30
-# Optional: -Project <substring> to filter
+```bash
+python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py component-report
+# Optional: --kind gate to filter, --json for machine-readable
 ```
 
-Surfaces:
-- Gate-outcome totals (which gates run, which catch)
-- Recent gates that caught real issues
-- Recent gates that were skipped
-- Per-project insights ("you've never used `/cso` but caught 3 auth bugs at review" pattern)
+Surfaces, per skill, agent, hook and gate:
+- `used`: how often it ran
+- `in_episodes` / `clean` / `regressed`: episodes it ran inside, and how they landed
+- `blocks`: how often it stopped the work
+- `trust`: clean rate over resolved episodes, on a Beta(2,2) prior
+
+`trust` reads null until a component has 5 resolved episodes. A null means too
+little evidence, never a bad component, and a missing row means unmeasured, not
+dead. Neither is a reason to retire anything.
+
+The pre-2026-09-04 gate history was imported once from the old `telemetry.jsonl`
+and carries an `[imported from telemetry.jsonl]` marker in `notes`.
 
 ### Settings.json hook setup (optional, manual, see below)
 
@@ -135,9 +147,9 @@ Get-Content C:/Users/skf_s/.claude/skills/dev-framework/HOOK-SETUP.md
 - `scripts/artifact-check.ps1`: Documentation artifact verifier
 - `scripts/status.ps1`: Compact one-liner status (used by `/dev-framework status`)
 - `scripts/phase-capture.ps1`: Auto hippo capture on phase transitions (hook target)
-- `scripts/log-gate.ps1`: Append-only telemetry log
-- `scripts/telemetry-report.ps1`: Aggregate telemetry insights
 - `overlays/{ui,ai-agent,backend,quant,cli,library,mobile}.md`: per-type gate overlays
-- `logs/telemetry.jsonl`: append-only gate-outcome log (created on first `log-gate` call)
+
+Gate telemetry has no files here any more. `devrl.py component-record` writes it
+and `devrl.py component-report` reads it, both against `dev-framework/episodes.db`.
 
 Stage-by-stage detail and quick table: `PIPELINE.md`.
