@@ -1,0 +1,81 @@
+{
+  "version": "2026-09-04",
+  "modes": {
+    "web": ["hero", "material", "motion", "type", "layout", "palette", "ui_base"],
+    "video": ["hero", "material", "runtime", "type", "palette"]
+  },
+  "slots": {
+    "hero": {
+      "three-procedural": {"label": "Three.js procedural scene (ThreeUI-style)", "tags": ["gpu"], "cdn": ["three"]},
+      "splat": {"label": "Gaussian splat via Spark", "tags": ["gpu", "heavy"], "cdn": ["three", "spark"]},
+      "paper-shader": {"label": "Paper Shaders full-bleed (mesh gradient / neuro noise / god rays)", "tags": ["gpu"], "cdn": ["paper-shaders"]},
+      "canvas-fx-over-dom": {"label": "GPU effect over live DOM (Canvas-UI style: liquid / shatter / VHS / particle reveal)", "tags": ["gpu", "heavy"], "cdn": []},
+      "ascii-dither-object": {"label": "3D object rendered as ASCII or dither", "tags": ["gpu"], "cdn": ["three"]},
+      "kinetic-type-only": {"label": "No GPU: viewport-scaled kinetic typography is the hero", "tags": [], "cdn": [], "requires": {"type": ["variable-kinetic", "condensed-grotesque", "wide-grotesque"]}},
+      "instanced-particles": {"label": "10k+ instanced particles / points forming the product mark", "tags": ["gpu"], "cdn": ["three"]}
+    },
+    "material": {
+      "liquid-glass": {"label": "Liquid glass: backdrop-filter + SVG feDisplacementMap refraction", "tags": ["heavy"], "conflicts": {"palette": ["neon-brutalist"], "layout": ["anti-grid-brutalist"]}},
+      "gooey": {"label": "Gooey: SVG feGaussianBlur + feColorMatrix merge, elements fuse like liquid", "tags": []},
+      "liquid-metal": {"label": "Liquid metal logo/mark via Paper Shaders liquidMetal", "tags": ["gpu"], "cdn": ["paper-shaders"]},
+      "border-beam": {"label": "Animated beam riding borders (conic-gradient mask)", "tags": []},
+      "tactile-brutalist": {"label": "Tactile brutalism: 1px borders, no radius, hard shadows, paper texture", "tags": [], "conflicts": {"palette": ["glass-soft-futurism"]}},
+      "flat-editorial": {"label": "Flat editorial: rules, no cards, type does the work", "tags": []}
+    },
+    "motion": {
+      "gsap-lenis": {"label": "GSAP ScrollTrigger + Lenis smooth scroll, pinned cinematic sections", "tags": [], "cdn": ["gsap", "lenis"]},
+      "native-scroll-driven": {"label": "Native CSS scroll-driven animations (animation-timeline), zero JS", "tags": []},
+      "view-transitions-motion": {"label": "View Transitions API + Motion (vanilla) for state changes", "tags": [], "cdn": ["motion"]},
+      "anime-v4": {"label": "Anime.js v4 timelines + Draggable", "tags": [], "cdn": ["animejs"]},
+      "css-micro-only": {"label": "CSS-only micro-interactions, nothing moves on scroll", "tags": []}
+    },
+    "runtime": {
+      "gsap-timeline": {"label": "GSAP paused timeline on window.__timelines (default HyperFrames runtime)", "tags": [], "cdn": ["gsap"]},
+      "three-hf-seek": {"label": "Three.js scene rendered from hf-seek time", "tags": ["gpu"], "cdn": ["three", "gsap"]},
+      "html-in-canvas-postfx": {"label": "Live DOM captured as texture, GLSL post-fx (Chrome origin trial, GPU-overlay fallback)", "tags": ["gpu", "heavy"], "cdn": ["gsap"]},
+      "paper-shader-bg": {"label": "Paper Shaders background driven by frame (speed 0, deterministic)", "tags": ["gpu"], "cdn": ["paper-shaders", "gsap"]},
+      "splat-flythrough": {"label": "Spark splat with camera path on hf-seek", "tags": ["gpu", "heavy"], "cdn": ["three", "spark", "gsap"]}
+    },
+    "type": {
+      "condensed-grotesque": {"label": "Condensed grotesque display (Barlow Condensed / Archivo Narrow) + Plex body", "fonts": ["Barlow Condensed:wght@500;700", "IBM Plex Sans:wght@400;500;600"]},
+      "editorial-serif": {"label": "Editorial serif display (Fraunces / Newsreader) + grotesque body", "fonts": ["Fraunces:opsz,wght@9..144,300;9..144,600", "Schibsted Grotesk:wght@400;500"]},
+      "mono-terminal": {"label": "Monospace everywhere (JetBrains Mono / Geist Mono style)", "fonts": ["JetBrains Mono:wght@400;500;700"]},
+      "variable-kinetic": {"label": "Variable font with animated axes (Roboto Flex / Anybody)", "fonts": ["Anybody:wdth,wght@50..150,400..800", "Roboto Flex:opsz,wdth,wght@8..144,25..151,100..1000"]},
+      "wide-grotesque": {"label": "Wide grotesque (Bricolage Grotesque / Unbounded) + serif body", "fonts": ["Bricolage Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,800", "Source Serif 4:opsz,wght@8..60,400"]}
+    },
+    "layout": {
+      "bento": {"label": "Bento grid (the 2026 default; make the cells unequal and one cell live)"},
+      "anti-grid-brutalist": {"label": "Anti-grid: overlapping blocks, raw offsets, deliberate misalignment"},
+      "editorial-columns": {"label": "Editorial multi-column with hairline rules and drop caps"},
+      "data-dense": {"label": "Data-dense pro: tables, sparklines, tight rows, tabular numerals"},
+      "single-column-manifesto": {"label": "One column, huge type, scroll is the narrative"},
+      "horizontal-scroll": {"label": "Horizontal scroll sections (scroll-snap or GSAP pinned)"}
+    },
+    "palette": {
+      "editorial-minimal": {"label": "Editorial minimalism", "tokens": {"bg": "#F6F5F1", "ink": "#151513", "accent": "#B3382C", "muted": "#8A877F"}},
+      "terminal-core": {"label": "Terminal-core", "single_world": true, "tokens": {"bg": "#0A0C0A", "ink": "#D6F5C9", "accent": "#7CFF6B", "muted": "#4F7A47"}},
+      "warm-editorial": {"label": "Warm editorial", "tokens": {"bg": "#FBF3E7", "ink": "#2B2118", "accent": "#C8641E", "muted": "#9C8B7A"}},
+      "data-dense-pro": {"label": "Data-dense pro", "tokens": {"bg": "#0F1418", "ink": "#E6ECF1", "accent": "#3DA5FF", "muted": "#6E7C8A"}},
+      "cinematic-dark": {"label": "Cinematic dark", "single_world": true, "tokens": {"bg": "#07070A", "ink": "#F2F0EA", "accent": "#E0B15C", "muted": "#5C5A63"}},
+      "playful-color": {"label": "Playful colour", "tokens": {"bg": "#FFF8E8", "ink": "#1B1B2F", "accent": "#FF5A5F", "muted": "#2EC4B6"}},
+      "glass-soft-futurism": {"label": "Glass / soft futurism", "tokens": {"bg": "#E9EEF5", "ink": "#1A2230", "accent": "#5B7CFF", "muted": "#9AA8BD"}},
+      "neon-brutalist": {"label": "Neon brutalist", "single_world": true, "tokens": {"bg": "#111111", "ink": "#FAFAFA", "accent": "#CCFF00", "muted": "#FF2D95"}},
+      "cult-indie": {"label": "Cult / indie", "tokens": {"bg": "#F2E8DA", "ink": "#2A1F1A", "accent": "#3B6D3A", "muted": "#B58B4C"}}
+    },
+    "ui_base": {
+      "shadcn-base-ui": {"label": "Port target: shadcn/ui on Base UI (2026 default)"},
+      "astryx": {"label": "Port target: Meta Astryx (StyleX, MCP-readable, 10 themes)"},
+      "handrolled": {"label": "Port target: hand-rolled components, no kit"}
+    }
+  },
+  "cdn": {
+    "three": {"importmap": {"three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"}, "verified": "2026-09-04"},
+    "spark": {"importmap": {"@sparkjsdev/spark": "https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.1.0/dist/spark.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"}, "peer": "three>=0.180.0; spark.module.js imports three/addons/postprocessing/Pass.js, so the addons entry is mandatory", "verified": "2026-09-04"},
+    "paper-shaders": {"importmap": {"@paper-design/shaders": "https://cdn.jsdelivr.net/npm/@paper-design/shaders@0.0.80/dist/index.js"}, "verified": "2026-09-04"},
+    "gsap": {"script": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js", "scrolltrigger": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js", "verified": "2026-09-04"},
+    "lenis": {"script": "https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js", "verified": "2026-09-04"},
+    "motion": {"script": "https://cdn.jsdelivr.net/npm/motion@13.2.0/dist/motion.js", "verified": "2026-09-04"},
+    "animejs": {"script": "https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.iife.min.js", "verified": "2026-09-04"}
+  },
+  "max_heavy_per_variant": 2
+}
