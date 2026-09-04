@@ -39,7 +39,7 @@ All of Part A and Part B shipped. Keith cleared the three gated items on 2026-09
 |---|---|---|
 | A0a-A0c, A1-A3 | shipped | see the A6 correction block after Step 5 |
 | A4 backfill | shipped | `--min-score 0.5`, 2 of 45 linked (`failure_modes` 11527, 11644), 43 left alone |
-| A5 cron | shipped | manual run enqueued `ok: true`; the config edit predates the last failing run, so the error state was stale |
+| A5 cron | shipped and verified | manual run 2026-09-04: `lastRunStatus: ok`, `lastDelivered: true`, `lastDeliveryStatus: delivered`, `consecutiveErrors` 2 to 0, 978s. The earlier `error` state was stale, since the config edit landed after the last failing run |
 | A6 | shipped, but all three of the plan's premises were wrong. Read the correction block before trusting this section |
 | B1 migration 0020 | shipped | dev-framework `67fa8d0` |
 | B2 recorder + B3 guards | shipped | ~/.claude `76a2ed6`; registered in `settings.json`, which is gitignored, so THIS BOX ONLY |
