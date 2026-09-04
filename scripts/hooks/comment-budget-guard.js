@@ -78,6 +78,8 @@ function codeOnly(text, token) {
 module.exports = { LINE_TOKENS, MAX_RUN, MAX_DENSITY, DENSITY_FLOOR, classify, longestRun, countComments, codeOnly };
 if (require.main !== module) return;
 
+const { record } = require('./lib/record-component');
+
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
@@ -110,14 +112,23 @@ process.stdin.on('end', () => {
   }
   if (!why) process.exit(0);
 
+  const reason =
+    'comment-budget-guard: ' + filePath + ' has ' + why + '. Comments are one line, two at most. ' +
+    'Say WHY a non-obvious choice was made, never WHAT the code does. Measurement notes, dates and ' +
+    'incident history go in docs/ARCHITECTURE.md or CLAUDE.md, never in source. Cut the block, then retry.';
+  record({
+    kind: 'hook',
+    name: 'comment-budget-guard.js',
+    sessionId: input.session_id,
+    cwd: input.cwd,
+    blocked: 1,
+    notes: reason,
+  });
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
-      permissionDecisionReason:
-        'comment-budget-guard: ' + filePath + ' has ' + why + '. Comments are one line, two at most. ' +
-        'Say WHY a non-obvious choice was made, never WHAT the code does. Measurement notes, dates and ' +
-        'incident history go in docs/ARCHITECTURE.md or CLAUDE.md, never in source. Cut the block, then retry.',
+      permissionDecisionReason: reason,
     },
   }));
   process.exit(0);

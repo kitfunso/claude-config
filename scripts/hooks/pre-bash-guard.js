@@ -6,6 +6,7 @@
  * - Warns before destructive commands (rm -rf, git reset --hard)
  */
 const fs = require('fs');
+const { record } = require('./lib/record-component');
 
 function main() {
   let input = '';
@@ -15,7 +16,18 @@ function main() {
     // Modern PreToolUse output shape (same as commit-msg-guard.js):
     // silent exit 0 = allow; hookSpecificOutput.permissionDecision for deny/ask.
     // The old {decision:"allow"} shape fails hook schema validation on every call.
+    let payload = {};
     const emit = (permissionDecision, reason) => {
+      if (permissionDecision === 'deny') {
+        record({
+          kind: 'hook',
+          name: 'pre-bash-guard.js',
+          sessionId: payload.session_id,
+          cwd: payload.cwd,
+          blocked: 1,
+          notes: reason,
+        });
+      }
       process.stdout.write(JSON.stringify({
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
@@ -27,6 +39,7 @@ function main() {
     };
     try {
       const data = JSON.parse(input);
+      payload = data;
       const cmd = (data.tool_input?.command || '').trim();
 
       // Block dev servers outside tmux (they hang the session)

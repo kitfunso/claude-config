@@ -9,6 +9,8 @@
 // Bash tool when stream routing is genuinely needed.
 // Emits modern PreToolUse permissionDecision JSON; silent exit 0 = allow.
 
+const { record } = require('./lib/record-component');
+
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
@@ -22,13 +24,22 @@ process.stdin.on('end', () => {
   const cmd = (input.tool_input && input.tool_input.command) || '';
 
   if (/2>\s*&\s*1/.test(cmd)) {
+    const reason =
+      'ps-stderr-guard: 2>&1 in PowerShell 5.1 wraps native-exe stderr in NativeCommandError and reports failure even on exit 0 (21 measured incidents). stderr is already captured - run the command bare, or use the Bash tool if you need stream routing.';
+    record({
+      kind: 'hook',
+      name: 'ps-stderr-guard.js',
+      sessionId: input.session_id,
+      cwd: input.cwd,
+      blocked: 1,
+      notes: reason,
+    });
     process.stdout.write(
       JSON.stringify({
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           permissionDecision: 'deny',
-          permissionDecisionReason:
-            'ps-stderr-guard: 2>&1 in PowerShell 5.1 wraps native-exe stderr in NativeCommandError and reports failure even on exit 0 (21 measured incidents). stderr is already captured - run the command bare, or use the Bash tool if you need stream routing.',
+          permissionDecisionReason: reason,
         },
       }),
     );

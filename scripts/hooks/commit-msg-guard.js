@@ -9,6 +9,8 @@
 // Scope: inline command text only; cannot inspect -F file contents.
 // Emits modern PreToolUse permissionDecision JSON; silent exit 0 = allow.
 
+const { record } = require('./lib/record-component');
+
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
@@ -23,6 +25,14 @@ process.stdin.on('end', () => {
   if (!/git\s+commit\b/.test(cmd)) process.exit(0);
 
   const deny = (reason) => {
+    record({
+      kind: 'hook',
+      name: 'commit-msg-guard.js',
+      sessionId: input.session_id,
+      cwd: input.cwd,
+      blocked: 1,
+      notes: reason,
+    });
     process.stdout.write(
       JSON.stringify({
         hookSpecificOutput: {
