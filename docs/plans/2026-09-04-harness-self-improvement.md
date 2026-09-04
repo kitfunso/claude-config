@@ -38,7 +38,7 @@ All of Part A and Part B shipped. Keith cleared the three gated items on 2026-09
 | Task | State | Where |
 |---|---|---|
 | A0a-A0c, A1-A3 | shipped | see the A6 correction block after Step 5 |
-| A4 backfill | shipped | `--min-score 0.5`, 2 of 45 linked (`failure_modes` 11527, 11644), 43 left alone |
+| A4 backfill | shipped, links made durable later the same day | `--min-score 0.5`, 2 of 45 linked (`failure_modes` 11527, 11644), 43 left alone; durability fix dev-framework `0bcca0d`, see the third correction below |
 | A5 cron | shipped and verified | manual run 2026-09-04: `lastRunStatus: ok`, `lastDelivered: true`, `lastDeliveryStatus: delivered`, `consecutiveErrors` 2 to 0, 978s. The earlier `error` state was stale, since the config edit landed after the last failing run |
 | A6 | shipped, but all three of the plan's premises were wrong. Read the correction block before trusting this section |
 | B1 migration 0020 | shipped | dev-framework `67fa8d0` |
@@ -57,6 +57,14 @@ Two corrections to the plan as written, both found by running it:
   `in_episodes` is 0 and `trust` is null on every row. That is the honest state the plan
   anticipated. The next piece of work, not in this plan, is stamping the current episode id
   onto rows written inside an episode.
+- **A4's links were not durable (found by the review, fixed the same day).** `apply_links`
+  wrote `fix_applied_to` with its own UPDATE and skipped `acted_observations`, so pass
+  condition 3 failed on a copy: `learn-effect` 2, `learn-cluster`, `learn-effect` 0. One
+  writer now (`EpisodeStore._link_failure_mode`), `link_policy_update` public, the backfill
+  routed through it, the two live rows repaired, and the round trip holds at 2 across an
+  embedding recompute. dev-framework `0bcca0d`. The review also closed three scoreboard
+  gaps (~/.claude `8ec5feb`): typed `/skill` prompts, agents without `subagent_type`, and
+  the Python hooks' denials.
 
 ## Evidence this plan is built on
 
