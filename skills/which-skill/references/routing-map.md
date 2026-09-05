@@ -109,9 +109,7 @@ House rule: read the matching `~/.claude/voice/*.md` sample before drafting.
 ## Quant / desk
 | Skill | When |
 |---|---|
-| **quant-report** | Required shape for validation, backtest, or pipeline results |
-| model-improve | Improve / rebuild / remodel any commodity model |
-| roll-check | Futures contract roll adjustments |
+| **quant-ml-protocol** | Required before any forecasting-model campaign: nulls, holdouts, selection honesty |
 | **issue-brief** | Required format for reporting any blocker or side-issue |
 
 ## Meta / harness
@@ -132,6 +130,5 @@ House rule: read the matching `~/.claude/voice/*.md` sample before drafting.
 - New feature: brainstorming → writing-plans → plan-eng-review → test-driven-development → verification-before-completion → ship (or the repo's own deploy path — see Ship note above)
 - Bug report: investigate → test-driven-development (repro test) → verification-before-completion → commit
 - UI change: brainstorming → frontend-design (+ dataviz if charts) → design-review → qa
-- Post-deploy check: smoke-test or qa-only → canary
-- Quant results: quant-report (+ make-pdf if a document is wanted)
+- Post-deploy check: qa-only → canary
 - New skill: skill-creator (drafting → evals → description optimization)

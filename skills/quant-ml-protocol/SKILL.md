@@ -6,7 +6,8 @@ description: "Building, validating, or promoting a time-series/financial forecas
 # Quant ML Protocol
 
 This is the general protocol. `/model-improve` is its Quantamental
-instantiation — use that skill for the mechanics there, but on any conflict
+instantiation; it lives in `quantamental/.claude/skills/` and loads only inside
+that repo. Use it for the mechanics there, but on any conflict
 of statistical principle (nulls, holdouts, selection honesty), this file wins.
 
 Distilled from a real 9-iteration model campaign (Aug 2026): every rule below

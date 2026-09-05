@@ -85,6 +85,8 @@ For commodity signal models, futures backtesting, financial modeling. Mostly Qua
 
 ## Tools
 
+The Quantamental agents and skills below moved to `quantamental/.claude/` on 2026-09-05 and load only inside that repo; `quant-analyst` stays global.
+
 - `commodity-backtest` agent (run → validate → sync)
 - `signal-validator` agent (quick health check)
 - `data-auditor` agent (cache freshness, source health)

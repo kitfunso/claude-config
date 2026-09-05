@@ -22,7 +22,7 @@ When several skills match, pick in this order:
 
 - **Mandated beats optional.** Some skills are house policy (the map marks them in bold). Recommend them as "required", not "consider".
 - **Project rules beat the map.** If the working repo's CLAUDE.md defines its own workflow for a stage (deploy path, review gates, QA tools), route to that and say so. Example: a repo that deploys by push + pull on a VM gets its documented deploy steps, not a generic `/ship` PR flow.
-- **Specific beats general.** For a bug, `investigate` beats `full-power`. For a futures roll issue, `roll-check` beats `quant-report`.
+- **Specific beats general.** For a bug, `investigate` beats `full-power`. For a hippo feature, `hippo-feature` beats `test-driven-development`.
 - **Stage fit beats keyword fit.** A "review" ask during planning wants `plan-eng-review`, not `code-review`.
 - If two skills still compete, name both and give the tiebreaker in one line (e.g. `/qa` fixes what it finds; `/qa-only` only reports).
 
