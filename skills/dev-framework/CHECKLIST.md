@@ -39,7 +39,7 @@ One-page reference. Read top to bottom on every non-trivial project. Stage defin
 
 ## 5. VERIFY (BLOCKING)
 - [ ] Runtime evidence captured (screenshot/log/test output)
-- [ ] `/verify` or `/qa` or `/smoke-test` or `/run` ran
+- [ ] `/verify` or `/qa` or `/webapp-testing` or `/run` ran
 - [ ] Lighthouse ran (frontend)
 - [ ] `/benchmark` ran (perf-sensitive)
 
