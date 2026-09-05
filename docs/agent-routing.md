@@ -19,11 +19,11 @@ absent, use the injected agent-types list instead.
 | `senior-code-reviewer` | Code quality, security review |
 | `data-engineer` | Pipelines, ETL |
 | `database-optimizer` | Query optimization, indexing |
-| `commodity-backtest` | Run model -> validate -> sync (full pipeline) |
-| `signal-validator` | Quick output health check (no model run) |
-| `data-auditor` | Cache freshness, source health diagnosis |
-| `model-diff` | Compare production vs candidate model versions |
-| `smoke-test-frontend` | Playwright smoke tests after deploys |
+
+The five Quantamental agents (`commodity-backtest`, `signal-validator`, `data-auditor`,
+`model-diff`, `smoke-test-frontend`) and its four skills (`model-improve`, `roll-check`,
+`smoke-test`, `quant-report`) moved to `quantamental/.claude/` on 2026-09-05, the day
+after the project was paused. They load only inside that repo.
 
 ## Skills
 
@@ -34,7 +34,6 @@ injected description is empty.
 
 | Skill | Trigger |
 |-------|---------|
-| `/smoke-test` | Run the Quantamental Playwright smoke suite by hand after a deploy; the `smoke-test-frontend` agent is the autonomous route |
 | `/standards-check` | Codebase audit scorecard, six 0-10 dimensions |
 | `/hippo-feature` | One hippo feature via the micro-eval TDD loop |
 | `/git-commit-helper` | Writing commit messages |

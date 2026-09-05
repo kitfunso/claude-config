@@ -15,7 +15,6 @@ relying on one.
 | `playwright` | user | browser automation |
 | `sentry` | user | error tracking |
 | `context7` | user | library docs |
-| `supabase-db` | user | Quantamental Supabase access |
 
 `luminus-mcp` v0.7.0 is npm-published with a global binary but is NOT registered in
 any MCP config on this machine. Register it per its README to use it. Its ENTSO-E key
@@ -38,7 +37,7 @@ Per-project keys live in each repo's `.env`.
 
 | Store | Where | Notes |
 |---|---|---|
-| Quantamental Supabase | via `supabase-db` MCP | KEITH RULING: `signals.cumulative_realized_pnl` IS live-PnL truth |
+| Quantamental Supabase | project ref `lguqpqzqlchuuamepygq`; both MCP registrations removed 2026-09-05 after the pause | frozen with the project; `signals.cumulative_realized_pnl` was the live-PnL truth while it ran |
 | devrl episodes | `episodes.db` (dev-framework-rl) | SQLite; trajectories, critic verdicts, rewards |
 | btlab | `~/btlab` DuckDB | PIT S&P 500 + NDX100 + Nasdaq listing + 24 crypto |
 | hippo store | hippo repo SQLite | agent memory; use store API, never broad invalidate |
