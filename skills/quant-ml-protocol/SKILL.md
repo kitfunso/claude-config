@@ -102,6 +102,41 @@ chart. A model that cannot name the naive strategy it beats has no result.
 - A richer model class earns its place only by BEATING the simple one on
   honest rows — a tie promotes the simpler model.
 
+## Stage 4.5 — the coverage interrogation (fire at yourself before every gate and every report)
+
+Keith's questions (2026-09-05, prc26), asked verbatim and answered in writing,
+one table row each, every answer carrying a pointer (protocol row, ledger row,
+report file). "Not tried" is a valid answer only with the reason and a
+scheduled slot.
+
+1. What have you tried?
+2. What features?
+3. What feature engineering?
+4. What model?
+5. Feature and model parameters tuning?
+6. Optuna optimisation?
+7. Are the agent being detailed enough?
+8. Full effort used to find suitable model?
+9. What is missing that we should try?
+
+Rules for the answers:
+
+- A "tried" carries its verdict row (id, numbers, paired interval) or it is
+  not tried. A run with no declaration is a diagnostic, not a try.
+- Answers 5 and 6 name the search: cells, k, the optimism bound, the CV
+  design. "No search" is a finding to report, never a silent default. Optuna
+  or any sequential optimiser is a declared search like any other: budget,
+  seed, objective and the null bar it is judged against are declared BEFORE
+  the first trial, and its k is the trial count, not 1.
+- Answer 9 lists at least one untried INPUT (new data), one untried MECHANISM
+  (model class, target treatment, loss) and one untried TUNING, each with a
+  cost estimate and a draft declaration. The user picks; the agent does not
+  run them unasked.
+- Answers 7 and 8 are graded by the user, not the author. The author's job is
+  to make grading possible: this table, the NOT-DONE table and the ledger
+  line, side by side. Self-grading them "yes" is banned.
+- The table rides every campaign report and the Stage 6 surface (item 6).
+
 ## Stage 5 — the validation gauntlet (adversarial, process-level)
 
 1. **Walk-forward only.** No random splits on time series, ever.
@@ -157,6 +192,8 @@ one surface:
    the declared decision rule says so — and it rides every future report).
 5. Then ask the user the steering bank's gate questions
    (`references/steering-bank.md` §Gate) and WAIT.
+6. The coverage interrogation table (Stage 4.5), so the user can grade the
+   detail and the effort, not just the verdict.
 
 Promotion requires explicit user sign-off, every time. Being unattended
 never authorises skipping the gate — ship the surface as the deliverable

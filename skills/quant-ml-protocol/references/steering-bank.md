@@ -48,6 +48,12 @@ Ask these verbatim, and wait:
    block promotion, the gate is theater — name the blocking conditions.
 6. **"What is on the accrual list, and when is each re-test?"** Near-misses
    are scheduled, not forgotten — and not quietly promoted either.
+7. **"What have you tried, and what is missing that we should try?"** The
+   Stage 4.5 coverage table, presented for grading: features, engineering,
+   models, tuning, Optuna, detail, effort, gaps. (War story, prc26 2026-09-05:
+   after two model lanes and one board submission the user had to ask "What
+   have you tried? What features? ... Optuna optimisation?" cold; the answers
+   existed across four files and no surface had put them side by side.)
 
 ## Standing behavioral rules (from the same record)
 
