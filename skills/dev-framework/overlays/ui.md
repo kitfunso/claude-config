@@ -36,7 +36,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 
 ### VERIFY
 - **`/qa` REQUIRED**: browser QA + auto-fix loop
-- **`/smoke-test` REQUIRED**: Playwright smoke tests
+- **`/webapp-testing` REQUIRED**: Playwright smoke tests
 - Test on actual browser, not just headless
 - Responsive check at 3 breakpoints (mobile/tablet/desktop)
 - `/devex-review` if dev-facing
@@ -56,7 +56,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 - **Lighthouse REQUIRED post-deploy** (per project memory: "run lighthouse after deploys")
 - Lighthouse score >= 90 mobile per project memory
 - `/canary` for console errors, perf regressions, page failures
-- `/smoke-test` against production URL
+- `/webapp-testing` against production URL
 
 ### LEARN
 - Component patterns captured for reuse
@@ -73,7 +73,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 - `/plan-design-review`: pre-implementation design plan critique
 - `/qa`: browser QA loop
 - `/qa-only`: browser QA report only
-- `/smoke-test`: Playwright tests
+- `/webapp-testing`: Playwright tests
 - `/browse`: headless browser commands (~100ms each)
 - `/setup-browser-cookies`: auth-required testing
 

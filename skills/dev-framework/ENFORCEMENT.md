@@ -23,7 +23,7 @@ ACTION: speed directive does not bypass these gates. Run them.
 These gates BLOCK phase progression if missing.
 
 ### VERIFY
-**Runtime evidence required.** Tests passing alone is NOT sufficient. A `/verify`, `/qa`, `/smoke-test`, or `/run` invocation must have produced visible output (screenshot, log, test run, server response).
+**Runtime evidence required.** Tests passing alone is NOT sufficient. A `/verify`, `/qa`, `/webapp-testing`, or `/run` invocation must have produced visible output (screenshot, log, test run, server response).
 
 ### REVIEW
 - `/self-review` BEFORE `/review` (order matters per v1.7.7)

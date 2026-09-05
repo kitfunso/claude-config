@@ -86,7 +86,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 - `/verify` — launch app, confirm change works in real environment
 - `/qa` — browser QA + auto-fix loop (UI projects)
 - `/qa-only` — browser QA report only (no fixes)
-- `/smoke-test` — Playwright smoke tests (frontend)
+- `/webapp-testing` — Playwright smoke tests (frontend)
 - `/run` — launch and exercise the app (CLI, server, TUI, Electron, library, browser-driven)
 - `/browse` — headless browser commands (~100ms each) for targeted checks
 - `/benchmark` — performance regression detection (perf-sensitive features)
@@ -145,7 +145,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 **Gates**:
 - `/land-and-deploy` — merge + wait for CI + deploy + verify
 - `/canary` — post-deploy monitoring (console errors, perf regressions, page failures)
-- `/smoke-test` — re-run against production URL
+- `/webapp-testing` — re-run against production URL
 - Lighthouse against production URL (frontend)
 - Cost canary for AI features (token spend anomalies)
 
@@ -176,7 +176,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 | 2. SCAFFOLD | /project-scaffold, /design-consultation | Required |
 | 3. PLAN | /writing-plans, /plan-eng-review, /codex | Required |
 | 4. EXECUTE | /full-power, /test-driven-development | Required |
-| 5. VERIFY | /verify, /qa, /smoke-test, /run | **BLOCKING** |
+| 5. VERIFY | /verify, /qa, /webapp-testing, /run | **BLOCKING** |
 | 6. REVIEW | /self-review, /review, /codex, /cso, /design-review | **BLOCKING** |
 | 7. SHIP | /ship-check, /sinking-ship, /commit, /publish-repo | Required |
 | 8. DEPLOY | /land-and-deploy, /canary, Lighthouse | **BLOCKING** |

@@ -49,7 +49,7 @@ Multi-type allowed: a Next.js app with FastAPI backend loads `ui` + `backend`. U
 
 These BLOCK phase progression if missing. Speed directives DO NOT bypass.
 
-- **VERIFY**: runtime evidence required, drive the affected flow end-to-end and capture output (`/qa` for UI, real commands for CLIs/APIs, `/smoke-test` after deploys)
+- **VERIFY**: runtime evidence required, drive the affected flow end-to-end and capture output (`/qa` for UI, real commands for CLIs/APIs, `/webapp-testing` after deploys)
 - **REVIEW**: `/self-review` → `/review` → `/codex` on diff. `/cso` if sensitive. `/design-review` if UI.
 - **SHIP**: `/ship-check` clean, CHANGELOG entry, version bumped (libraries), `/record-decision` evaluated (record filed or "no decision record needed" stated)
 - **DEPLOY**: `/land-and-deploy` + `/canary` clean

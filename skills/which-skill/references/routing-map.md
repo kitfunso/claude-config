@@ -66,7 +66,7 @@ Point-in-time snapshot (2026-08-14). The live available-skills list in context w
 | qa | Browser QA + auto-fix loop |
 | qa-only | Browser QA, report only, no fixes |
 | browse | Headless browser commands (~100ms each) |
-| smoke-test / webapp-testing | Frontend checks after deploys |
+| webapp-testing | Frontend checks after deploys |
 | benchmark | Page performance, web vitals, bundle size |
 | canary | Post-deploy monitoring of the live app |
 | devex-review | Live developer-experience audit |
