@@ -167,7 +167,13 @@ If creds are missing, decide upfront whether to (a) have the operator authentica
 
 Run `/office-hours` (builder mode) or `/brainstorming` to generate 3-5 candidate framings of the problem. Pick the strongest.
 
-**Then grill your own pick.** Run `/grill-me` against the chosen framing — "me" is the orchestrator (you). The grill is adversarial: interrogate the assumptions in your own selection, name the weakest premise, surface what would have to be true for this framing to win, and what would falsify it. If the grill breaks the framing, return to the candidate list and pick a different one (or refine). Record the chosen framing + the grill's strongest counter-point + your response in the step summary:
+**Then work your own pick, twice: build it out, then break it.**
+
+**Build it out with `/grilling`.** Map the framing as a design tree and work the frontier: every decision whose prerequisites are already settled. Ask the whole frontier in one round, numbered, each question carrying your recommended answer. Then answer your own round — the orchestrator is the respondent here, and the recommendations exist so it can decide without a human. Escalate only a question whose answer is on the ASK-FIRST list (cost, destructive, live-schema, a genuine two-readings fork); everything else takes the recommendation and records it. Finding facts is the orchestrator's job: dispatch a sub-agent for anything the repo, the DB or a tool can answer, and ask the rest of the frontier while it runs. The pre-stage is done when the frontier is empty, so nothing reaches `plan` silently assumed.
+
+**Then break it with `/grill-me`.** "Me" is the orchestrator (you). The grill is adversarial: interrogate the assumptions in your own selection, name the weakest premise, surface what would have to be true for this framing to win, and what would falsify it. If the grill breaks the framing, return to the candidate list and pick a different one (or refine).
+
+Two passes, not one. `/grill-me` attacks the answers you already have; it never surfaces the question you failed to ask. Every brainstorm concern from either pass is carried forward into `plan` under the §4 rule, so an unvisited branch here is an unvisited branch the plan-eng-critic will never see. Record the chosen framing + the grill's strongest counter-point + your response in the step summary:
 
 ```bash
 python scripts/devrl.py step-record $EID brainstorm --skill /office-hours --critic-status n/a --summary "<chosen framing + grill's strongest objection + how you addressed it>"
@@ -386,9 +392,13 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 - **`plan` stage — run `/grill-me` as the tail step before plan-eng-critic.** "Me" here is the orchestrator (you). The grill interrogates the orchestrator's own plan: weakest premise, hidden assumptions, what would have to be true for this plan to work, what would falsify it, which scope claims are unsupported. The grill output is INPUT to plan-eng-critic — the critic should judge whether the plan addresses the grill's objections or explicitly accepts them as out-of-scope. Save the grill summary in the manifest's `self_grill_summary` field (optional schema field today; may be promoted to required in a future iteration once the workflow shape stabilises). If the grill destroys the plan (a premise can't be defended), revise the plan before plan-eng-critic runs — do not present a known-broken plan to the critic.
 
+- **`plan` stage — run `/domain-modeling` against the repo's `CONTEXT.md` before the plan artifact is written.** If the repo has a `CONTEXT.md`, the plan uses its terms and no synonyms; a term the plan needs that the glossary does not define is a gap, and the fix is to settle it and write it there inline, not to invent a second word for it in the plan. If the repo has no `CONTEXT.md`, create one at the first term the episode settles and leave it at that: lazy creation, glossary only, no implementation detail, never a spec. Offer an ADR only when all three of the skill's tests hold (hard to reverse, surprising without context, a real trade-off with alternatives). Record the terms touched in the plan manifest's `self_grill_summary` alongside the grill. This is the cheapest defence the orchestrator has against multi-session drift: episodes on one target span compactions, and a glossary on disk survives what the context window does not.
+
+- **`plan` and `execute` critic briefings — pass the `/codebase-design` vocabulary verbatim.** Brief `plan-eng-critic` and `code-review-critic` to phrase every structural finding in that skill's terms: module, interface, implementation, depth, seam, adapter, leverage, locality, plus the deletion test and "one adapter is a hypothetical seam, two is a real one". Do not let a critic reach for component, service, API or boundary. The reason is the learn step, not style: §6 clusters findings across episodes, and clustering is string-shaped, so two critics describing one defect in two vocabularies produce two clusters of one instead of one cluster of two, and the delta never crosses the tier threshold. Findings shape is unchanged (`{"severity", "message", "location"}`); this constrains the wording inside `message`.
+
 - **(Optional, opt-in) Meta-critic mode** — when a critic returns `pass`, the orchestrator MAY run `/grill-me` against the critic's verdict + reasoning, asking "did this pass actually hold up under adversarial pressure?" If the grill breaks the pass (surfaces an issue the critic missed), the verdict becomes provisional: record as `friction` via `episode-friction` and either re-run the stage with the missed concern in the must-fix, or escalate to the human. This is expensive (extra sub-agent per pass) and OFF by default — opt-in via `episode-init --meta-critic-grill`. Reserve for high-stakes episodes (production deploys, schema migrations, security-touched diffs). Tier 10's `learn-evolve` reads `friction` notes flagged this way to propose critic-prompt mutations.
 
-`/full-power` is deliberately NOT wired — the orchestrator already fans out sub-agents per critic, so layering it on inflates token cost without changing behaviour. `/grill-me` is wired because it's targeted adversarial pressure on a specific artifact (framing / plan / verdict) at a specific decision point, not a general "try harder" mode.
+`/full-power` is deliberately NOT wired — the orchestrator already fans out sub-agents per critic, so layering it on inflates token cost without changing behaviour. The four grill-family wires each earn their slot at a different point: `/grilling` opens the design tree at brainstorm (what did we fail to ask?), `/grill-me` attacks the answers at brainstorm, plan and optionally each verdict (what did we get wrong?), `/domain-modeling` fixes the words at plan (are we all saying the same thing?), and `/codebase-design` fixes the words the critics use (can the learn step count these?). None of them is a general "try harder" mode; drop one and a specific failure comes back.
 
 ### 4b. Execution delegation — the orchestrator does not code (Keith directive, 2026-07-04)
 
@@ -857,6 +867,15 @@ only surface across a batch. Apply the policy deltas, then start the next batch.
 - Critic parse error (`critic-check` exit 2)
 - Manifest validation failure
 - Final ship gate — always (a standing pre-authorization recorded in the project's CLAUDE.md counts as that human decision, made once — see Loop mode step 4 / "One batched deploy gate"; absent one, per-episode or per-batch human confirmation)
+
+**Every escalation on this list appends one row to `~/.claude/BLOCKERS.md`** before the orchestrator stops or parks the episode:
+
+```markdown
+## <target>
+- [ ] <what Keith must do, one line> | clock: <lead time or "none"> | blocks: episode $EID at <stage> | source: trajectories/$EID/<stage>.manifest.json
+```
+
+Clear the row when the gate clears. This is the producer half of `/human-blockers`; without it a parked episode is only discoverable by whoever remembers to open its trajectory. Loop mode makes that worse, not better: a batch can park three episodes on three different human gates overnight, and the loop's own stop epilogue reports them one at a time to a session nobody is reading. Rows in `BLOCKERS.md` survive the session that wrote them.
 
 ## Worktree isolation for code episodes (execute stage)
 
