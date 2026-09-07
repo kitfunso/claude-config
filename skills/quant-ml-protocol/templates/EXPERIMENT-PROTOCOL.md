@@ -36,6 +36,8 @@ Stored-revised sources: vintage snapshots start <date>; lag-stress results:
 - Primary metrics (≥2): <ranking metric> AND <money metric, costs = <...>>
 - Tie-break: parsimony
 - Nulls are: <vetoes | caution flags> — flags ride every future report
+- Multiplicity: N × α line on every pass; joint bootstrap (SPA | StepM)
+  when lanes share data: <yes | N/A, why>
 - Promotion requires: the Stage-6 user gate, explicitly signed off
 
 ## 4. Declared experiments (registry)
@@ -46,8 +48,21 @@ Stored-revised sources: vintage snapshots start <date>; lag-stress results:
 
 ## 5. NOT-DONE table (mandatory in every report)
 
-| declared item | status | why |
+Pre-seeded with the Stage 4.1 mechanism ladder. A rung leaves this table
+only when its registry row (section 4) carries a verdict.
+
+| declared item | status | why / slot |
 |---|---|---|
+| 4.1.1 level models (AR / ARIMA / ETS / HAR) | NOT RUN | <...> |
+| 4.1.2 magnitude + distributional lane (pinball / CRPS) | NOT RUN | <...> |
+| 4.1.3 rolling-length sweep + recency weights | NOT RUN | <...> |
+| 4.1.4 lag structure of outside data | NOT RUN | <...> |
+| 4.1.5 feature selection with error control (knockoffs) | NOT RUN | <...> |
+| 4.1.6 monotone constraints / partial pooling | NOT RUN | <...> |
+| 4.1.7 Optuna/TPE + zero-search champion | NOT RUN | <...> |
+| 4.1.8 ensembles across families | NOT RUN | <...> |
+| 4.1.9 late-lane data in every window config | NOT RUN | <...> |
+| 4.1.10 execution lag + real costs inside the metric | NOT RUN | <...> |
 | <...> | NOT RUN | <...> |
 
 ## 6. Accrual list (thin candidates — scheduled, never forgotten)
@@ -67,6 +82,9 @@ Stored-revised sources: vintage snapshots start <date>; lag-stress results:
 - Schedule: <when the model runs, and what price the entry is>
 - Ledger: append-only, one row per scheduled anchor, spec-tagged, judged on
   its own date, never edited; prior-spec rows archived and labeled.
+- Tripwires: REVIEW <value> · KILL <value> · operational kill <skip/error
+  rate>; judged by <e-process | confidence sequence>, valid under daily peeks
+- Sizing: raw <scalar> · shrunk for estimation error <scalar, SE used>
 - Drift monitor: <rolling window vs backtest distribution, alert threshold>
 
 ## Amendment log

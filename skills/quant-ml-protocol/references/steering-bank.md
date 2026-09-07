@@ -54,6 +54,12 @@ Ask these verbatim, and wait:
    after two model lanes and one board submission the user had to ask "What
    have you tried? What features? ... Optuna optimisation?" cold; the answers
    existed across four files and no surface had put them side by side.)
+8. **"Which rung of the ladder is still NOT-DONE, and why?"** The Stage 4.1
+   mechanism ladder, rung by rung, with each untried rung's reason and slot.
+   (War story, grade-diff 2026-09-07: at the gate nine mechanisms were
+   untried at once: level models, magnitude, window sweep, lag structure,
+   feature selection, ensembles, Optuna, execution lag, late-lane data in
+   one window only. Every one had been "flagged"; none had a row.)
 
 ## Standing behavioral rules (from the same record)
 

@@ -10,8 +10,9 @@ instantiation; it lives in `quantamental/.claude/skills/` and loads only inside
 that repo. Use it for the mechanics there, but on any conflict
 of statistical principle (nulls, holdouts, selection honesty), this file wins.
 
-Distilled from a real 9-iteration model campaign (Aug 2026): every rule below
-was paid for by a specific failure, recorded in `references/steering-bank.md`.
+Distilled from two real campaigns (bd-forecast, 9 iterations, Aug 2026;
+grade-diff, Sep 2026): every rule below was paid for by a specific failure,
+recorded in `references/steering-bank.md`.
 The core insight is a three-tier map of what goes wrong:
 
 - **Known unknowns** — mechanizable: the checklists and gates below. Run them
@@ -43,6 +44,10 @@ Instantiate `templates/EXPERIMENT-PROTOCOL.md` into the project as
    caution flag instead of a number has flipped a verdict after
    promotion (AF2 2026: +3.93 bps/day t 2.74 gross became ~+1.13 at
    t ~0.8 once the stated 2 bp/calendar-day financing was applied).
+   Execution lag is a cost too: the entry price is the first tradable
+   print AFTER the signal is computable, never the assessment mid the
+   signal was computed from. Measure the lag and apply it from the first
+   backtest; a money number dealt at the mid is a diagnostic.
 3. **Target decomposition.** Subtract everything the market already pays:
    carry, roll-down, basis. If a naive always-one-side strategy scores well
    on the raw target, the target is wrong, not the model good.
@@ -83,6 +88,10 @@ Instantiate `templates/EXPERIMENT-PROTOCOL.md` into the project as
   reported next to N × α (expected false passes) and the expected
   maximum null Sharpe at N trials. A pass inside that noise ceiling is
   a flag, not a result.
+  N × α is a Bonferroni-shaped bound and over-punishes correlated lanes.
+  When lanes share data, judge the family with a joint bootstrap
+  (Hansen SPA, or Romano-Wolf StepM, which names WHICH lanes survive)
+  and report it beside the N × α line.
 
 ## Stage 3 — baselines before models
 
@@ -93,14 +102,70 @@ chart. A model that cannot name the naive strategy it beats has no result.
 ## Stage 4 — model discipline
 
 - Simple → complex, one change at a time, champion/challenger.
-- Expanding vs rolling windows: tested, not assumed (small samples usually
-  punish forgetting).
 - Purge: a training row is admitted only after its outcome RESOLVED before
   the fit date. Remaining overlap gets uniqueness weights.
 - Validate the hyperparameter GRID itself (a grid reaching too-strong
   regularization silently shrinks small specs to the base rate).
 - A richer model class earns its place only by BEATING the simple one on
   honest rows — a tie promotes the simpler model.
+
+### Stage 4.1 — the mechanism ladder (every rung tried, or in the NOT-DONE table with a reason and a slot)
+
+Distilled from the grade-diff campaign (Sep 2026), where every rung below
+was found untried at the gate. Walk it in order; each rung is a declared
+lane (Stage 2) with its own null bar.
+
+1. **The level before the sign.** When the target is a level (a diff, a
+   spread, a structure) that shows autocorrelation, fit AR / ARIMA /
+   exponential smoothing / HAR-type models on the level itself. A sign
+   classifier is a try only once a level model holds a verdict row
+   beside it.
+2. **Magnitude and distribution.** Sizing needs a magnitude. Add a
+   regression on the size of the move, a volatility model, and a
+   distributional lane (quantiles or a full predictive distribution)
+   scored with a strictly proper rule: pinball loss or CRPS. Calibration
+   first, sharpness second.
+3. **Window and recency.** Sweep rolling lengths against expanding, and
+   add exponential recency weights as the continuous version; they cost
+   nothing extra. Expanding vs one rolling length is a diagnostic. Small
+   samples usually punish forgetting, so expanding is the prior and a
+   shorter window must beat it on honest rows.
+4. **Lag structure of outside data.** Each outside series enters with
+   declared lags, changes, and interactions with regime state and reset
+   events, within the feature cap. A single z-score per series is the
+   baseline lane, and the ladder starts above it.
+5. **Feature selection with error control.** Decorrelate or cluster first,
+   hold the n_indep/8 cap, then select with model-X knockoffs at a stated
+   false-discovery rate. Knockoffs assume the feature joint distribution
+   is modelled; with autocorrelated features generate them block-wise
+   and label the FDR nominal. Per-feature knockout has no error control
+   and stays a diagnostic.
+6. **Structure before search.** Where the sign of a driver is domain
+   knowledge, encode it as a monotone constraint (LightGBM
+   `monotone_constraints`, method intermediate or advanced) so the trees
+   cannot fit a noise-driven sign flip. Where one target is under-powered
+   and related targets exist (sibling grades, sibling routes), pool them
+   with a hierarchical model that shrinks each target's coefficients
+   toward the pooled mean by its own standard error (the Vasicek
+   adjustment). Pooling is the largest sample-size multiplier available.
+7. **Hyperparameters.** Optuna/TPE on the winning families, about 50
+   trials per refit, declared per Stage 4.5 rules. Inner folds of tens
+   to low hundreds of rows mostly fit the folds, so the declared null
+   bar is the judge, not the inner score. Run a zero-search champion
+   beside it (a prior-fitted tabular model such as TabPFN): its k is 1,
+   one ledger lane instead of a search, and a tie promotes it by
+   parsimony.
+8. **Ensembles across families.** Simple averaging and stacking across
+   the families are declared lanes. Prospectively, exponential-weights
+   aggregation over the live specs replaces champion/challenger selection:
+   the weights adapt causally, and the selection haircut becomes a regret
+   bound of order sqrt(T log N) against the best single spec.
+9. **Late-lane data.** A series that starts after the sample start is
+   tested in EVERY window configuration the main lanes use, not one, and
+   its thin-window status (Stage 5.5) is stated beside each result.
+10. **Execution lag and real costs.** Stage 0 item 2, applied: the rung
+    most often "already flagged" at the gate with the metric still dealt
+    at the mid.
 
 ## Stage 4.5 — the coverage interrogation (fire at yourself before every gate and every report)
 
@@ -123,6 +188,8 @@ Rules for the answers:
 
 - A "tried" carries its verdict row (id, numbers, paired interval) or it is
   not tried. A run with no declaration is a diagnostic, not a try.
+- Answer 1 walks the Stage 4.1 ladder rung by rung; an unwalked rung is a
+  NOT-DONE row, never silence.
 - Answers 5 and 6 name the search: cells, k, the optimism bound, the CV
   design. "No search" is a finding to report, never a silent default. Optuna
   or any sequential optimiser is a declared search like any other: budget,
@@ -157,6 +224,11 @@ Rules for the answers:
 4. Leave-one-year-out; per-feature knockout; seasonality controls (calendar
    dummies alone as a baseline); revision stress on every stored-revised
    driver.
+   A knockout answers "does the model need X", not "does X move the
+   target". For the second question (a turnaround, a chokepoint count, a
+   programme change) use double/debiased ML: orthogonalise driver and
+   target against the nuisance features with cross-fitting, and report
+   the effect with its interval.
 5. **Thin-window rule**: any candidate evaluated on n < 300 anchors goes to
    the pre-registered ACCRUAL LIST with a scheduled re-test date — never
    into the model, never forgotten.
@@ -185,7 +257,8 @@ one surface:
 2. EVERY metric with a paired interval — never a single-metric verdict.
    ("All tied" on one metric has been overturned by the money metric.)
    Include the trial-ledger line: N trials this campaign, expected max
-   null Sharpe at N, observed Sharpe beside it.
+   null Sharpe at N, observed Sharpe beside it, and the SPA or StepM
+   result when the lanes share data (Stage 2).
 3. The decision rule restated, with the sentence: **"This verdict is only as
    good as this rule — attack the rule, not just the numbers."**
 4. All caution flags, openly (a null that fails is demoted to a flag only if
@@ -212,6 +285,15 @@ instead.
   it is not a substitute for tripwires. A lane too thin to CONFIRM its
   edge at its accrual rate is declared kill-only, with the detectable-
   effect horizon stated.
+  The ledger is peeked at every run, so fixed-n tests on it are invalid.
+  Judge tripwires with anytime-valid tools: an e-process for the kill
+  test and a confidence sequence for the edge estimate. Both stay valid
+  at every stopping time, so daily looks keep the declared error rate.
+- **Sizing shrinks for estimation error.** The edge that sets the size is
+  itself an estimate from a thin ledger. Shrink the size scalar (Kelly
+  fraction, vol-target multiplier) by the standard error of the edge
+  (Baker and McHale 2013 give the back-of-envelope form for the win
+  probability) and state the shrunk size beside the raw one.
 - Operational reality is part of the model: what time it runs, what price
   the entry is, what the backtest's marks actually are (settle vs intraday),
   what happens on holidays — measured, not assumed.
