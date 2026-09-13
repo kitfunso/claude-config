@@ -23,6 +23,7 @@ CACHE_DIR = (Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"
              / "cache" / "hippo-context")
 LOCK_TTL = 300.0
 COLD_TIMEOUT = 12.0
+MEMORY_HEADING = "## Project Memory"
 
 
 def hippo() -> str | None:
@@ -31,6 +32,20 @@ def hippo() -> str | None:
 
 def cache_file(cwd: str) -> Path:
     return CACHE_DIR / f"{hashlib.sha1(cwd.encode('utf-8')).hexdigest()[:16]}.json"
+
+
+def strip_snapshot(payload: str) -> str:
+    """The SessionStart hook already prints the snapshot; per prompt it is dead weight."""
+    try:
+        doc = json.loads(payload)
+        block = doc["hookSpecificOutput"]["additionalContext"]
+    except (ValueError, KeyError, TypeError):
+        return payload
+    cut = block.find(MEMORY_HEADING)
+    if cut <= 0:
+        return payload
+    doc["hookSpecificOutput"]["additionalContext"] = block[cut:]
+    return json.dumps(doc)
 
 
 def run_hippo(cwd: str, timeout: float) -> str | None:
@@ -43,7 +58,7 @@ def run_hippo(cwd: str, timeout: float) -> str | None:
     except (OSError, subprocess.SubprocessError):
         return None
     out = (done.stdout or "").strip()
-    return out if done.returncode == 0 and out else None
+    return strip_snapshot(out) if done.returncode == 0 and out else None
 
 
 def write_cache(path: Path, payload: str) -> None:

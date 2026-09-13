@@ -84,6 +84,36 @@ model, because the rest carry `disable-model-invocation: true` and the script co
 only what is injected. Hippo self-reports 1,500 for what costs 1,991
 in cl100k.
 
+Hippo pass, same day, after Keith asked what it costs. It was 2,663 of 17,387, a
+sixth of the whole prompt, and the block was serving the wrong 17 entries. Two causes.
+First, the snapshot: `hippo context` prepends the Active Task Snapshot, so the
+UserPromptSubmit hook reprinted 821 tokens of the last pre-compact summary on every
+prompt, while SessionStart already runs `hippo compact-resume`, which delivers the same
+snapshot once, at the only moment a discarded transcript makes it worth anything.
+`scripts/hooks/hippo_context_cached.py` now cuts everything before `## Project Memory`
+before it writes the cache; the fix belongs in the wrapper, not in hippo, because
+compact-resume needs the snapshot. Second, the pins: 23 pinned memories held 3,355
+tokens against a 1,500 budget, so hippo dropped six by a ranking that kept a March 2026
+roadmap for work already shipped and dropped an item marked OPEN on 10 September. Four
+were forgotten for being wrong, not merely old: two stale hippo roadmaps that describe
+the SQLite and DAG backbone as future work, a `NEVER use --no-verify` pin that
+contradicts the Git Operations rule allowing it on an explicit ask, and one of two
+same-day entries that disagreed on whether 3 or 8 mattpocock skills were vendored.
+Eight more were unpinned rather than forgotten, so they stay recallable: the two
+largest were `bitfall` at 371 and `fifty` at 604, project state that MEMORY.md already
+points at through a file that is the source of truth and does not rot in place. The
+pinned pool is 11 entries and fits under the budget, so nothing is silently dropped;
+the injection is 12 entries and 1,704 tokens, and the total is 16,428. Rule for a pin:
+it earns its place only if it changes behaviour on an arbitrary prompt in an arbitrary
+project. `hippo.db.bak-20260913-pre-pin-prune` holds the state before all of it.
+
+A defect found while doing that, and still open: two concurrent `hippo context`
+processes deadlock on the SQLite store. Each ran past ten minutes and returned nothing,
+against 1.0 to 1.6 seconds for a single run, and the tell is a node process holding
+near-zero CPU. The wrapper spawns a detached refresh per cwd, so two working
+directories refreshing together can wedge each other, and a wedged refresh writes
+nothing, which leaves the cache serving entries that were forgotten hours earlier.
+
 Also corrected: the comment-budget guards were closing a comment run at a blank line,
 so narration split by blanks evaded the 3-in-a-row rule. Both `comment-budget-guard.js`
 and `comment_budget_guard.py` now continue a run across blank-only lines and only a
