@@ -75,6 +75,8 @@ Every builder brief opens with four answers, written by you, not left to the bui
 - **Constraints.** Stack, performance, accessibility, the Artifact CSP allowlist.
 - **Differentiation.** The one thing someone will remember. This is the memorable thing from `DESIGN.md`, restated for this variant's hero.
 
+Three dials, stated as numbers in every brief (taste-skill): DESIGN_VARIANCE (centred, safe layout at 1; asymmetric, overlapping at 10) from the rolled `layout`; MOTION_INTENSITY (hover only at 1; scroll choreography at 10) from the rolled `motion`; VISUAL_DENSITY (airy at 1; data-dense at 10) from the subject (a trading desk page is dense, a manifesto is airy).
+
 Then the aesthetics rules the builder must apply:
 
 - Typography carries the page. The display face and the body face from `DESIGN.md`, paired on purpose, a scale you stay on, weights that make hierarchy, `text-wrap: balance` on headings, ~65ch measure for running text.
@@ -95,7 +97,7 @@ The full `/design-review` needs a served URL, a clean git tree, and the gstack b
 1. Generic SaaS card grid as the first impression.
 2. Beautiful image or effect with a weak brand.
 3. Strong headline with no clear action.
-4. Busy imagery or effect behind text (the first live round failed this twice: wireframe grid under the paragraph, ghost headline over the headline).
+4. Busy imagery or effect behind text (a wireframe grid under a paragraph, a ghost headline over the headline).
 5. Sections repeating the same mood statement.
 6. Carousel with no narrative purpose.
 7. App UI made of stacked cards instead of layout.

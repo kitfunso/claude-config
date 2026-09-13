@@ -48,6 +48,6 @@ From developer.apple.com/app-store/review/guidelines:
 - **2.5.4 Background modes.** Background services "only for their intended purposes"; the review notes say which purpose and what the user sees while it runs.
 - **4.2 Minimum functionality.** The app must do more than "a repackaged website". A Capacitor shell earns its place with a native capability (background audio, push, deep links, offline) that the PWA cannot do; say which in the review notes.
 
-Play equivalents live at play.google.com/console under Policy status; the Data safety form and the target API level are the two that stop a rollout. R8 minification on (`minifyEnabled true`) removes Play's obfuscation warning (phzse, September 2026).
+Play equivalents live at play.google.com/console under Policy status; the Data safety form and the target API level are the two that stop a rollout. R8 minification on (`minifyEnabled true`) removes Play's obfuscation warning (phzse, September 2026). Play keeps one open edit per app: any script that opens an edit (even a dry run) while CI is uploading kills the upload with "This edit has expired"; watch the build page instead of polling Play (phzse, September 2026).
 
 Background modes and sensitive permissions (microphone, location, health) get a paragraph in the review notes saying why the app needs them and what the user sees.

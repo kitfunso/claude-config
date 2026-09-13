@@ -6,7 +6,8 @@
  * before allowing the Write to proceed. Enforces the Hand-Maintained Files
  * (CRITICAL) rule in ~/.claude/CLAUDE.md.
  *
- * Behavior: silent auto-backup, then defer. Recovery: `mv <path>.old <path>`.
+ * Behavior: silent auto-backup, then defer. Recovery: copy the backup back:
+ * `~/.claude/backups/<path with the drive colon removed>.old` -> `<path>`.
  * Emits NO decision: "approve" would auto-approve the writes this rule exists
  * to make you confirm, so the hook backs up and leaves permission alone.
  * Log: ~/.claude/logs/hand-maintained-backups.log
@@ -18,6 +19,7 @@ const os = require('os');
 const HOME = os.homedir();
 const CLAUDE_DIR = path.join(HOME, '.claude').replace(/\\/g, '/');
 const LOG_FILE = path.join(HOME, '.claude', 'logs', 'hand-maintained-backups.log');
+const BACKUP_ROOT = path.join(HOME, '.claude', 'backups');
 
 function isProtected(filePath) {
   if (!filePath) return false;
@@ -34,7 +36,10 @@ function ensureLogDir() {
 
 function backup(filePath) {
   if (!fs.existsSync(filePath)) return null;
-  const backupPath = filePath + '.old';
+  // Mirrors the absolute path under backups/ so N files never collide into one <file>.old.
+  const mapped = path.resolve(filePath).replace(':', '');
+  const backupPath = path.join(BACKUP_ROOT, mapped) + '.old';
+  fs.mkdirSync(path.dirname(backupPath), { recursive: true });
   fs.copyFileSync(filePath, backupPath);
   return backupPath;
 }

@@ -14,15 +14,21 @@
       "files": []
     },
     {
+      "id": 3,
+      "prompt": "Launch video for the hippo 1.0 release, 12 seconds, for X.",
+      "expected_output": "Video-mode roll (1 recipe), routed through /hyperframes with flow automation, one composition with 2-3 scenes, previewed (not rendered), snapshot sheet looked at, then a stop asking render / re-roll / change story.",
+      "files": []
+    },
+    {
       "id": 4,
       "prompt": "Make the landing page for our crude datalake look amazing. There is no DESIGN.md yet.",
       "expected_output": "No variant is built first. The skill runs the short-form /design-consultation: product context pre-filled from the repo, the memorable-thing question, one complete proposal with SAFE/RISK, then stops for the user's approval. Only after approval does it write DESIGN.md, roll with --design, build, gate, and board.",
       "files": []
     },
     {
-      "id": 3,
-      "prompt": "Launch video for the hippo 1.0 release, 12 seconds, for X.",
-      "expected_output": "Video-mode roll (1 recipe), routed through /hyperframes with flow automation, one composition with 2-3 scenes, previewed (not rendered), snapshot sheet looked at, then a stop asking render / re-roll / change story.",
+      "id": 5,
+      "prompt": "Surprise me. No brand yet, I just want to see five wild takes on a page for btlab before I pick a direction.",
+      "expected_output": "No consultation first: the user asked for exploration before a brand exists in their own words. The roll runs without --design so palette and type are rolled too, five variants are built and gated, the round is presented as taste discovery, and after the pick the skill runs the consultation on the winner with its palette and type as the proposal.",
       "files": []
     }
   ]

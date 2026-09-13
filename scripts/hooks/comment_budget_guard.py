@@ -72,30 +72,56 @@ def comment_flags(lines: list[str], ext: str) -> list[bool]:
     return flags
 
 
-def check(content: str, ext: str) -> str | None:
-    lines = content.splitlines()
-    if not lines:
+def apply_edit(content: str, old: str, new: str, replace_all: bool) -> str | None:
+    if not old or old not in content:
         return None
-    flags = comment_flags(lines, ext)
+    return content.replace(old, new) if replace_all else content.replace(old, new, 1)
 
+
+def header_end(lines: list[str], ext: str) -> int:
+    flags = comment_flags(lines, ext)
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        if stripped == "" or stripped.startswith("#!") or flags[i]:
+            i += 1
+            continue
+        break
+    return i
+
+
+# A run survives blank lines so a block split by whitespace still counts as one.
+def check_run(content: str, ext: str) -> str | None:
+    lines = content.splitlines()
+    flags = comment_flags(lines, ext)
     run = 0
-    for flag in flags:
-        run = run + 1 if flag else 0
+    for i, flag in enumerate(flags):
+        if flag:
+            run += 1
+        elif lines[i].strip() != "":
+            run = 0
         if run > MAX_RUN:
             return (
                 f"more than {MAX_RUN} comment lines in a row — the Comments rule "
                 "(rules/coding-standards.md) allows one line, two at most, WHY not "
                 "WHAT. Cut the block, then retry. Escape: CLAUDE_COMMENT_BUDGET=off."
             )
+    return None
 
-    total = len(lines)
-    count = sum(flags)
+
+def check_density(file_text: str, ext: str) -> str | None:
+    lines = file_text.splitlines()
+    body = lines[header_end(lines, ext):]
+    if not body:
+        return None
+    total = len(body)
+    count = sum(comment_flags(body, ext))
     if total >= MIN_LINES_FOR_DENSITY and count / total > MAX_DENSITY:
         return (
             f"comment density {count}/{total} = {count / total:.0%} exceeds "
-            f"{MAX_DENSITY:.0%} — the Comments rule (rules/coding-standards.md) "
-            "says one line, two at most, WHY not WHAT. Trim comments, then retry. "
-            "Escape: CLAUDE_COMMENT_BUDGET=off."
+            f"{MAX_DENSITY:.0%} in the resulting file — the Comments rule "
+            "(rules/coding-standards.md) says one line, two at most, WHY not WHAT. "
+            "Trim comments, then retry. Escape: CLAUDE_COMMENT_BUDGET=off."
         )
     return None
 
@@ -112,7 +138,8 @@ def main() -> None:
     if os.environ.get("CLAUDE_COMMENT_BUDGET", "").lower() == "off":
         return
     payload = json.load(sys.stdin)
-    if payload.get("tool_name") not in ("Edit", "Write"):
+    tool_name = payload.get("tool_name")
+    if tool_name not in ("Edit", "Write"):
         return
     tool_input = payload.get("tool_input") or {}
     file_path = (tool_input.get("file_path") or "").replace("\\", "/")
@@ -122,7 +149,21 @@ def main() -> None:
     if re.search(r"(^|/)docs(/|$)", file_path, re.IGNORECASE):
         return
     content = tool_input.get("content") or tool_input.get("new_string") or ""
-    reason = check(content, ext)
+    reason = check_run(content, ext)
+    if not reason:
+        # Density is judged on the file the edit produces, not the snippet alone.
+        file_text = content if tool_name == "Write" else None
+        if tool_name == "Edit":
+            try:
+                with open(tool_input.get("file_path") or "", "r", encoding="utf-8") as fh:
+                    current = fh.read()
+                file_text = apply_edit(current, tool_input.get("old_string") or "",
+                                        tool_input.get("new_string") or "",
+                                        tool_input.get("replace_all") is True)
+            except Exception:
+                file_text = None
+        if file_text is not None:
+            reason = check_density(file_text, ext)
     if reason:
         record(kind="hook", name=os.path.basename(__file__), session_id=payload.get("session_id"),
                cwd=payload.get("cwd"), blocked=True, notes=reason)

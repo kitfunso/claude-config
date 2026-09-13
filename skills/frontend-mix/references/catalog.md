@@ -26,7 +26,7 @@ Caveat: WebGPURenderer is r182's default in docs but `three.webgpu.js` is a sepa
 What: a real 3D capture in the hero. Spark 2.1.0 (World Labs), peer `three>=0.180.0`. Public samples for MVPs: `https://sparkjs.dev/assets/splats/butterfly.spz`, `cat.spz`, `fly.spz` (each a few MB). For a product, capture with Luma/Polycam/Scaniverse and export `.spz` under ~15 MB.
 ```html
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/","@sparkjsdev/spark":"https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.1.0/dist/spark.module.js"}}</script>
-<!-- the three/addons/ entry is mandatory: spark.module.js imports three/addons/postprocessing/Pass.js and fails to resolve without it (found in the first live round, 2026-09-04) -->
+<!-- the three/addons/ entry is mandatory: spark.module.js imports three/addons/postprocessing/Pass.js and fails to resolve without it -->
 <script type="module">
 import * as THREE from "three";
 import { SplatMesh, SparkRenderer } from "@sparkjsdev/spark";

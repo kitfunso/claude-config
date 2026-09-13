@@ -32,6 +32,10 @@
 /skills/frontend-slides/**
 /skills/gstack/
 /skills/gstack/**
+/skills/arcads-claude-code/
+/skills/arcads-claude-code/**
+/skills/higgsfield-claude-skills/
+/skills/higgsfield-claude-skills/**
 /skills/**/*.pyc
 /skills/**/*.exe
 /skills/**/*.dll

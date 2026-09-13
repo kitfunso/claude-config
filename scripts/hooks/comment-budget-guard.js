@@ -2,6 +2,7 @@
 // Denies an Edit/Write whose comments exceed the budget in rules/coding-standards.md.
 // Source files only. Set CLAUDE_COMMENT_BUDGET=off to disable.
 
+const fs = require('fs');
 const MAX_RUN = 3;
 const MAX_DENSITY = 0.2;
 const DENSITY_FLOOR = 15;
@@ -56,8 +57,7 @@ function longestRun(lines, token) {
   let run = 0;
   for (const k of kind) {
     if (k === 'comment') { run += 1; best = Math.max(best, run); continue; }
-    // A blank line separates two comments; it does not join them into one block.
-    // Aggregate narration is caught by the density rule instead.
+    if (k === 'blank') continue;
     run = 0;
   }
   return best;
@@ -81,6 +81,35 @@ if (require.main !== module) return;
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
+// Manual slicing, never String#replace(old, new_string): new_string may contain "$&"/"$1".
+function applyEdit(content, oldStr, newStr, replaceAll) {
+  if (!oldStr || content.indexOf(oldStr) === -1) return null;
+  if (!replaceAll) {
+    const idx = content.indexOf(oldStr);
+    return content.slice(0, idx) + newStr + content.slice(idx + oldStr.length);
+  }
+  let result = '';
+  let rest = content;
+  let pos;
+  while ((pos = rest.indexOf(oldStr)) !== -1) {
+    result += rest.slice(0, pos) + newStr;
+    rest = rest.slice(pos + oldStr.length);
+  }
+  return result + rest;
+}
+
+// Shebang/blank/comment header lines are boilerplate, not the body the density budget grades.
+function headerEnd(lines, token) {
+  const kind = classify(lines, token);
+  let i = 0;
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+    if (trimmed === '' || trimmed.startsWith('#!') || kind[i] === 'comment') { i += 1; continue; }
+    break;
+  }
+  return i;
+}
+
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
@@ -99,17 +128,32 @@ process.stdin.on('end', () => {
   const text = String(ti.content != null ? ti.content : ti.new_string || '');
   if (!text) process.exit(0);
   const lines = text.split(/\r?\n/);
-
   const run = longestRun(lines, token);
-  const comments = countComments(lines, token);
-  const density = lines.length ? comments / lines.length : 0;
+
+  // Density is judged on the file the edit produces, not the snippet alone, so a
+  // short why-comment dropped into a big file can't read as 100% comments.
+  let fileText = input.tool_name === 'Write' ? text : null;
+  if (input.tool_name === 'Edit') {
+    try {
+      const current = fs.readFileSync(ti.file_path, 'utf8');
+      fileText = applyEdit(current, String(ti.old_string || ''), String(ti.new_string || ''), ti.replace_all === true);
+    } catch (e) {
+      fileText = null;
+    }
+  }
 
   let why = null;
   if (run > MAX_RUN) {
     why = run + ' comment lines in a row (budget: ' + MAX_RUN + ')';
-  } else if (lines.length >= DENSITY_FLOOR && density > MAX_DENSITY) {
-    why = comments + ' comment lines out of ' + lines.length + ' (' +
-      Math.round(density * 100) + '%, budget: ' + Math.round(MAX_DENSITY * 100) + '%)';
+  } else if (fileText != null) {
+    const fileLines = fileText.split(/\r?\n/);
+    const body = fileLines.slice(headerEnd(fileLines, token));
+    const comments = countComments(body, token);
+    const density = body.length ? comments / body.length : 0;
+    if (body.length >= DENSITY_FLOOR && density > MAX_DENSITY) {
+      why = comments + ' comment lines out of ' + body.length + ' in the resulting file (' +
+        Math.round(density * 100) + '%, budget: ' + Math.round(MAX_DENSITY * 100) + '%)';
+    }
   }
   if (!why) process.exit(0);
 

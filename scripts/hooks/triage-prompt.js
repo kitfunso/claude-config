@@ -31,12 +31,14 @@ function main() {
       if (/\b(CIO|CEO|CFO|portfolio manager|head of|founder)\b/i.test(prompt) && /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/.test(prompt)) {
         triggers.push('named individual + role');
       }
-      // Numeric financial claims
-      if (/\b(Sharpe|PnL|drawdown|AUM|return|alpha)\s*[:\-=]?\s*[-+]?\d+/i.test(prompt)) {
+      // Numeric financial claims. return/returns needs a percent marker so "return 0" (code) can't match.
+      const hasNumericTerm = /\b(Sharpe|PnL|drawdown|AUM|alpha)\s*[:\-=]?\s*[-+]?\d+/i.test(prompt);
+      const hasPercentReturn = /\breturns?\s*[:\-=]?\s*[-+]?\d+(?:\.\d+)?\s*(?:%|\bpercent\b)/i.test(prompt);
+      if (hasNumericTerm || hasPercentReturn) {
         triggers.push('numeric financial claim');
       }
       // Verification verbs against named code paths
-      if (/\b(verify|audit|is.{0,20}true|prove|check|confirm)\b/i.test(prompt) && /\b[\w\-/]+\.(py|js|ts|tsx|jsx|md|json)\b/.test(prompt)) {
+      if (/\b(verify|audit|is.{0,20}true|prove)\b/i.test(prompt) && /\b[\w\-/]+\.(py|js|ts|tsx|jsx|md|json)\b/.test(prompt)) {
         triggers.push('file/code verification request');
       }
 

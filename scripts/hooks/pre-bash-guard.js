@@ -45,7 +45,8 @@ function main() {
 
       // Block dev servers outside tmux (they hang the session)
       if (/\b(npm run dev|npm start|yarn dev|pnpm dev|next dev|uvicorn .* --reload)\b/.test(cmd)) {
-        if (!process.env.TMUX) {
+        const backgrounded = data.tool_input && data.tool_input.run_in_background === true;
+        if (!process.env.TMUX && !backgrounded) {
           emit('deny', 'Dev servers hang the session. Use `run_in_background: true` or run in a separate terminal/tmux.');
         }
       }

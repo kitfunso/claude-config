@@ -8,7 +8,7 @@ HyperFrames renders video from an HTML composition whose timing is declared with
 - `npx hyperframes preview` opens it in the browser. Take a snapshot sheet at scene midpoints and LOOK at it.
 - No render until the user answers "render, re-roll a slot, or change the story?". This is the human gate; HyperFrames also keeps rendering user-gated in both modes.
 
-Route: `/hyperframes` → intent layer with `flow: automation`, `storyboard: no` (so it does not re-ask what the roll already decided) → `/product-launch-video` when a product is being launched or demoed, `/motion-graphics` for a short title or reveal. Hand the recipe in as constraints on `frame.md` (design system) and `STORYBOARD.md` (per-scene visual notes). Rendering, captions, audio (`/media-use`) stay with those skills.
+Route: `/hyperframes` → intent layer with `flow: automation`, `storyboard: no` (so it does not re-ask what the roll already decided) → `/product-launch-video` when a product is being launched or demoed, `/general-video` for a short title or reveal. Hand the recipe in as constraints on `frame.md` (design system) and `STORYBOARD.md` (per-scene visual notes). Rendering, captions, audio (`/media-use`) stay with those skills.
 
 ## Slot to adapter map
 
