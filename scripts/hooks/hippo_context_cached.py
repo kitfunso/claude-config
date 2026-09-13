@@ -3,7 +3,7 @@
 
 `hippo context` costs 0.57s idle but 28-57s under 24-core load, against a 15s
 hook budget, so the injection was dropped whenever the box was busy.
-See docs/incidents.md (2026-09-06).
+See docs/incidents.md (2026-09-06, and 2026-09-13 for the snapshot and the lock).
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ ARGS = ["context", "--pinned-only", "--include-recent", "5",
         "--format", "additional-context"]
 CACHE_DIR = (Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
              / "cache" / "hippo-context")
-LOCK_TTL = 300.0
+LOCK_TTL = 60.0
 COLD_TIMEOUT = 12.0
 MEMORY_HEADING = "## Project Memory"
 
@@ -34,14 +34,19 @@ def cache_file(cwd: str) -> Path:
     return CACHE_DIR / f"{hashlib.sha1(cwd.encode('utf-8')).hexdigest()[:16]}.json"
 
 
+def lock_file() -> Path:
+    """One lock for the whole store: two concurrent refreshes deadlock SQLite."""
+    return CACHE_DIR / "refresh.lock"
+
+
 def strip_snapshot(payload: str) -> str:
     """The SessionStart hook already prints the snapshot; per prompt it is dead weight."""
     try:
         doc = json.loads(payload)
         block = doc["hookSpecificOutput"]["additionalContext"]
-    except (ValueError, KeyError, TypeError):
+        cut = block.find(MEMORY_HEADING)
+    except (ValueError, KeyError, TypeError, AttributeError):
         return payload
-    cut = block.find(MEMORY_HEADING)
     if cut <= 0:
         return payload
     doc["hookSpecificOutput"]["additionalContext"] = block[cut:]
@@ -80,7 +85,7 @@ def refresh_running(lock: Path) -> bool:
 
 
 def spawn_refresh(cwd: str) -> None:
-    lock = cache_file(cwd).with_suffix(".lock")
+    lock = lock_file()
     if refresh_running(lock):
         return
     try:
@@ -106,7 +111,7 @@ def refresh(cwd: str) -> int:
     if out:
         write_cache(path, out)
     try:
-        path.with_suffix(".lock").unlink()
+        lock_file().unlink()
     except OSError:
         pass
     return 0

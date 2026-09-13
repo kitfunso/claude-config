@@ -103,16 +103,35 @@ Eight more were unpinned rather than forgotten, so they stay recallable: the two
 largest were `bitfall` at 371 and `fifty` at 604, project state that MEMORY.md already
 points at through a file that is the source of truth and does not rot in place. The
 pinned pool is 11 entries and fits under the budget, so nothing is silently dropped;
-the injection is 12 entries and 1,704 tokens, and the total is 16,428. Rule for a pin:
-it earns its place only if it changes behaviour on an arbitrary prompt in an arbitrary
-project. `hippo.db.bak-20260913-pre-pin-prune` holds the state before all of it.
+the injection is 13 entries and 1,651 tokens here, and the total is 16,375. Rule for a
+pin: it earns its place only if it changes behaviour on an arbitrary prompt in an
+arbitrary project. `hippo.db.bak-20260913-pre-pin-prune` holds the state before all of
+it.
 
-A defect found while doing that, and still open: two concurrent `hippo context`
-processes deadlock on the SQLite store. Each ran past ten minutes and returned nothing,
-against 1.0 to 1.6 seconds for a single run, and the tell is a node process holding
-near-zero CPU. The wrapper spawns a detached refresh per cwd, so two working
-directories refreshing together can wedge each other, and a wedged refresh writes
-nothing, which leaves the cache serving entries that were forgotten hours earlier.
+Quote the total as a level with a stated spread, not a constant. 14,724 of it is config
+text and does not move. The hippo line does: `--include-recent 5` takes the last five
+writes, so it differs by working directory and after every `hippo remember`. Two live
+caches an hour apart read 1,651 and 1,758. A figure of 16,428 went into this file, the
+audit memory and the cut sheet before that spread was measured; the level is 16,375
+here and lands between roughly 16,375 and 16,500 elsewhere.
+
+The deadlock behind it, now fixed. Two concurrent `hippo context` processes deadlock on
+the SQLite store: each ran past ten minutes and returned nothing, against 0.9 to 1.6
+seconds for a single run, and the tell is a node process holding near-zero CPU. The
+cause was in the wrapper, not in hippo: `spawn_refresh` took a lock named after the
+working directory, so it serialised refreshes within one cwd and did nothing at all
+across cwds, which is the only case that collides. The lock is now one file for the
+whole store, `cache/hippo-context/refresh.lock`, and `LOCK_TTL` drops from 300s to 60s
+because a crashed refresh now blocks every directory rather than one. That wedge is
+what let the cache serve entries forgotten hours earlier, so it was also the reason 51
+of 52 cached payloads still held the pruned pins; those were deleted, and a cold read
+repopulates each one correctly in about 0.9s on its next prompt.
+
+`scripts/hooks/test/test_hippo_context_cached.py` covers the strip and the lock, 15
+tests, run with `python -m unittest discover -s scripts/hooks/test -p "test_*.py"`. It
+earned its place on the first run: a payload whose `additionalContext` is null crashed
+`strip_snapshot` with an AttributeError the except clause did not name, which in the
+hook means a traceback instead of an injection.
 
 Also corrected: the comment-budget guards were closing a comment run at a blank line,
 so narration split by blanks evaded the 3-in-a-row rule. Both `comment-budget-guard.js`
