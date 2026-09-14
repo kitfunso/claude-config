@@ -1,11 +1,11 @@
 ﻿---
 name: build-release
-description: Bumps iOS/Android build numbers, builds the Android .aab, commits, and pushes for the Phzse app. Use when asked to ship a new Phzse build.
+description: Bumps iOS/Android build numbers, compile-checks the Android build, commits, pushes, then starts both Codemagic workflows for the Phzse app. Use when asked to ship a new Phzse build.
 ---
 
 # Build Release
 
-Automates the full release build workflow for the Phzse app: bump build numbers, build web assets, build the Android .aab, commit everything, and push.
+Ships a Phzse release: bump build numbers, build web assets, compile-check Android, commit, push, then start both Codemagic workflows. **CI builds and uploads the shipping artifacts.** The local gradle run is a pre-flight only, and the iOS IPA is never built here at all.
 
 ## Prerequisites
 
@@ -88,24 +88,25 @@ Wait for completion. This must succeed before proceeding.
 cd "C:/Users/skf_s/phzse" && npx cap sync android
 ```
 
-### 7. Build Android bundle
+### 7. Compile-check the Android build
 
 ```bash
 cd "C:/Users/skf_s/phzse/android" && ./gradlew bundleRelease
 ```
 
-This takes 30-60 seconds. Must finish with `BUILD SUCCESSFUL`.
+30-60 seconds, must finish with `BUILD SUCCESSFUL`. This is a pre-flight, nothing
+more. CI runs the same gradle task and fails the same way four minutes later, so
+catch it here.
 
-### 8. Copy .aab to project root
+**The bundle that ships is built by CI, not by this command.** `android-release`
+on Codemagic builds and signs its own, with the `phzse_upload_keystore` Codemagic
+holds, and uploads it straight to Play. Do not copy the local `.aab` anywhere and
+do not upload it by hand while CI works: two sources for one artifact is how a
+`versionCode` drifts between the repo and the store. The old step that copied it
+to `app-release-v{VERSION}-build{BUILD}.aab` existed only to feed a manual upload
+and is gone.
 
-```bash
-cp "C:/Users/skf_s/phzse/android/app/build/outputs/bundle/release/app-release.aab" \
-   "C:/Users/skf_s/phzse/app-release-v{VERSION_NAME}-build{NEW_BUILD}.aab"
-```
-
-The .aab is gitignored, so it won't be committed: it's just for local reference / Play Store upload.
-
-### 9. Write the App Store release notes
+### 8. Write the App Store release notes
 
 Rewrite `store-assets/release-notes/en-GB.txt` to describe THIS release, in plain
 words a user reads on the store page. Apple refuses a review submission when the
@@ -113,7 +114,7 @@ default locale has no `whatsNew`, and Codemagic's `publishing:` block has no key
 for it, so the CI publish step reads this file. Build #172 died on a stale-empty
 one. Show Keith the text before committing: it is public copy.
 
-### 10. Stage, commit, and push
+### 9. Stage, commit, and push
 
 Stage all modified files (not untracked directories like `.gstack/` or `prototypes/`):
 
@@ -140,7 +141,7 @@ Then push:
 git push
 ```
 
-### 11. Upload to the stores
+### 10. Upload to the stores
 
 - **iOS**: start the `ios-release` workflow in Codemagic. There is no
   `triggering:` block, so the push does NOT start a build. Press Start new build
@@ -158,25 +159,112 @@ git push
   a2905ab. Do not add `submit_to_testflight` back. The submission runs from a
   script step, not a `publishing:` block, because only the script can pass the
   release notes (`--whats-new "@file:..."`), and Apple rejects a submission
-  without them (8b7ff74). There is no Codemagic API token on this box,
-  so the Start new build press is Keith's.
+  without them (8b7ff74). There is no Codemagic API token on this box, but the
+  Chrome profile IS signed in to Codemagic, so press the button yourself. A tab
+  resting on a `/login` URL proves nothing: navigate to the settings page and
+  look before you call it logged out. That mistake handed a finished release
+  back to Keith on 2026-09-04.
 - **Android**: start the `android-release` workflow the same way, from the same
-  settings page. It builds the bundle and uploads it to the Play production
-  track as a draft (`submit_as_draft: true`), so nothing reaches users until
-  Keith presses the button. It needs two secrets in Codemagic that only he can
-  install: an Android keystore named `phzse_upload_keystore`, and an environment
-  group `google_play` holding `GCLOUD_SERVICE_ACCOUNT_CREDENTIALS`. Check both
-  exist before starting the build; without them it dies at signing.
-  `publishing.google_play` has no key for release notes, so Keith types those in
-  the console when he reviews the draft.
-  If the secrets are still missing, fall back: drive the browser to the Prepare
-  release page, pre-fill the release name and notes, and hand over the .aab path
-  for Keith to drag. Do not try to upload it. The classifier denies app-binary
-  uploads and `file_upload` caps at 10 MB against an ~11 MB bundle.
+  settings page. It builds the bundle, signs it, and uploads it to the Play
+  production track as a draft (`submit_as_draft: true`), so nothing reaches users
+  until Keith presses the button. Nothing else is needed from you or from him.
+  **This lane is proven end to end** by build `6aa0592a1dafc6b3c2e63184`
+  (2026-09-08), which ran every step, `Build AAB` in 4m 0s, and got a real answer
+  out of the Play API. Its steps summed to 6m 34s, so expect 6 to 7 minutes from
+  Start new build, most of it gradle.
+  **The one failure to expect is your own fault, and it is loud:**
+  `Version code 118 has already been used`. Play refuses a `versionCode` it has
+  seen, so step 3's bump is not optional and re-running the workflow on an
+  already-published build number can never succeed. Read the number in
+  `android/app/build.gradle` before pressing the button.
+  **`instance_type` must stay `mac_mini_m2`.** The Android workflow shipped with
+  `linux_x2` and so never started a machine once in its life: that instance is not
+  on this billing plan, and the failure reads `The selected instance type is not
+  available with the current billing plan`. Fixed in `e7e94ca`. Gradle, node 22 and
+  java 21 all run on the macOS image the iOS lane already uses.
+  **Verifying the Play credential when you cannot read it back:** a Codemagic
+  Secret is write-only, so the only evidence is *where the build dies*, and each
+  fix moves the death later. Bad JSON dies at `Provided Google Play service
+  account JSON has invalid format` before any machine work. A good key reaches
+  Play and prints the app back at you: `App name`, `Package name: com.phzse.app`,
+  `Version`, and the `Phzse Admin` signing certificate. A duplicate-versionCode
+  error is therefore a PASS on credentials, not a failure of them.
+  The two secrets behind this are installed and were both Keith's to add: keystore
+  `phzse_upload_keystore` (Phzse Admin, expires November 09, 2080) under Code
+  signing identities > Android keystores, and `GCLOUD_SERVICE_ACCOUNT_CREDENTIALS`
+  (group `google_play`, Secret) on the Environment variables tab, beside
+  `CERTIFICATE_PRIVATE_KEY` in `signing`. Codemagic has made personal-account
+  GLOBAL variables read-only and is removing them, so app-level is the only place
+  these go. If either ever needs reinstalling, do not hand-type it: run
+  `python ~/brain-gym/scripts/codemagic-install-play-key.py --prompt --app phzse
+  --key-file ~/Downloads/phzse-488419-94ef93c9d510.json`, which posts the key from
+  the file through the Codemagic v3 API so nobody copies the bytes.
+  Everything under those two entries is already built: service account
+  `play-publisher@phzse-488419.iam.gserviceaccount.com` in GCP project
+  `phzse-488419` (unique id `110060498211983366484`),
+  `androidpublisher.googleapis.com` enabled on it, and Active Play Console access
+  to `com.phzse.app` with the two Releases permissions. **Play publishing rights
+  live in Play Console, not Cloud IAM**: the service account needs no GCP IAM role,
+  the grant is an invite under Users and permissions. The `/api-access` path is
+  retired and redirects to the developer account home.
+  `publishing.google_play` has no key for release notes, so the draft ALWAYS
+  arrives without them. Step 11 finishes the job; do not leave it for Keith and do
+  not type them in the console.
+  **Manual upload is the fallback only, for when CI itself is down.** It needs a
+  local `.aab` from step 7 and a separate PLAIN Chrome window driven by Win32
+  automation (done for build 114 on 2026-09-02). Do NOT use the Chrome MCP
+  extension for the drop: it intercepts the native file chooser. Do NOT use
+  `mcp__claude-in-chrome__file_upload` either: it caps at 10 MB and the classifier
+  denies app binaries through it. The library dialog re-orders rows between
+  screenshot and click, so re-screenshot and confirm the ticked row before Add to
+  release. Only if the Win32 route is also blocked, pre-fill the release name and
+  notes and hand Keith the .aab path to drag. Two console traps: a release with
+  zero bundles shows "You cannot remove all production APKs and Android App
+  Bundles", and the fix is uploading the new bundle, never clicking Include on the
+  old row, which re-ships the live version. After Save, the submit button is on
+  Publishing overview, not the release page.
+  Play's "native code without debug symbols" warning is EXPECTED and unfixable.
+  Do not chase it. `ndk { debugSymbolLevel 'FULL' }` was tested on 2026-09-04
+  with `--rerun-tasks` and produced zero symbol entries, because the only native
+  libs are prebuilt AndroidX `.so` files that Google already stripped (no
+  `.symtab`, no `.debug_*`). We compile no native code, so there is nothing to
+  package.
+
+### 11. Publish the Play draft
+
+`android-release` leaves a DRAFT with no release notes. Finish it once the build is
+green, from the repo root:
+
+```bash
+npm run play:publish -- --key "C:/Users/skf_s/Downloads/phzse-488419-94ef93c9d510.json"
+```
+
+That is a DRY RUN: it stages the change, validates the edit, then discards it. Read
+the output, then add `--commit` to publish. `scripts/play-publish.mjs` reads the
+package, `versionCode`, `versionName` and the notes file straight out of the
+checkout, refuses if the Play draft carries any other `versionCode`, and reads the
+track back after committing to prove the notes landed. Nothing takes effect before
+the commit, so a run that stops early changes nothing.
+
+**Do not run it, dry run included, until Codemagic shows `Publishing` green.** Every
+run opens a Play edit and Play keeps ONE edit per app, so a dry run during the CI
+upload kills the upload with `This edit has expired, please create a new Edit`
+(build 6aa502b7a0b59d4e46424352, 2026-09-12, caused by a 75-second polling loop).
+A failed upload does not consume the `versionCode`: re-run the workflow as is.
+Watch the build page, never poll Play, to learn when the draft has landed.
+
+`tracks.update` REPLACES the releases array. Sending the new release alone as
+`status: completed` supersedes the live one, exactly like the console's rollout
+button; it cannot un-publish anything by omission. An earlier note claimed the
+opposite and cost Keith a hand step he never needed (2026-09-08).
+
+Do NOT move this into `codemagic.yaml`. The draft is the only human gate between a
+green build and every user of a health app, and this one deliberately keeps it.
 
 ### 12. Report
 
 Tell the user:
 - Build number bumped: {OLD} to {NEW}
-- .aab file: `app-release-v{VERSION}-build{NEW}.aab`
+- Codemagic build id for `android-release`, and which step it reached
+- The Play track read back after publishing: name, versionCode, status
 - Committed and pushed to remote

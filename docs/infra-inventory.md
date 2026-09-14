@@ -11,7 +11,7 @@ relying on one.
 
 | Server | Scope | Notes |
 |---|---|---|
-| `2chain` | global (`~/.claude/settings.json`) | MCP tool registry; prod API key pointer: memory `reference_2chain_prod_api_key.md` (ONLY copy) |
+| `2chain` | global (`~/.claude.json` user scope) | MCP tool registry; prod API key now in `TWOCHAIN_API_KEY` User env var (moved off disk 2026-09-13) |
 | `playwright` | user | browser automation |
 | `sentry` | user | error tracking |
 | `context7` | user | library docs |
@@ -30,6 +30,7 @@ lives in the luminus repo `.env`; NTP creds are still unregistered (open item, m
 | Trading212 API | memory `reference_t212_api_auth.md` | auth details in file |
 | Cloudflare | memory `reference_cloudflare_zones.md` | 7 zones incl. hippo-memory.com; LIST before picking a domain |
 | ENTSO-E | luminus repo `.env` | used by luminus-mcp |
+| Codemagic API token | NOT STORED. Keith only, from Codemagic > Account settings > API token | Searched 2026-09-08: no `.codemagic` config, no `.env`, not here. The card offers Revoke and Show only, no Generate, and Show leaves it masked in the DOM, so no agent can read it. Route: Keith writes it to a file and `python ~/brain-gym/scripts/codemagic-install-play-key.py --token-file PATH --app <app> --key-file <key>` does the rest. Do not spend a turn hunting for it. |
 
 Per-project keys live in each repo's `.env`.
 

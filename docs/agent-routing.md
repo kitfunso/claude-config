@@ -3,6 +3,9 @@
 Reference tables for picking a specialized agent or skill. Reached from the global
 CLAUDE.md pointer; read it when routing, not from memory.
 
+Archived 2026-09-13 to ~/.claude/agents-archive/: the 18 seo-* agents, database-optimizer,
+fastapi-pro. Restore by moving the file back.
+
 ## Agents
 
 Applies on a box that has `~/.claude/agents/` definitions. Where that directory is

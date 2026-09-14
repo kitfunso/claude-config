@@ -18,17 +18,13 @@ Distilled from Anthropic's `frontend-design` (installed locally), leonxlnx/taste
 
 ## What the good skills do instead
 
-**Commit to a direction before code** (frontend-design). Name the tone in one phrase: "tactile brutalist trading terminal", "cinematic dark product film", "warm editorial field guide". Every choice after that serves the phrase. Intentionality beats intensity; minimal done with precision is as bold as maximal.
-
-**Three dials, set deliberately** (taste-skill): DESIGN_VARIANCE (centred, safe layout at 1; asymmetric, overlapping at 10), MOTION_INTENSITY (hover only at 1; scroll choreography at 10), VISUAL_DENSITY (airy at 1; data-dense at 10). The roller's `layout` and `motion` slots set two of these; you set density from the subject (a trading desk page is dense, a manifesto is airy). State the three numbers in the sub-agent brief.
+Direction phrase, dials, and typography rules live in `references/design-standards.md` section 2. The rest:
 
 **Teach by anti-pattern** (Impeccable, anti-ui-slop): the list above exists because "don't make AI slop" does nothing, while "no purple gradient, no three cards" does.
 
 **Spend boldness in one place** (artifact-design): one aesthetic risk per variant, everything around it quiet. If the roll gives you a splat hero AND liquid glass AND neon brutalist palette, the roller already blocked that. If the roll gives you two loud things, pick which one leads and make the other its supporting act.
 
 **Subject vernacular as content, not ornament**: a page for a crude oil desk shows $/bbl and tenor labels; a page for an npm package shows the real install line and a real changelog date. One detail only this subject would have, per variant, minimum.
-
-**Typography carries the page**: pair the rolled display face with the rolled body face on purpose, set a scale and stay on it, ~65ch measure for running text, `tabular-nums` wherever digits align, uppercase labels with a touch of letter-spacing.
 
 **Neutrals are chosen**: tint every grey toward the accent or the ground. Pure #888 reads as unconsidered.
 
