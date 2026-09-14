@@ -25,6 +25,7 @@ MUTATING = re.compile(
 )
 
 DASH_C = re.compile(r"\bgit\s+(?:[^\s]+\s+)*?-C\s+\"?([^\s\"]+)\"?")
+CD_PREFIX = re.compile(r"^\s*cd\s+\"?([^\s\"&;|]+)\"?\s*(?:&&|;)")
 
 # High-precision subset of the CLAUDE.md Banned AI-isms list. Whole words only.
 # "harness" and "enhance" are omitted: too many legitimate technical uses.
@@ -38,6 +39,16 @@ BANNED_WORDS = re.compile(
 BANNED_PHRASES = re.compile(
     r"(dive into|unpack th|it's worth noting|in conclusion)", re.IGNORECASE
 )
+
+
+MSYS_DRIVE = re.compile(r"^/([a-zA-Z])/")
+
+
+def resolve_dir(raw: str | None, cwd: str | None) -> str:
+    # The command text is Git Bash syntax: translate /c/... and skip $VAR paths.
+    if not raw or raw.startswith("$"):
+        return cwd or "."
+    return MSYS_DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", raw)
 
 
 def current_branch(directory: str) -> str | None:
@@ -65,8 +76,8 @@ def main() -> None:
     notes: list[str] = []
 
     if MUTATING.search(command):
-        m = DASH_C.search(command)
-        directory = m.group(1) if m else payload.get("cwd") or "."
+        m = DASH_C.search(command) or CD_PREFIX.search(command)
+        directory = resolve_dir(m.group(1) if m else None, payload.get("cwd"))
         branch = current_branch(directory)
         if branch:
             notes.append(f"[GIT GUARD] Branch in {directory}: {branch}. "
