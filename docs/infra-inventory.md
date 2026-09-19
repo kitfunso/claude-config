@@ -49,5 +49,5 @@ Per-project keys live in each repo's `.env`.
 
 | Tool | Where | Notes |
 |---|---|---|
-| Fast browser route | launcher `~/.claude/scripts/fast_browser.py`; Jev Ultrafast clone (MIT, `browser-use/jev-ultrafast`) at `C:/Users/skf_s/tools/jev-ultrafast`, run through `uv run --project` | added 2026-09-19; needs only `TYPESAFE_API_KEY`, no second model; every step sends page element labels to TypeSafe |
+| Fast browser route | launcher `~/.claude/scripts/fast_browser.py`; Jev Ultrafast clone (MIT, `browser-use/jev-ultrafast`) at `C:/Users/skf_s/tools/jev-ultrafast`, run through `uv run --project` | added 2026-09-19; needs only `TYPESAFE_API_KEY`, no second model; every step sends page element labels to TypeSafe. **The clone carries a local patch, uncommitted there:** in `jev_ultrafast/browser.py`, `Emulation.setFocusEmulationEnabled` must run before `Emulation.setDeviceMetricsOverride`. A fresh clone has them the other way round and every run dies with `_IPCResponseTimeout`; re-apply the swap after any re-clone or upstream pull |
 | Fast browser Chrome | profile `C:/Users/skf_s/tools/fast-browser-profile`, CDP port 9333, Browser Harness daemon name `fastbrowser` | its own profile with no logins; never attach it to openclaw's Chrome (ports 18800, 18802), which holds the posting sessions |

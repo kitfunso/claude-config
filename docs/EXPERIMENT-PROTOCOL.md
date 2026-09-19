@@ -166,3 +166,47 @@ the driver of arm N.
 
 | Lane | Date | Pass F / N | Median wall s F / N | Median context chars F / N | Cost | Call |
 |---|---|---|---|---|---|---|
+| 1 | 2026-09-19 | 7 of 8 / 0 of 8 | 15.4 over F's 7 passes / not measured | not counted; F is capped near 2,000 page chars a call by `TEXT_LIMIT` / not measured | not printed by the launcher; 19 live runs, est. under $0.01 | **VOID.** Control check failed: N passed 0 of 8, and not because of the tasks. No keep-or-remove verdict. The nudge stays as it was. |
+
+**Lane 1 notes.**
+
+Why N failed. Every Claude Code session on this box starts its own Playwright MCP
+server, and they all share one on-disk Chrome profile (`mcp-chrome-*`). Five sessions
+were open. Another session's Chrome held the profile lock, so every N call died
+before the page loaded. That Chrome was not ours to stop. The way out is the
+`--isolated` flag on the `playwright-mcp` registration (profile kept in memory, one
+per session); it drops saved Playwright cookies, so it is Keith's call. A re-run of
+this lane needs that flag or a box with one session open.
+
+Per task, arm F (wall seconds, steps):
+
+| # | Pass | Wall s | Steps | Note |
+|---|---|---|---|---|
+| 1 | yes | 18.8 | 2 | final text rebuilt from the agent's notes after its compaction |
+| 2 | yes | 36.7 | 6 | first call blocked for a missing `--say`, the caller's miss; passed on the title match |
+| 3 | yes | 15.4 | 2 | |
+| 4 | yes | 19.2 | 2 | judged case-blind: the page says "The Python standard library" |
+| 5 | yes | 12.4 | 4 | |
+| 6 | yes | 12.8 | 2 | |
+| 7 | yes | 10.4 | 3 | |
+| 8 | **no** | 42.3 | 1 | BLOCKED before any click, on two goal wordings. A real gap: a bare "Next" pager link |
+
+Arm N: tasks 2 to 8 failed in 12 to 13 s each on the lock; task 1 burned 385 s and
+10 tool calls finding it. The agent loop inside F took 0.9 to 4.8 s a task; the rest
+of the wall time is `uv` start-up, Chrome attach and the page load.
+
+Task flaws to fix before a re-run. Task 2's pass string says "rotary inverted
+pendulum"; the page says "rotational". Task 4's pass string has the wrong case.
+The context-chars metric needs a counter in the launcher, since the agent transcript
+could not be grepped for the markers.
+
+Found on the way. The route was broken at the start of the lane: every run died with
+`_IPCResponseTimeout`. Root cause is call order in the clone's
+`jev_ultrafast/browser.py`. It opens a background tab, then calls
+`Emulation.setDeviceMetricsOverride` before `Emulation.setFocusEmulationEnabled`. A
+background tab with no focus emulation never draws a frame, so the metrics call never
+gets its ACK and the daemon's 5 s timeout fires. Fix: swap the two lines. No window
+pops up and nothing takes focus. Three of three runs DONE after the swap, and two
+runs at once under one daemon both ended DONE, so sessions can share the route. The
+patch lives only in the local clone (see `docs/infra-inventory.md`); no upstream PR
+is open.

@@ -108,12 +108,22 @@ class CacheFile(unittest.TestCase):
 
 
 class Dedupe(unittest.TestCase):
-    """One send per session per text; SessionStart clears the marker."""
+    """One send per armed session per text; SessionStart arms the marker."""
 
     def setUp(self):
         import uuid
         self.sid = f"test-{uuid.uuid4()}"
-        self.addCleanup(hook.reset, self.sid)
+        self.arm(self.sid)
+
+    def arm(self, sid):
+        hook.reset(sid)
+        self.addCleanup(lambda: hook.seen_file(sid).unlink(missing_ok=True))
+
+    def test_a_session_the_reset_hook_never_armed_is_not_silenced(self):
+        cold = self.sid + "-cold"
+        self.assertFalse(hook.already_sent(cold, payload(MEMORY)))
+        self.assertFalse(hook.already_sent(cold, payload(MEMORY)))
+        self.assertFalse(hook.seen_file(cold).exists())
 
     def test_the_first_send_goes_out_and_the_repeat_does_not(self):
         self.assertFalse(hook.already_sent(self.sid, payload(MEMORY)))
@@ -131,7 +141,7 @@ class Dedupe(unittest.TestCase):
     def test_another_session_is_not_silenced(self):
         hook.already_sent(self.sid, payload(MEMORY))
         other = self.sid + "-b"
-        self.addCleanup(hook.reset, other)
+        self.arm(other)
         self.assertFalse(hook.already_sent(other, payload(MEMORY)))
 
     def test_no_session_id_never_silences(self):

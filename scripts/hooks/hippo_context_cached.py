@@ -86,23 +86,23 @@ def already_sent(session_id: str, out: str) -> bool:
     """The block stays in context until a compaction, so a repeat only burns tokens."""
     if not session_id or os.environ.get("CLAUDE_HIPPO_DEDUPE", "").lower() == "off":
         return False
-    digest = hashlib.sha1(out.encode("utf-8")).hexdigest()
     path = seen_file(session_id)
     try:
-        if path.read_text(encoding="utf-8") == digest:
-            return True
+        seen = path.read_text(encoding="utf-8")
     except OSError:
-        pass
+        # no marker: this box has no --reset hook, so nothing would re-send after a compaction
+        return False
+    digest = hashlib.sha1(out.encode("utf-8")).hexdigest()
+    if seen == digest:
+        return True
     write_cache(path, digest)
     return False
 
 
 def reset(session_id: str) -> int:
-    """SessionStart runs this: a compaction or /clear drops the block from context."""
-    try:
-        seen_file(session_id).unlink()
-    except OSError:
-        pass
+    """SessionStart runs this: a compaction or /clear drops the block, so arm one fresh send."""
+    if session_id:
+        write_cache(seen_file(session_id), "")
     return 0
 
 
