@@ -23,6 +23,11 @@ KEY_NAME = "TYPESAFE_API_KEY"
 JEV_MODEL = "jev-1.13.0"
 DENY_HOST_PARTS = ("ramsky",)
 TEXT_LIMIT = 2000
+# the clone lists only on-screen elements and its rules never mention scrolling, so Jev said BLOCKED
+SCROLL_RULE = (
+    "\nOnly controls inside the visible viewport are listed. If the control the goal needs is not"
+    " listed and SCROLL_DOWN is offered, choose SCROLL_DOWN before BLOCKED."
+)
 
 
 class NeedsSay(Exception):
@@ -176,8 +181,10 @@ def run_agent(url: str, goals: list[str], max_steps: int, say_values: list[str])
     os.environ["BU_CDP_URL"] = CDP_URL
     os.environ["BU_NAME"] = "fastbrowser"
     import jev_ultrafast.agent as agent_module
+    import jev_ultrafast.model as model_module
 
     agent_module.field_text = make_writer(say_values)
+    model_module.NEXT_ACTION += SCROLL_RULE
     started = time.perf_counter()
     steps = 0
     status = "ERROR"
@@ -195,6 +202,7 @@ def run_agent(url: str, goals: list[str], max_steps: int, say_values: list[str])
                         "status": state["status"],
                         "operation": last.get("operation"),
                         "target": last.get("target"),
+                        "action": str(last.get("action") or "")[:60],
                     }
                 )
                 if steps >= max_steps:

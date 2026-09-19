@@ -12,7 +12,7 @@ relying on one.
 | Server | Scope | Notes |
 |---|---|---|
 | `2chain` | global (`~/.claude.json` user scope) | MCP tool registry; prod API key now in `TWOCHAIN_API_KEY` User env var (moved off disk 2026-09-13) |
-| `playwright` | user | browser automation |
+| `playwright` | local, project `C:/Users/skf_s` in `~/.claude.json` | browser automation; `playwright-mcp --headless --isolated` since 2026-09-19. Without `--isolated` every session shared one on-disk profile and only the first could open a browser. Each session now gets an in-memory profile, so no login survives a browser close. Change it with `claude mcp remove playwright -s local` then `claude mcp add playwright -s local -- playwright-mcp --headless`, run from `C:/Users/skf_s` |
 | `sentry` | user | error tracking |
 | `context7` | user | library docs |
 

@@ -167,6 +167,7 @@ the driver of arm N.
 | Lane | Date | Pass F / N | Median wall s F / N | Median context chars F / N | Cost | Call |
 |---|---|---|---|---|---|---|
 | 1 | 2026-09-19 | 7 of 8 / 0 of 8 | 15.4 over F's 7 passes / not measured | not counted; F is capped near 2,000 page chars a call by `TEXT_LIMIT` / not measured | not printed by the launcher; 19 live runs, est. under $0.01 | **VOID.** Control check failed: N passed 0 of 8, and not because of the tasks. No keep-or-remove verdict. The nudge stays as it was. |
+| 2 | 2026-09-19 | 7 of 8 / 7 of 8 | 4.3 / 23.4 over the 6 tasks both pass | 1,898 / 6,037 over the same 6 | Jev not printed, est. under $0.02; arm N on the subscription, notional $2.20, not billed | **KEEP the nudge (clause 1).** Control check passed. F is 5.4x faster on the median and puts about a third of the characters into context. Inner times agree (3.6 s / 15.1 s), so no tie. One wording change: paging through results goes to the normal tool. Details under "Lane 2 result" below. |
 
 **Lane 1 notes.**
 
@@ -210,3 +211,92 @@ pops up and nothing takes focus. Three of three runs DONE after the swap, and tw
 runs at once under one daemon both ended DONE, so sessions can share the route. The
 patch lives only in the local clone (see `docs/infra-inventory.md`); no upstream PR
 is open.
+
+### J2 lane 2: the same eight tasks with a live control arm (declared 2026-09-19, before its first run)
+
+**Why.** Lane 1 is void. `--isolated` went onto the Playwright registration the same
+day, but it only reaches new sessions, and this session's Playwright server is still
+locked out. So arm N runs in fresh sessions.
+
+**What changed from lane 1, all fixed before the first run.**
+
+- Arm N: one fresh `claude -p --model sonnet` session per task, started in
+  `C:/Users/skf_s`, allowed the Playwright MCP tools only. One prompt template: start
+  URL, goal, "stop when the goal is met, reply `FINAL_URL=<url>`".
+- Arm F: the launcher with two edits made after lane 1. It appends a scroll rule to
+  the clone's `NEXT_ACTION` text (the clone lists on-screen elements only and its
+  rules never mention scrolling, which is why task 8 said BLOCKED at step 1), and
+  each step line now carries the clicked label.
+- Both arms are run by one script, `j2_lane2.py` in the session scratchpad. It times
+  the one shell command per task, so wall seconds are outer wall for both arms:
+  `uv` start-up is inside F's number and `claude` start-up is inside N's. The inner
+  times (F `elapsed_ms`, N `duration_ms`) are reported as diagnostics. If the verdict
+  differs between outer and inner time, the call is a tie.
+- Context chars. F: characters of launcher output, which is what lands in the
+  caller's context. N: summed text of every tool result in the session's
+  stream-json transcript.
+- Pass checks, judged by the script from the final URL and page text, never from the
+  model's own claim. Task 2 is now "final URL has `Furuta_pendulum`". Task 4 is
+  case-blind. The rest are as declared above. Goals are the task-table wording,
+  word for word, for both arms. F gets `--say` for the two typed values (tasks 2, 5).
+- Order as before: odd tasks F first, even tasks N first. One run per task per arm.
+  A plumbing smoke of arm N on a page outside the task list comes first and is not
+  a lane run.
+
+**Decision rule and control check.** Unchanged from the campaign declaration.
+
+**Abort rule.** If `ANTHROPIC_API_KEY` is set in the process, arm N would bill the
+API. The script stops and the lane stays unrun.
+
+**Known before the run, disclosed.** One diagnostic F run of task 8 with the scroll
+rule: Jev scrolled and reached page 2, then clicked a quote tag named "navigation"
+and ended MAX_STEPS. So F is expected to fail task 8 again, for a new reason.
+
+**Trial ledger.** N = 2 lanes. **Cost cap.** Shares J1's $1.00; Jev spend expected
+under $0.02. Arm N runs on the subscription.
+
+**Lane 2 result (2026-09-19).** 16 runs, one per task per arm. Raw rows:
+`j2/lane2/results.jsonl` in the session scratchpad (temp, not kept), so the table
+below is the record. The medians come from one `python -c` over that file: pass
+counts, then `statistics.median` of `wall_s`, `inner_ms` and `context_chars` over the
+tasks both arms pass.
+
+| # | F pass | F wall s | F chars | N pass | N wall s | N tool calls | N chars |
+|---|---|---|---|---|---|---|---|
+| 1 | yes | 2.1 | 1,468 | yes | 15.8 | 3 | 7,312 |
+| 2 | yes | 4.3 | 2,007 | yes | 35.1 | 6 | 4,762 |
+| 3 | yes | 3.3 | 2,570 | yes | 23.5 | 3 | 4,494 |
+| 4 | yes | 2.6 | 2,370 | **no** | 32.0 | 5 | 14,268 |
+| 5 | yes | 5.4 | 2,071 | yes | 25.1 | 5 | 4,090 |
+| 6 | yes | 4.3 | 1,085 | yes | 23.3 | 3 | 55,202 |
+| 7 | yes | 4.3 | 1,789 | yes | 21.5 | 4 | 67,261 |
+| 8 | **no** | 17.3 | 2,065 | yes | 32.7 | 4 | 28,535 |
+
+Rule check. Control: N passed 7 of 8, so the lane counts. Clause 1 holds on all three
+legs: F passed 7 of 8; F's median wall is 4.3 s against N's 23.4 s over the six tasks
+both pass (half of N's is 11.7 s); F's median context is 1,898 chars against 6,037.
+Inner times say the same (3.6 s against 15.1 s), so the tie clause does not fire.
+Across all eight tasks F put 15,425 chars into context and N put 185,924.
+
+Read these with care.
+
+- N's task 4 fail is a check artefact. It reached `/3/library/index.html`, the right
+  page, but its last tool result held the URL line and no page text, so the text
+  check had nothing to match. Scored as declared. Counted as a pass, the verdict is
+  the same (medians 4.3 / 23.5 s and 2,007 / 7,312 chars over seven tasks).
+- F's task 8 fail is real, and this is the second lane to show it. With the scroll
+  rule Jev no longer says BLOCKED at step 1. It scrolls, reaches page 2, then clicks
+  the quote tag "navigation" and ends BLOCKED after 15 steps. A lure label beats a
+  plain pager link. The nudge text now sends paging through results to the normal
+  tool.
+- N's wall time includes a fresh `claude` start and a Sonnet turn per click. That is
+  the real price of the normal route in a new session; a warm session with a browser
+  already open would be closer. One run per cell, no spread measured.
+- N's chars swing with the page, 4,090 to 67,261, since each Playwright result
+  carries the page snapshot. F is capped near 2,000 by `TEXT_LIMIT`.
+- Eight public, login-free pages. Nothing here says the route works behind a login,
+  on a canvas or in a frame; the nudge already keeps those on the normal tool.
+
+Cost. Jev: 8 lane runs plus 2 diagnostics, not printed, est. under $0.02. Arm N:
+notional $2.20 in the transcripts, on the subscription, not billed (`apiKeySource`
+was `none` in the smoke run).
