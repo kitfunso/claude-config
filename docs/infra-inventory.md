@@ -30,6 +30,7 @@ lives in the luminus repo `.env`; NTP creds are still unregistered (open item, m
 | Trading212 API | memory `reference_t212_api_auth.md` | auth details in file |
 | Cloudflare | memory `reference_cloudflare_zones.md` | 7 zones incl. hippo-memory.com; LIST before picking a domain |
 | ENTSO-E | luminus repo `.env` | used by luminus-mcp |
+| TypeSafe Jev | `TYPESAFE_API_KEY` User env var (set 2026-09-18) | System One decision API; hippo `src/judgment.ts` reads it. Set on the HOME box only so far, set the same var on the work box. Never on disk: `~/.claude` is a git repo |
 | Codemagic API token | NOT STORED. Keith only, from Codemagic > Account settings > API token | Searched 2026-09-08: no `.codemagic` config, no `.env`, not here. The card offers Revoke and Show only, no Generate, and Show leaves it masked in the DOM, so no agent can read it. Route: Keith writes it to a file and `python ~/brain-gym/scripts/codemagic-install-play-key.py --token-file PATH --app <app> --key-file <key>` does the rest. Do not spend a turn hunting for it. |
 
 Per-project keys live in each repo's `.env`.
@@ -43,3 +44,10 @@ Per-project keys live in each repo's `.env`.
 | btlab | `~/btlab` DuckDB | PIT S&P 500 + NDX100 + Nasdaq listing + 24 crypto |
 | hippo store | hippo repo SQLite | agent memory; use store API, never broad invalidate |
 | resona test PG | `scripts/test-db-up.sh` in resona repo | test infra only |
+
+## Local tools and ports
+
+| Tool | Where | Notes |
+|---|---|---|
+| Fast browser route | launcher `~/.claude/scripts/fast_browser.py`; Jev Ultrafast clone (MIT, `browser-use/jev-ultrafast`) at `C:/Users/skf_s/tools/jev-ultrafast`, run through `uv run --project` | added 2026-09-19; needs only `TYPESAFE_API_KEY`, no second model; every step sends page element labels to TypeSafe |
+| Fast browser Chrome | profile `C:/Users/skf_s/tools/fast-browser-profile`, CDP port 9333, Browser Harness daemon name `fastbrowser` | its own profile with no logins; never attach it to openclaw's Chrome (ports 18800, 18802), which holds the posting sessions |

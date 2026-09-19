@@ -59,7 +59,8 @@ def run_hippo(cwd: str, timeout: float) -> str | None:
         return None
     try:
         done = subprocess.run([exe, *ARGS], cwd=cwd, capture_output=True,
-                              timeout=timeout, text=True, encoding="utf-8")
+                              timeout=timeout, text=True, encoding="utf-8",
+                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError):
         return None
     out = (done.stdout or "").strip()
@@ -74,6 +75,35 @@ def write_cache(path: Path, payload: str) -> None:
         os.replace(tmp, path)
     except OSError:
         pass
+
+
+# SHORTCUT: markers are never deleted (40 bytes a session); sweep by mtime if the dir grows.
+def seen_file(session_id: str) -> Path:
+    return CACHE_DIR / f"{hashlib.sha1(session_id.encode('utf-8')).hexdigest()[:16]}.seen"
+
+
+def already_sent(session_id: str, out: str) -> bool:
+    """The block stays in context until a compaction, so a repeat only burns tokens."""
+    if not session_id or os.environ.get("CLAUDE_HIPPO_DEDUPE", "").lower() == "off":
+        return False
+    digest = hashlib.sha1(out.encode("utf-8")).hexdigest()
+    path = seen_file(session_id)
+    try:
+        if path.read_text(encoding="utf-8") == digest:
+            return True
+    except OSError:
+        pass
+    write_cache(path, digest)
+    return False
+
+
+def reset(session_id: str) -> int:
+    """SessionStart runs this: a compaction or /clear drops the block from context."""
+    try:
+        seen_file(session_id).unlink()
+    except OSError:
+        pass
+    return 0
 
 
 def refresh_running(lock: Path) -> bool:
@@ -125,6 +155,9 @@ def main() -> int:
         payload = json.loads(sys.stdin.read() or "{}")
     except ValueError:
         payload = {}
+    session_id = payload.get("session_id") or ""
+    if len(sys.argv) > 1 and sys.argv[1] == "--reset":
+        return reset(session_id)
     cwd = payload.get("cwd") or os.getcwd()
 
     cached = None
@@ -134,14 +167,16 @@ def main() -> int:
         pass
 
     if cached:
-        print(cached)
+        if not already_sent(session_id, cached):
+            print(cached)
         spawn_refresh(cwd)
         return 0
 
     out = run_hippo(cwd, timeout=COLD_TIMEOUT)
     if out:
         write_cache(cache_file(cwd), out)
-        print(out)
+        if not already_sent(session_id, out):
+            print(out)
     else:
         spawn_refresh(cwd)
     return 0

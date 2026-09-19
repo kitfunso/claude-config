@@ -107,5 +107,44 @@ class CacheFile(unittest.TestCase):
                             hook.cache_file("C:\\Users\\skf_s"))
 
 
+class Dedupe(unittest.TestCase):
+    """One send per session per text; SessionStart clears the marker."""
+
+    def setUp(self):
+        import uuid
+        self.sid = f"test-{uuid.uuid4()}"
+        self.addCleanup(hook.reset, self.sid)
+
+    def test_the_first_send_goes_out_and_the_repeat_does_not(self):
+        self.assertFalse(hook.already_sent(self.sid, payload(MEMORY)))
+        self.assertTrue(hook.already_sent(self.sid, payload(MEMORY)))
+
+    def test_changed_text_goes_out_again(self):
+        hook.already_sent(self.sid, payload(MEMORY))
+        self.assertFalse(hook.already_sent(self.sid, payload(MEMORY + "- new\n")))
+
+    def test_reset_makes_the_same_text_go_out_again(self):
+        hook.already_sent(self.sid, payload(MEMORY))
+        hook.reset(self.sid)
+        self.assertFalse(hook.already_sent(self.sid, payload(MEMORY)))
+
+    def test_another_session_is_not_silenced(self):
+        hook.already_sent(self.sid, payload(MEMORY))
+        other = self.sid + "-b"
+        self.addCleanup(hook.reset, other)
+        self.assertFalse(hook.already_sent(other, payload(MEMORY)))
+
+    def test_no_session_id_never_silences(self):
+        self.assertFalse(hook.already_sent("", payload(MEMORY)))
+        self.assertFalse(hook.already_sent("", payload(MEMORY)))
+
+    def test_the_env_switch_turns_it_off(self):
+        import os
+        from unittest import mock
+        hook.already_sent(self.sid, payload(MEMORY))
+        with mock.patch.dict(os.environ, {"CLAUDE_HIPPO_DEDUPE": "off"}):
+            self.assertFalse(hook.already_sent(self.sid, payload(MEMORY)))
+
+
 if __name__ == "__main__":
     unittest.main()
