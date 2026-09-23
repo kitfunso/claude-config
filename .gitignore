@@ -55,3 +55,7 @@
 # forms missed /rules/, so 5 .old files were staged before this rule existed.
 **/*.old
 **/*.old-*
+
+# Eval run output: generated, and it carries local temp paths.
+/skills/**/evals/results/
+/skills/**/evals/results/**
