@@ -611,7 +611,9 @@ both.
    cadence in the grid and that each declared embargo holds where it was
    declared; the cap arithmetic written per window rung; the leaf-floor
    parameter and its unit for every tree family; the tuning declaration on
-   the page, naming its retuning design, with Optuna trials = 200 for every
+   the page, naming its retuning design beside the study count of all
+   three designs (a compute limit is a written trade between them, never a
+   design dropped unseen), with Optuna trials = 200 for every
    study that runs; the calibration choice for every probability output.
 7. **Model comparison and the window grid.** Families in a ladder
    (`references/model-families.md`): champion alone; a regularised linear
@@ -737,10 +739,11 @@ both.
     on the eligible rows within its selected window and retuned on its
     declared retuning schedule; one code path builds research and live
     features, proven by the consistency test on the first run; every run
-    writes one immutable forecast row (spec_id, fit_id, forecast_id, cutoff
+    writes one immutable forecast row carrying all three ids (spec_id,
+    fit_id, forecast_id; a scheme with fewer is incomplete), the cutoff
     time, input snapshot hash, prediction, and the champion's forecast with
-    its fit_id) and every matured target one outcome record linked to it,
-    nothing edited.
+    its fit_id; every matured target writes one outcome record linked to
+    it, nothing edited.
     The read rule is written before the first row: the statistic, the
     minimum matured outcomes, the date the ledger reaches that minimum at
     its accrual rate, and either a confidence sequence or one fixed read

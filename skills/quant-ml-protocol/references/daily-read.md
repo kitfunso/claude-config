@@ -29,11 +29,15 @@ Three ids:
 - forecast_id: a particular prediction and input snapshot, carrying the
   input snapshot hash and the cutoff time. A data pull between refits
   changes the forecast's input snapshot, not the fit: it makes new
-  forecast rows under the current fit_id, never a new fit_id or spec_id.
+  forecast_ids, each hashing its new input snapshot, under the current
+  fit_id, never a new fit_id or spec_id.
 
-Only a spec_id change opens a new ledger track. Routine refitting under the
+All three are required, and a correction to an id scheme names all
+three: without fit_id a refit cannot be audited, and without forecast_id
+a ledger row cannot be tied to the inputs it saw. Only a spec_id change
+opens a new ledger track. Routine refitting under the
 same frozen rules should produce a new fit_id, and a data pull only new
-forecast rows, not erase the continuity of evidence for spec_id.
+forecast_ids, not erase the continuity of evidence for spec_id.
 
 ## The run
 
