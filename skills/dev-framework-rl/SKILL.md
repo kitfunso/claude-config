@@ -42,6 +42,11 @@ Mechanics: `python ~/.claude/dev-framework/scripts/devrl.py <cmd>` run FROM the
 feature repo (the `python scripts/devrl.py` snippets below are shorthand for that
 absolute form), OR a non-persisting subshell `( cd ~/.claude/dev-framework && ... )`;
 give EVERY feature-repo command its own explicit `cd <repo> &&` in the SAME call.
+While this session holds the episode lock, `pre-bash-guard.js` enforces this: it
+denies a git/npm/npx/vitest/codex command with no absolute `cd`, `-C` or `--prefix`
+in the same call, and git that throws away uncommitted work (checkout --, restore,
+reset --hard, clean -f, stash other than list/show) unless the command carries
+`DEVRL_ALLOW_DESTRUCTIVE=1`. Critics that mutate code change a copy, never the tree.
 Full incident detail: AUDIT-RULES.md "cwd-drift".
 
 ## Episode lifecycle
@@ -109,8 +114,12 @@ If codex is missing, decide upfront whether to (a) install it, (b) skip codex-re
 --uncommitted` reviews the CURRENT cwd's repo; after any devrl command that can
 mean dev-framework itself. Never call it bare from an orchestrator session — invoke
 `bash ~/.claude/dev-framework/scripts/codex-review-pinned.sh <feature-repo> [args]`
-(subshell-cds, verifies codex's `workdir` line, exit 3 = review VOID). Full
-incident: AUDIT-RULES.md "codex review cwd pinning".
+(subshell-cds, verifies codex's `workdir` line, exit 3 = review VOID). It adds
+`--uncommitted` itself unless you pass `--uncommitted`, `--base` or `--commit`.
+It also exits 3 before codex runs when an uncommitted review would see a clean
+tree, and after codex when the output ends in "Review was interrupted" (usage
+limit or capacity: zero findings, even when codex exited 0). Full incident:
+AUDIT-RULES.md "codex review cwd pinning".
 
 **Codex-on-Windows root cause + hard timeout (2026-08-02, episode 01KZ1FHCK).**
 Codex's Windows sandbox helper receives its policy on the command line; at
@@ -126,8 +135,8 @@ output-file mtime, not just content.
 
 **Base-aware invocation (2026-08-15, episode 01M025CW434ZAPVSFC61BGFGCT).**
 Check `git status` in the feature repo BEFORE invoking the wrapper:
-- Work already committed => `--uncommitted` reviews NOTHING ("working tree is
-  clean") and wastes a round. Pass `--base origin/master` (or the base sha).
+- Work already committed => `--uncommitted` reviews NOTHING, and the wrapper
+  now VOIDs it (exit 3) before codex runs. Pass `--base origin/master` (or the base sha).
   Codex rejects `--base` combined with a positional prompt — use the flag alone.
 - Re-review rounds after fix commits => scope to the DELTA with
   `--base <prior-commit-sha>`. A grown multi-commit branch (~4k insertions)
@@ -911,6 +920,14 @@ After each stage, run the safety check:
 python scripts/devrl.py budget-check $EID --consecutive-fail-cap 3
 ```
 
+Idle time is not work. When you resume after a human gate, a provider limit (usage limit, 429, auth outage) or an idle session, declare the wait before doing more work:
+
+```bash
+python scripts/devrl.py episode-wait $EID --reason "<what it waited on>"
+```
+
+The wait runs from the latest recorded step to now. `--since` and `--until` take ISO times with an offset. The command refuses a span that has a recorded step inside it. budget-check leaves declared waits off the wallclock and shows them as `waited_sec`. Never declare work time. If budget-check trips on a wait you never declared, declare it with `--since` and `--until` from the step times (`episode-steps`), then run budget-check again.
+
 Exit 0 → continue. Exit 1 → stop; the JSON `verdict` is one of:
 - `paused` — the `~/.claude/dev-framework/PAUSE` sentinel file exists
 - `wallclock-exceeded` — elapsed time is past the episode's `wallclock_budget_sec`
@@ -931,6 +948,7 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `episode-get <id>` | print episode JSON | 0 / 2 missing |
 | `episode-steps <id>` | print the episode's recorded steps as JSON | 0 / 2 missing |
 | `episode-friction <id> --note S` | record an operator friction note (feeds learn-check) | 0 / 2 missing |
+| `episode-wait <id> --reason S [--since ISO] [--until ISO]` | declare idle time (human gate, usage limit) so budget-check leaves it off the wallclock; refuses a span with a recorded step inside | 0 / 2 bad span or missing |
 | `set-project-type <id> <type> <rubric>` | set type + rubric | 0 |
 | `episode-finalize <id> --status <s> [--user-satisfaction N\|deferred] [--redirects N] [--learn-emit] [--no-prompt]` | close episode; `--learn-emit` writes pending_apply blob (Tier 0.2 / Tier 3) | 0 / 2 |
 | `satisfaction-record <id> N` | fill in deferred user_satisfaction post-hoc (Tier 0.2) | 0 / 2 missing |
