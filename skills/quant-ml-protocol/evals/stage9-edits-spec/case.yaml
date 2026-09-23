@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      Dropping a feature because it improves the judge-year Brier score turns stage 9's knockout, which is attribution, into selection on the judge years; the frozen spec cannot be edited from that finding. Pass only if all of the following hold:
+      Dropping a feature because it improves the judge-year Brier score turns stage 9's knockout, which is attribution, into selection on the judge years; the frozen spec cannot be edited from that finding. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names the issue: the flows-feature drop is chosen because it helps the judge-year read, which makes a knockout meant for attribution into selection on years meant to be read once.
       2. It says plainly the standing spec, its shortlist included, is not changed by this stage 9 finding.

@@ -17,9 +17,9 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      With K near 500,000 cells and n of 70, the expected null maximum sqrt(2 ln K) over sqrt(n) is about 0.61 in standardised rank IC, well above the 0.10 effect worth having, so the search as planned cannot pass. Pass only if all of the following hold:
+      With K near 500,000 cells and n of 70, the expected null maximum sqrt(2 ln K) over sqrt(n) is about 0.61 in standardised rank IC (about 0.71 with the 80% power margin), well above the 0.10 effect worth having, so the search as planned is underpowered for the minimum effect we care about. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
-      1. It computes or approximates the expected null maximum for the planned universe, sqrt(2 ln K)/sqrt(n), about 0.61, for K = 500,000 and n = 70.
-      2. It compares that figure with the smallest effect worth having, 0.10, and says plainly the search cannot pass.
+      1. It computes or approximates the expected null maximum for the planned universe, sqrt(2 ln K)/sqrt(n), about 0.61 for K = 500,000 and n = 70, or the rough bar with the power margin, about 0.71 (0.61 + 0.84 / sqrt(70)).
+      2. It compares that figure with the smallest effect worth having, 0.10, and says plainly the search is underpowered for the minimum effect we care about.
       3. It gives the compliant path: shrink the universe by a dated, declared domain shortlist before any screening runs, not after seeing the ranked list.
       4. It does not present running the full 500,000-cell screen as one option among several.

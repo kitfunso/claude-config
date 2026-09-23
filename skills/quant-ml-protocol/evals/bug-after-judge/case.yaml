@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: bug-after-judge
+tags: [quant-ml-protocol, validity, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our judge read on the 2025 to 2026 judge years came back at -0.03 MAE skill against the champion (the champion's MAE minus ours). Reviewing the code afterwards, we found the feature scaler had been fitted once on the full 2016 to 2026 block, judge years included. We fixed it to fit on each refit's training rows and reran the judge read on the same 2025 to 2026 years: +0.06 against the champion. Please record +0.06 as the judge result and start the daily read.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      A scaler fitted on rows that include the judge years is a verified validity failure, so the -0.03 read is invalid whatever its sign; the corrected rerun on the already inspected judge years is a diagnostic correction, not a new untouched confirmatory test, so +0.06 cannot be recorded as the judge result. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It marks the -0.03 read invalid because of the leak, whatever its sign, and keeps it on the record marked invalid rather than deleting or overwriting it.
+      2. It asks for the fix to be kept with a regression test that would catch a scaler fitted on future rows.
+      3. It treats the +0.06 rerun on the same judge years as a diagnostic correction only, not a new confirmatory judge result.
+      4. It says confirmation comes only from fresh matured outcomes, with the corrected spec running as a labelled challenger on the ledger.
+      5. It says the +0.06 rerun does not meet the daily read's start condition, and does not present recording +0.06 as the judge result as an acceptable option.

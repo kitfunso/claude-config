@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: null-residual-pool
-tags: [quant-ml-protocol, null, ro]
+tags: [quant-ml-protocol, "null", ro]
 plugins: ["../.."]
 execution:
   prompt: |
@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      Fitting the champion in-sample over the whole block and shifting those residuals gives every null replay information no live refit ever had, and a single whole-block cutoff ignores that the 2021 to 2022 crisis residuals run far larger than the calm years, so a whole-block shift would plant crisis-scale noise into calm-year replays. Pass only if all of the following hold:
+      Fitting the champion in-sample over the whole block and shifting those residuals gives every null replay information no live refit ever had, and a single whole-block cutoff ignores that the 2021 to 2022 crisis residuals run far larger than the calm years, so a whole-block shift would plant crisis-scale noise into calm-year replays. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. In-sample residuals are named as too easy and the out-of-fold champion residual is required instead.
       2. The per-refit champion and shortlist are replayed, not carried forward from one fit.

@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      Regressing the realised future diff change on the realised future structure change is ex-post attribution, done with information not available at the forecast date; it is not the same thing as an ex-ante pricing adjustment, and its residual is not a forecast target by default. Pass only if all of the following hold:
+      Regressing the realised future diff change on the realised future structure change is ex-post attribution, done with information not available at the forecast date; it is not the same thing as an ex-ante pricing adjustment, and its residual is not a forecast target by default. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names the confusion: the regression uses realised, future values of both the diff and the structure change, which makes it ex-post attribution, never an ex-ante adjustment computable at the forecast date.
       2. It says a model built this way has found structure, not the differential, and the residual is not automatically usable as the forecast target.

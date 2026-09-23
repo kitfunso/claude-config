@@ -62,8 +62,10 @@ date are named. Stage numbers follow the 2026-09-22 ten-stage list.
 5. **"What would make you say no?"** If nothing on the page could block the
    conclusion, the page is theatre; name the blocking conditions.
 6. **"What would have made you say yes?"** The search bar: the smallest
-   effect worth having beside the null maximum. If the bar sat above the
-   effect, the page says the search could not have passed, whatever the data
-   held. (critique 2026-09-22.)
+   effect worth having beside the null cutoff, with the signal-injection
+   power when it ran. If the effect did not clear the bar by the power
+   margin, or the injection power fell short of the declared power, the
+   page says the search was underpowered for the minimum effect we care
+   about, whatever the data held. (critique 2026-09-22.)
 7. **"What is on the re-test list, and when is each due?"** Late-start and
    thin columns are scheduled, not forgotten, and not quietly promoted.

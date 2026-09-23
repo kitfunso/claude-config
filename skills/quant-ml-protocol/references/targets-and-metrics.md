@@ -1,8 +1,9 @@
 # Targets and metrics
 
-Read at stage 1 (declaring the targets and their metrics) and stage 9
-(calibration). Every target declared here is scored on the same anchors, the
-same folds and the same frozen forecast-date set as the point target.
+Read at stage 1 (declaring the targets and their metrics), stage 6 (the
+calibration choice) and stage 9 (calibration diagnostics). Every target
+declared here is scored on the same anchors, the same folds and the same
+frozen forecast-date set as the point target.
 
 ## Target families
 
@@ -10,7 +11,7 @@ same folds and the same frozen forecast-date set as the point target.
 |---|---|---|
 | A | Level, S at t+h | The future level itself matters (storage, load). Carries the unit root; baselines add AR(1) and exponential smoothing on the level. |
 | B | Change, S at t+h minus S at t; log change for a positive series | The default point target for a price, spread, rate or differential. |
-| C | Direction, 1 if the change is positive | Declared beside B when the decision is a side. Scored against the trailing base rate, never against 50%. |
+| C | Direction, 1 if the change is positive | Declared beside B when the decision is a side. Binding skill is against the champion; the trailing base rate is the reference, never 50%. |
 | D | Trajectory, S at t+1 to t+h | Only when the path matters, not the endpoint. Multi-output. |
 | E | Distribution of S at t+h given X at t: quantiles or a parametric head | Declared beside B when the decision needs a size, an interval or a tail. |
 
@@ -33,14 +34,18 @@ information available recursively at prediction time.
 
 ## The metric per target
 
-| Target | Primary | Secondaries | Must beat |
+| Target | Primary | Secondaries | Reference baselines (reported) |
 |---|---|---|---|
-| Point change, timing decision | rank IC | MAE, sign hit | no change, trailing mean, the champion |
-| Point change, magnitude decision | MAE, with its relative MAE (model MAE over no-change MAE on the same rows; MAE skill = 1 minus that ratio); Huber where the page says why | rank IC, sign hit | no change, trailing mean, the champion |
+| Point change, timing decision | rank IC | MAE, sign hit | no change and trailing mean, on MAE (a constant has no rank IC) |
+| Point change, magnitude decision | MAE, with relative_mae (model MAE over no-change MAE on the same rows); Huber where the page says why | rank IC, sign hit | no change, trailing mean |
 | Direction | Brier | log loss, balanced accuracy, reliability diagram | trailing base rate, majority side |
 | Quantiles | pinball loss per level | coverage per level | the unconditional quantiles of the training rows |
 | Distribution | CRPS | coverage of the central intervals | the unconditional distribution |
-| Level | MAE, MASE (MAE scaled by the in-sample one-step naive MAE, Hyndman and Koehler 2006; a ratio to an out-of-sample same-horizon baseline is always called relative MAE) | RMSE | naive last value, AR(1) |
+| Level | MAE, MASE (MAE scaled by the in-sample one-step naive MAE, Hyndman and Koehler 2006; a ratio to an out-of-sample same-horizon baseline is always called relative_mae) | RMSE | naive last value, AR(1) |
+
+The champion is always the binding comparator, for every target (oriented
+primary skill, below); the reference baselines are reported beside it and
+never set a bar.
 
 Brier, log loss, pinball and CRPS are proper scoring rules: a forecaster
 minimises them by reporting what it believes. Accuracy and sign hit are not,
@@ -60,11 +65,17 @@ incremental form, the oriented incremental screening statistic: the
 target-family statistic of one predeclared one-feature estimator over
 the champion on identical anchors, positive meaning information beyond
 the champion, the same estimator for every cell, fitted point-in-time
-at each refit, scored out of fold. The stage 7 selection rule uses the
-oriented primary skill of a complete model, defined below. Screening estimator
-per family: timing, no fitted model, the rank IC of the cell against
-the champion residual; magnitude (B) and level (A), OLS of the champion
-residual on the standardised cell, or ridge at a fixed declared
+at each refit. A screen that fits an estimator scores it on a declared
+forward inner split of the refit's training rows: by default, fit on the
+first two thirds and score on the last third, after the purge gap. The
+stage 7 selection rule uses the oriented primary skill of a complete
+model, defined below. Screening estimator per family: timing, no fitted
+model, by default the absolute rank IC of the cell against the champion
+residual, the number the null's maximum over both signs reads, with the
+signed IC kept beside it as a diagnostic (a declared alternative learns
+the sign on the earlier part of the refit's training rows and scores the
+signed IC on the later part); magnitude (B) and level (A), OLS of the
+champion residual on the standardised cell, or ridge at a fixed declared
 penalty, scored by paired MAE skill; direction (C), a fixed logistic
 regression on the champion score plus the cell, scored by Brier skill,
 with log loss and calibration as secondaries; quantiles (E), fixed
@@ -74,23 +85,34 @@ Gaussian location-scale regression where defensible, else the
 parametric head the page names), scored by CRPS skill; trajectory (D),
 one fixed multi-output one-feature estimator scored by the aggregate
 declared at stage 1 (the mean of per-horizon skill, or declared
-weights). The distributional family never varies by cell. The rough
+weights). A fixed OLS screen evaluated out of sample on MAE is
+permissible. Least-absolute-deviation regression would align the fitting
+objective more directly with MAE. Whichever fit is declared is the one
+the null replays. The distributional family never varies by cell. The rough
 bars in SKILL.md conventions take the standardised effect; the paired
 block bootstrap on identical anchors is the real uncertainty for every
 metric.
 
 Oriented primary skill. Every primary metric is carried downstream as a
 skill statistic whose positive direction means improvement over the
-declared comparator: for rank IC, model IC minus comparator IC; for a
-loss (MAE, Brier, pinball, CRPS), comparator loss minus model loss.
-Positive beats the comparator, zero ties, negative loses. Selection,
-paired intervals, the judge haircut, ledger claims and monitoring use
-this oriented skill, so nothing downstream carries a metric-specific
-sign convention; the raw metric is reported beside it. It is the forecast
-performance of a complete model against its comparator (stages 7 to 10)
-and a different object from the stage 5 screening statistic: for the
-timing screen, the rank IC of a cell against the champion residual is not
-model IC minus champion IC.
+champion, the one binding comparator: for a loss (MAE, Brier, pinball,
+CRPS), L_champion minus L_model; for rank IC, model IC minus champion IC.
+Positive beats the champion, zero ties, negative loses. The comparator is
+a rule: the champion reselected at each refit from the stage 1 candidate
+list. This one number is used at nomination, the judge read, live
+evaluation and monitoring, so nothing downstream carries a
+metric-specific sign convention or a second comparator; the raw metric is
+reported beside it. Relative figures are reported under explicit names
+such as relative_mae or brier_skill_score and never set a bar.
+Constant-forecast rank IC: not applicable. Evaluate the constant baseline
+using applicable loss metrics. A zero may stand for it only as a declared
+reporting convention, never presented as a computed correlation; under a
+rank IC primary metric a constant cannot be ranked, so it is never the
+champion unless that convention was declared before any outcome was read.
+Oriented skill is the forecast performance of a complete model against
+the champion (stages 7 to 10) and a different object from the stage 5
+screening statistic: for the timing screen, the rank IC of a cell against
+the champion residual is not model IC minus champion IC.
 
 ## Champion fit for the null
 
@@ -140,16 +162,20 @@ resampled and mapped back, never additive on the bounded scale. The
 adapter is named on the null page beside the method, and every replay
 reruns the same point-in-time procedure.
 
-## Calibration, at stage 9
+## Calibration: declared at stage 6, diagnosed at stage 9
 
 - Reliability diagram: ten equal-count bins on the nomination folds, and once
-  on the judge years. A bin whose interval excludes the diagonal is named as
-  miscalibration.
-- Brier against the base-rate Brier; decompose into reliability, resolution
-  and uncertainty when the sample allows.
-- Calibrator: Platt (a logistic on the score) or isotonic, fitted on the inner
-  purged folds at each refit. It is part of the spec and travels to the
-  ledger. A raw classifier score is never reported as a probability.
+  on the judge years. The bins are a picture: no single bin gives a verdict.
+  An overall verdict needs a declared test with its null and construction
+  written down; without one, the page gives none.
+- Brier beside the base-rate Brier (a reference); decompose into
+  reliability, resolution and uncertainty when the sample allows.
+- Calibrator, declared at stage 6: none, Platt (a logistic on the score) or
+  isotonic. None is admissible when the model already outputs a
+  probability. A calibrator is fitted on held-out inner predictions at each
+  refit, never on the classifier's own training predictions, and belongs to
+  the cell in the grid, the null, the judge read and live. A raw classifier
+  score is never reported as a probability.
 - Quantile coverage: the empirical coverage of each level with its paired
   interval. A 90% interval that covers 70% is a finding, said first.
 - Conformal intervals: a time-series calibration scheme declared for the

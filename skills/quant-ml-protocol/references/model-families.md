@@ -13,10 +13,20 @@ dates; a tie promotes the simpler.
    campaign usually ends.
 3. **Shallow trees.** Gradient boosting or random forest, shallow by
    default: a depth range centred on 2 to 4 and a leaf floor of one eighth
-   of the effective rows are the initial heuristics, declared before Optuna
-   and scaled to the effective sample, neither a universal limit; row and
-   column subsampling, a narrow learning-rate range; monotone constraints
-   where the sign of a driver is domain knowledge.
+   of the refit's raw training rows are the initial heuristics, declared
+   before Optuna, neither a universal limit; the floor guarantees no count
+   of independent observations per leaf. The plan names the library
+   parameter and its unit. LightGBM `min_data_in_leaf` (alias
+   `min_child_samples`) is an integer count applied through a
+   Hessian-based approximation, so a leaf can hold fewer rows; LightGBM
+   `min_sum_hessian_in_leaf` (alias `min_child_weight`) is a sum of
+   Hessians and is never set from a row count. scikit-learn
+   `min_samples_leaf` reads an integer as a count and a float as a
+   fraction, `ceil(fraction * n_samples)`, so 0.125 gives one eighth; with
+   sample weights the weighted form is `min_weight_fraction_leaf`. Any
+   other library: name the parameter and its unit. Row and column
+   subsampling, a narrow learning-rate range; monotone constraints where
+   the sign of a driver is domain knowledge.
 4. **Equal-weight average** of the standing cells across rungs. No fitted
    weights, no extra search, one more cell. Worth running when the
    components' errors differ, not when they are variants of one algorithm.
@@ -36,7 +46,8 @@ dates; a tie promotes the simpler.
    page says why. Training: normalisation
    fitted on the training fold; early stopping on an inner purged fold;
    AdamW, dropout or weight decay, gradient clipping; the checkpoint at the
-   inner minimum; S seeds. A joint-horizon model (multi-output or shared head)
+   inner minimum; the declared seed or seed ensemble, with S extra seeds as
+   a stability diagnostic (Seeds, below). A joint-horizon model (multi-output or shared head)
    or a recursive multi-step model is admitted here as a separately declared
    family when its structure matches the forecasting problem, under the same
    nomination, null and richer-beats-simpler rules; a recursive family
@@ -54,9 +65,17 @@ for direction; pinball for quantiles.
 
 Before the first trial, on the page: the space, the budget, the seed, the
 objective (the primary metric on the inner purged walk-forward, averaged
-over inner folds) and the stopping and pruning rule. The trial count is k,
-and the null replays rerun the whole search, never the winning configuration
-alone. Report the fold-to-fold spread beside the mean: one exceptional fold
+over inner folds), the stopping and pruning rule, and the retuning
+schedule, declared separately from the refit schedule as one of three
+designs: retune at every refit; retune on a sparser declared schedule (by
+default each refit of the coarsest cadence, with finer cadences reusing
+the last study); or tune once on an initial development period, freeze,
+and score forecasts only after that period. Hyperparameters used for a
+historical forecast come from a study completed using only eligible data
+available before that forecast; between retuning dates the last study's
+hyperparameters are reused. The trial count is k, and the null replays
+rerun the whole search, every study on the retuning schedule, never the
+winning configuration alone. Report the fold-to-fold spread beside the mean: one exceptional fold
 and several poor ones is a different model from a consistent one with the
 same mean. Grid sanity: a rung that collapses the model to the base rate
 (over-regularisation) is removed with a note; a winner on a search boundary
@@ -70,8 +89,10 @@ as TabPFN) has k = 1 and is a fair cell.
 
 ### Optuna budget
 
-Whenever Optuna is used, the study runs exactly 200 trials (`n_trials=200`);
-pruned trials count toward the 200. The count is fixed by the protocol,
+Whenever an Optuna study actually runs, it runs exactly 200 trials
+(`n_trials=200`); pruned trials count toward the 200. Between retuning
+dates no study runs and no trials are spent: the last study's
+hyperparameters are reused. The count is fixed by the protocol,
 never chosen from the data or the compute, so the budget is not a degree of
 freedom and never moves in either direction. Complexity is controlled
 through the search space and the model, never the trial count: narrower
@@ -80,22 +101,26 @@ feature caps, and the richer-beats-simpler rule. Small samples still get
 200 trials, over a deliberately narrow and strongly regularised space. A
 family for which 200 trials is infeasible narrows its space or simplifies
 its implementation before the run, or is listed as not fittable. Whether a
-study runs once per family and window configuration or once per grid cell
-is written on the plan before the run. Every null replay that supports a
-claim from the study reruns the same 200-trial study in that world;
-refitting only the real winner's hyperparameters understates the search and
-is invalid. Deterministic grids keep their enumerated size. Two hundred
+study runs once per family and window configuration or once per grid cell,
+and on which retuning schedule, is written on the plan before the run; each
+study completes on data before the forecasts it serves. Every null replay
+that supports a claim from the studies reruns every 200-trial study on the
+same schedule in that world; refitting only the real winner's
+hyperparameters understates the search and is invalid. The plan states the
+null cost as studies per world x B x 200 trials. Deterministic grids keep their enumerated size. Two hundred
 trials are two hundred candidate configurations, not observations; they add
 nothing to power.
 
 ## Seeds
 
-Any stochastic fit (trees with subsampling, nets) runs S seeds at the chosen
-cell, S = 5 by default, more when seed variance is material, fewer for an
-effectively deterministic fit, declared before the stochastic family is
-compared. Report the seed range beside the paired interval; a seed range wider
-than the interval is seed noise, and the cell's claim is the range, not the
-best seed.
+Any stochastic fit (trees with subsampling, nets) declares one seed, or an
+ensemble of seeds, and uses it the same way at nomination, in the null, at
+the judge read and live; the best seed is never chosen after results. S
+extra seeds at the chosen cell, S = 5 by default, more when seed variance
+is material, fewer for an effectively deterministic fit, declared before
+the stochastic family is compared, are a stability diagnostic: report their
+range beside the paired interval. A seed range wider than the interval is
+seed noise, said first.
 
 ## Feature importance is a diagnostic
 

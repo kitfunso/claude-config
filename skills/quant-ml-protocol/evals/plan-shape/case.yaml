@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: plan-shape
-tags: [quant-ml-protocol, trigger, plan]
+tags: [quant-ml-protocol, trigger, plan, ro]
 plugins: ["../.."]
 execution:
   prompt: |
@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      The reply should follow the quant-ml-protocol stage list. Pass only if all of the following hold:
+      The reply should follow the quant-ml-protocol stage list. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names a nomination block and a judge block of years, says the judge block is read once, and says this split is fixed before any feature is built.
       2. It states a power check before screening: the expected null maximum for the planned universe compared with the smallest effect worth having, or an equivalent rule that shrinks the universe by a declared shortlist when the bar sits above the effect.

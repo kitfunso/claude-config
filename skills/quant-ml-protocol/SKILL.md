@@ -21,8 +21,8 @@ interpretable) is stage 9. Decision (does it pay after costs and constraints)
 is the trading page. A low-error forecast can lose money; a strong backtest
 can rest on one unstable feature.
 
-Revised 2026-09-22 (third revision, after three outside reviews). Earlier
-versions: `~/dev/quant-ml-protocol-draft/old/`.
+Revised 2026-09-23 (fourth revision, after the 2026-09-23 review and its
+feedback). Earlier versions: `~/dev/quant-ml-protocol-draft/old/`.
 
 ## Hard rules, defaults and data availability
 
@@ -42,9 +42,10 @@ whenever it is used, the protocol fixes the study at exactly 200 trials.
 
 Hard validity rules, none optional: chronological walk-forward evaluation,
 never a random train-test split for a temporal forecast; no known future
-leakage; fitted preprocessing inside the training folds; feature, champion
-and shortlist selection inside the walk-forward; purge of labels that have
-not matured; the judge block used once, for the frozen specification; no
+leakage; fitted preprocessing inside the training folds; feature, champion,
+shortlist and hyperparameter selection inside the walk-forward, on the
+declared refit and retuning schedules; purge of labels that have not
+matured; the judge block used once, for the frozen specification; no
 judge-driven rewrite of the standing specification; search multiplicity
 represented in the null replay, the same research search replayed under
 it; trading rules never selected on judge P&L; an append-only live forecast
@@ -63,6 +64,15 @@ replay the searched procedure. A caution flag is carried on the page and
 the campaign continues: no historical vintages, unknown revision risk, a
 small sample, a late-start feature, a coarse null, high seed variance,
 unstable regime behaviour, vendor-reconstructed history.
+
+Validity failures found after a result. A verified validity failure
+invalidates the affected evaluation regardless of its sign. Preserve the
+original result and mark it invalid. Correct the implementation and add a
+regression test. A rerun on already inspected judge data may be reported
+as a diagnostic correction, but it is not a new untouched confirmatory
+test. Confirmation then comes only from fresh matured outcomes, with the
+corrected spec running as a labelled challenger on the ledger
+(`references/daily-read.md`).
 
 Never cheat time, never select on the judge, never hide search
 multiplicity, and never pretend the data is more point-in-time than the
@@ -89,7 +99,8 @@ and recorded.
   one place in the code. Every feature row carries the time its inputs became
   available. Anything fitted (scaler, imputer, PCA, calibrator, regime
   labeller, shortlist, champion choice) is fitted at each refit date on data
-  to that date.
+  to that date; hyperparameters come from a study completed on data before
+  the forecasts they serve, on the declared retuning schedule.
 - Multiplicity: the bar for a search is what the same search finds when the
   extra information is removed and everything else is kept. The null removes
   the incremental information and keeps the champion's conditional
@@ -119,12 +130,17 @@ and recorded.
   dependence, the champion's relation and the calendar columns survive, and
   the universe is built once. Each replay reruns the whole procedure
   point-in-time: per-refit champion, per-refit shortlist, any declared
-  tuning in full (an Optuna study reruns all 200 trials in each world;
-  refitting only the real winner's hyperparameters understates the search
-  and is invalid). The statistic is the incremental form of the primary metric
+  tuning in full on its retuning schedule (every Optuna study on the
+  schedule reruns all 200 trials in each world; refitting only the real
+  winner's hyperparameters understates the search and is invalid; the plan
+  states the cost as studies per world x B x 200 trials, so 8 annual
+  retunes at B = 100 make 160,000 trials per window configuration). The
+  statistic is the incremental form of the primary metric
   (`references/targets-and-metrics.md`). One null per claim: b counts the
   replays whose maximum over the search that produced the claim (its family
-  and horizon, every cell, both signs) beats the real chosen statistic;
+  and horizon, every cell; for the timing screen both signs, so the
+  maximum is over the absolute rank IC, the number the real screen reads)
+  beats the real chosen statistic;
   p = (b+1)/(B+1); the campaign-wide maximum is reported beside it as the
   stricter number. The whole-block claim keeps the whole-block null;
   chronology binds in one place, the cutoff used inside the walk-forward
@@ -155,7 +171,9 @@ and recorded.
   the real search is seen. It carries the uncertainty its design allows:
   for independently drawn bootstrap
   worlds, an order-statistic bracket whose binomial coverage of that
-  percentile is at least 90% (ranks read off Binomial(B, 0.95)); for a shift
+  percentile is at least the bracket's confidence level (ranks read off
+  Binomial(B, q), with q the declared cutoff quantile; the confidence level
+  is a separate setting, 90% by default, declared beside q); for a shift
   set, which is one fixed set of worlds and not independent draws, the
   cutoffs from the two interleaved halves of the set as its sensitivity, with
   no coverage claimed; bootstrap worlds whenever an interval is needed. The
@@ -172,16 +190,26 @@ and recorded.
   defensible nulls exist (volatility regimes, structural breaks,
   heteroskedasticity, binary or distributional targets) it reports the
   sensitivity across them rather than one method as uniquely correct.
-- Power: a search that cannot pass is theatre, not caution. Before the real
-  screen, the screen null runs alone and its replay maximum is compared with
-  the smallest effect worth having, both in standardised units; a universe
-  whose null maximum sits above that effect is shrunk by a dated domain
-  declaration before anything is screened.
+- Power: before the real screen, the screen null runs alone and its cutoff
+  is compared with the smallest effect worth having, both in standardised
+  units. When the effect does not clear the cutoff by the power margin
+  (z_power / sqrt(n), rough), the search is underpowered for the minimum
+  effect we care about. When feasible, a declared signal-injection check
+  measures the power: plant the effect worth having in a real cell, replay
+  the whole search, and count the share of worlds where the planted cell
+  clears the cutoff actually used. The target is 80%, the declared power.
+  Short of it, the universe is shrunk by a dated domain declaration before
+  the real screen runs.
 - Selection inside the walk-forward: screening, clustering, any fitted
   preprocessing and the champion's identity run at each refit date of the
   coarsest cadence on data to that date, so no nomination prediction uses a
   shortlist or a champion chosen on its own outcomes. Cells with finer
   cadences reuse the shortlist of the coarsest refit before them.
+  Hyperparameters used for a historical forecast must come from a study
+  completed using only eligible data available before that forecast. The
+  retuning schedule is declared separately from the model-refitting
+  schedule. Between retuning dates, previously selected hyperparameters may
+  be reused.
 
 **Conventions, fixed by choice: defaults, not statistical truths.** Stated
 on the page with the date; a project may replace any of them before the
@@ -216,18 +244,26 @@ least 100, coarse below, floor 20 (an engineering floor); offsets one
 horizon from zero and two horizons apart by default; bootstrap block
 starting at twice the horizon in anchors and checked against the empirical
 dependence; residual scale ratio 2 as the heuristic warning threshold for
-the null-method check. Effects are stated standardised in the primary
-metric: a rank IC as itself, with n = n_rank; a paired-loss metric (MAE,
-Brier, pinball, CRPS) as the smallest useful mean paired-loss improvement
-divided by the long-run standard deviation of the per-anchor paired
-differences, estimated on nomination rows as sqrt(n_anchor) times the
-block-bootstrap standard error of the mean or by a HAC estimator, with
-n = n_anchor and no second division by overlap. Three rough numbers take
-the standardised effect and are labelled rough, with n the count of the
-primary statistic: the two-SE bar 2/sqrt(n) for reading one statistic; the
-rough analytic search bar sqrt(2 ln K)/sqrt(n) for
-the expected null maximum of a search; the ledger minimum (2 / e)^2, at
-least 30. The paired block bootstrap is the real uncertainty for all three.
+the null-method check. Paired intervals are two-sided at 95% and the power
+target is 80% by default, both written before stage 1 closes; at those
+defaults z_level = 1.96 and z_power = 0.84. Effects are stated
+standardised in the primary metric: a rank IC as itself, with n = n_rank;
+a paired-loss metric (MAE, Brier, pinball, CRPS) as the smallest useful
+mean paired-loss improvement divided by the long-run standard deviation of
+the per-anchor paired differences, estimated on nomination rows as
+sqrt(n_anchor) times the block-bootstrap standard error of the mean or by
+a HAC estimator, with n = n_anchor and no second division by overlap.
+Three rough numbers take the standardised effect e and are labelled rough,
+with n the count of the primary statistic: the two-SE bar 2/sqrt(n) for
+reading one statistic; the rough analytic search bar
+sqrt(2 ln K)/sqrt(n) + z_power/sqrt(n), the expected null maximum of a
+search plus the power margin; the ledger minimum
+((z_level + z_power) / e)^2, at least 30, which at e = 0.2 gives 196.2, so
+197 anchors. That count is a planning approximation, not a universal
+formula for rank-IC differences, whole-search maxima or sequential
+stopping; a rank IC count is rougher still, and a ledger read by a
+confidence sequence takes its count from the sequence's boundary. The
+paired block bootstrap is the real uncertainty for all three.
 Refit cadence ladder: annual, quarterly, monthly, weekly by default for
 daily market data; the project declares another (daily, weekly, monthly;
 weekly, monthly, quarterly; event-triggered, monthly) from data frequency,
@@ -238,22 +274,28 @@ weeks by default for slow fundamental data; a source may instead declare a
 lag ladder (+1 day, +1 week, +4 weeks, +8 weeks) from its publication and
 revision behaviour, written before its result is read. Staleness cap per
 source, set by the source's expected publication cadence and market use (a
-forward-filled value older than the cap is missing). Seeds S = 5 by default
-for any stochastic fit; more when seed variance is material, fewer for an
-effectively deterministic fit, declared before the stochastic family is
-compared. Optuna budget, the one user-fixed convention: exactly 200 trials
-per declared study whenever Optuna is
-used, fixed by the protocol and never chosen from the data or the compute;
-space, objective, seed, inner purged walk-forward and pruning rule are
-declared before trial 1, and every null replay reruns the whole 200-trial
-study (`references/model-families.md`). A tie set above half the grid
+forward-filled value older than the cap is missing). Seeds: a stochastic
+fit declares one seed, or an ensemble of seeds, and uses it the same way
+at nomination, in the null, at the judge read and live; the best seed is
+never chosen after results. S = 5 extra seeds at the chosen cell by
+default are a stability diagnostic, reported as a range; more when seed
+variance is material, fewer for an effectively deterministic fit, declared
+before the stochastic family is compared. Optuna budget, the one
+user-fixed convention: exactly 200 trials applies whenever a study
+actually runs, fixed by the protocol and never chosen from the data or the
+compute; between retuning dates the last study's hyperparameters are
+reused and no trials run. Space, objective, seed, inner purged
+walk-forward, pruning rule and the retuning schedule are declared before
+trial 1, and every null replay reruns every 200-trial study on that
+schedule (`references/model-families.md`). A tie set above half the grid
 means the grid did not discriminate.
 
 **Open, selected on the nomination years, never declared as the answer.**
 Expanding vs rolling and the rolling length; refit cadence within the
 declared ladder; recency weighting; z-score, change and lag windows; the
 feature count within the cap; the model family, including a joint-horizon
-or recursive family where declared; the hyperparameters; the target family
+or recursive family where declared; the hyperparameters, each set chosen
+by a study on data before the forecasts it serves; the target family
 beyond the point target. A sibling project's result (bd, wb, td3c) is a
 cell to include, not a prior. The selection rule, the tie-break (a declared
 complexity score, or the least-machinery order labelled a stability prior)
@@ -267,8 +309,9 @@ closes it, its state (done, partial or skipped, with the number the check
 produced) and where the evidence lives. A true blocker (known leakage,
 preprocessing fitted on future rows, unmatured labels in training, the judge
 reused for selection, a broken target construction, invalid chronology, a
-null that does not replay the searched procedure) stops every later stage;
-a caution flag (no vintages, unknown revision risk, a small sample, a
+null that does not replay the searched procedure) stops every later stage,
+and one verified after a result was read follows the validity-failure rule
+above, whatever the result's sign; a caution flag (no vintages, unknown revision risk, a small sample, a
 late-start feature, a coarse null, high seed variance, unstable regimes) is
 written on the page and the campaign continues; a negative research result
 passes. Nothing downstream starts on a partial
@@ -278,8 +321,10 @@ beyond the champion); stages 6 and 7 are estimation (how a frozen
 information set is combined). A search that mixes them pays multiplicity for
 both.
 
-1. **Framing, target and power.** The decision the forecast feeds, in one
-   line. Instrument, horizons and the primary horizon. For a price, spread,
+1. **Framing, target and power.** Two dated parts: freeze the candidate
+   universe and baseline specifications before running outcome-dependent
+   comparisons. Part one, declared and frozen before any nomination outcome
+   is read: the decision the forecast feeds, in one line. Instrument, horizons and the primary horizon. For a price, spread,
    rate or differential the default point target is the change (log change
    for a positive series, raw change for one that crosses zero), direct per
    horizon by default; the level stays available where the economic
@@ -292,33 +337,27 @@ both.
    because the market already pays it (carry, basis, roll), seam rule,
    roll-clean construction. Forecast cutoff time, input snapshot, target mark
    and the scoring metric per target, because the ledger at stage 10 needs
-   them. Count n_rank per horizon (anchors divided by horizon overlap, a
-   rough independent count) and, where the primary metric is a paired loss,
-   n_anchor (forecast anchors, dependence carried by the long-run variance),
-   and state the rough bar on the count the primary statistic uses. Name the
-   nomination and judge years and list every earlier read that touched the
-   judge years. Score the required baselines in
-   the target's own space on the same nomination anchors as the model: no
-   change, always one side, trailing base rate, trailing mean, seasonal
-   naive where a season exists (a level target adds AR(1)), and the domain
-   baselines the market suggests, on the stage 1
-   primary metric and its declared secondaries as
-   `references/targets-and-metrics.md` sets them per family; the strongest
-   simple baseline becomes the comparator, and a baseline is
-   never compared in a metric other than the one that selects the model.
-   Write the champion
-   candidates: a short predeclared list of simple baseline specifications
-   with its count, before any nomination outcome is read; a candidate may
-   be one feature or a small frozen domain baseline (seasonal plus carry,
-   curve plus calendar, netback plus freight, AR component plus calendar),
-   simple, interpretable, predeclared and point-in-time fitted where
-   possible. The champion at any refit date is the strongest of that frozen
-   set on the training rows available to
-   that date, in the direction of the stage 1 primary metric as
-   `references/targets-and-metrics.md` defines it: the candidate with the
-   highest oriented primary skill against the relevant constant baseline;
-   everything built later is judged on what it adds after the champion
-   specification.
+   them. The smallest incremental effect worth having in the primary
+   metric, in its raw units (the number that would change the decision),
+   and the declared interval level and power. Count n_rank per horizon
+   (anchors divided by horizon overlap, a rough independent count) and,
+   where the primary metric is a paired loss, n_anchor (forecast anchors,
+   dependence carried by the long-run variance). Name the nomination and
+   judge years and list every earlier read that touched the judge years.
+   Specify the required baselines in the target's own space on the same
+   nomination anchors as the model: no change, always one side, trailing
+   base rate, trailing mean, seasonal naive where a season exists (a level
+   target adds AR(1)), and the domain baselines the market suggests. Write
+   the champion candidates: a short predeclared list of simple baseline
+   specifications with its count; a candidate may be one feature or a
+   small frozen domain baseline (seasonal plus carry, curve plus calendar,
+   netback plus freight, AR component plus calendar), simple,
+   interpretable, predeclared and point-in-time fitted where possible. The
+   champion at any refit date is the candidate with the best stage 1
+   primary metric (lowest loss, or highest rank IC) on the training rows
+   available to that date, as `references/targets-and-metrics.md` defines
+   it; it is the one binding comparator, and everything built later is
+   judged on what it adds after the champion specification.
    Its identity is chosen inside the walk-forward like every other fitted
    choice, and the full-nomination winner is reported as context, never used
    at an earlier refit. Its fit for the null is named here and matches the
@@ -328,21 +367,30 @@ both.
    quantiles, the declared probabilistic champion for a distribution, the
    declared multi-output fit for a trajectory, a support-respecting link fit
    for a bounded target; fitted point-in-time at every refit, and the null
-   adapter must match it. Rough analytic search bar: the planned
-   universe size K from the schema, the expected null maximum
-   sqrt(2 ln K) / sqrt(n) in standardised units, labelled rough, and the
-   smallest incremental effect
-   worth having in the primary metric, standardised the same way (the number
-   that would change the decision). When the project will trade the
+   adapter must match it. When the project will trade the
    forecast, the trading skeleton is declared here and frozen: instrument,
    execution timestamp and expected lag, cost categories, holding rule,
    overlapping-signal treatment, risk limits, the primary economic metric;
    thresholds and sizing are fitted later, on the nomination years only
-   (`references/trading-layer.md`). Pass: the target page carries the
-   counts, the bar, the baselines, the candidate list, the metrics, the
-   rough analytic search bar and, when the project trades, the skeleton. A one-side
-   baseline that scores well is drift the page explains; skill is
-   improvement over it.
+   (`references/trading-layer.md`). Part two, the outcome reads, dated
+   after part one: where the primary metric is a paired loss, the long-run
+   standard deviation of the per-anchor paired differences and the
+   standardised effect worth having; the required baselines scored on the
+   stage 1 primary metric where it applies and on its declared
+   secondaries, as `references/targets-and-metrics.md` sets them per
+   family, and reported as references that never set a bar (a constant has
+   no rank IC and is scored on the loss metrics that apply); the rough
+   two-SE bar on the count the primary statistic uses; the rough analytic
+   search bar from the planned universe size K in the schema,
+   sqrt(2 ln K) / sqrt(n) + z_power / sqrt(n) in standardised units, the
+   expected null maximum plus the power margin, labelled rough, beside the
+   standardised effect worth having. Pass: the target page carries part
+   one, dated (targets, metrics, the raw effect, the level and power, the
+   counts, the baseline specifications, the candidate list, the null fit
+   and, when the project trades, the skeleton), then part two, dated after
+   it (the standardised effect, the reference baseline scores, the bars).
+   A one-side baseline that scores well is drift the page explains;
+   binding skill is improvement over the champion.
 2. **Data audit, hygiene and freeze.** Every candidate table in the family,
    found by prefix and directory (list what was not profiled). Per table:
    span, cadence, duplicates, which column is the observation date, rows per
@@ -386,7 +434,9 @@ both.
    later pulls append to, the code commit and the environment lock. Finalise
    K from the exact column counts and the transform ladder, and write the
    universe decision: full enumeration, or a domain shortlist with a one-line
-   rationale per row, declared here before any outcome is read. Pass: a
+   rationale per row, declared here before any feature is scored against
+   the target, with the outcome reads made so far (stage 1, part two)
+   listed beside it. Pass: a
    provenance grade and revision-risk label per source, hygiene and
    calendar alignment documented, known future leakage removed, the
    manifest path, K and the universe decision on the plan page, and every
@@ -444,11 +494,15 @@ both.
    refit date, and the full-nomination winner's nomination statistic as
    context.
 5. **Screen.** First the screen null alone: B replays of the whole screen on
-   the null target, offsets spaced as the rule says; its replay maximum is
-   the empirical search bar and replaces the rough analytic one on the plan
-   page. If it sits above the smallest effect worth having, the universe
-   decision at stage 2 is reopened and rewritten before the real screen
-   runs. Then, at
+   the null target, offsets spaced as the rule says; the cutoff at the
+   declared percentile of their maxima is the empirical search bar and
+   replaces the rough analytic one on the plan page. Then, where feasible,
+   the signal-injection check: the effect worth having planted in a real
+   cell, the whole search replayed, and the share of worlds where the
+   planted cell clears that cutoff. Short of the declared power (80% by
+   default), or, where injection is infeasible, when the effect does not
+   clear the empirical bar by the power margin, the universe decision at
+   stage 2 is reopened and rewritten before the real screen runs. Then, at
    each refit date of the coarsest cadence, on data to that date: the
    incremental statistic of every cell against each horizon. Every target
    family has one predeclared one-feature screening estimator, identical
@@ -456,25 +510,35 @@ both.
    is the oriented incremental screening statistic of the target family on
    identical anchors, positive meaning information beyond the champion
    (`references/targets-and-metrics.md`; the oriented primary skill of a
-   complete model against its comparator is a different object and belongs
-   to stages 7 to 10): timing, the rank IC of the cell
-   against that refit's champion residual; magnitude and level, OLS of the
-   champion residual on the standardised cell (or ridge at a fixed declared
-   penalty) and paired MAE skill; direction, a fixed logistic on the
-   champion score plus the cell and Brier skill; quantiles, fixed linear
-   quantile regression per declared level and pinball skill; distribution,
-   one predeclared probabilistic estimator and CRPS skill; trajectory, one
-   fixed multi-output estimator and the stage 1 aggregate horizon score.
+   complete model against the champion is a different object and belongs
+   to stages 7 to 10): timing, by default the absolute rank IC of the cell
+   against that refit's champion residual, the number the null's maximum
+   over both signs reads, with the signed IC kept beside it as a
+   diagnostic (a declared alternative learns the sign on the earlier part
+   of the refit's training rows and scores the signed IC on the later
+   part); magnitude and level, OLS of the champion residual on the
+   standardised cell (or ridge at a fixed declared penalty) and paired MAE
+   skill; direction, a fixed logistic on the champion score plus the cell
+   and Brier skill; quantiles, fixed linear quantile regression per
+   declared level and pinball skill; distribution, one predeclared
+   probabilistic estimator and CRPS skill; trajectory, one fixed
+   multi-output estimator and the stage 1 aggregate horizon score. A screen
+   that fits an estimator scores it on a declared forward inner split of
+   the refit's training rows: by default, fit on the first two thirds and
+   score on the last third, after the purge gap. A fixed OLS screen
+   evaluated out of sample on MAE is permissible. Least-absolute-deviation
+   regression would align the fitting objective more directly with MAE.
+   Whichever fit is declared is the one the null replays.
    The estimator never varies by cell; model-family choice belongs to
    stages 6 and 7. Cutoff at each refit from
    the null rolled to that date: null worlds built on rows to the refit date
    under the same B rule, so the shortlist at a 2020 refit owes nothing to
    2021. The whole-block p-value is a separate number and uses the
-   whole-block null. Skill-direction consistency across the nomination
-   subperiods seen so far: a cell whose oriented incremental screening
-   statistic repeatedly
-   alternates between positive and negative is flagged unstable even when
-   its pooled score is positive; where the one-feature estimator has an
+   whole-block null. Sign consistency across the nomination subperiods
+   seen so far: a cell whose signed diagnostic IC (timing) or incremental
+   skill (loss screens) repeatedly alternates between positive and
+   negative is flagged unstable even when its pooled score is positive;
+   where the one-feature estimator has an
    interpretable coefficient or loading, coefficient-sign stability is
    reported separately as a diagnostic, never substituted for it. One
    survivor per highly redundant cluster by default; several stay where the
@@ -485,7 +549,8 @@ both.
    Pass: a null page recording the target-family null adapter, the
    resampling method with its dependence and regime treatment, B and the
    offset spacing, the residual scale by year, the cutoff with its
-   uncertainty, the replay maximum per search and campaign-wide, and the
+   uncertainty, the replay maximum per search and campaign-wide, the
+   signal-injection power or the reason injection was infeasible, and the
    pass count; a ranked shortlist per refit date with the incremental
    statistic, the per-refit rolled cutoff, group, cluster and first date.
 6. **Selection, cap and tuning rules.** Default capacity guard: Cap per
@@ -499,24 +564,41 @@ both.
    domain structure (a regularised linear model may carry a wider set, a
    shallow tree a tighter one, a strong domain prior a smaller hand-declared
    set), frozen before the model comparison. Trees carry a separate depth
-   range and leaf floor written on the page, shallow by default (depth
-   centred on 2 to 4, leaf floor n_eff divided by 8 as the initial
-   heuristic), declared before Optuna and scaled to the effective sample.
+   range and leaf floor written on the page, shallow by default, declared
+   before Optuna: depth centred on 2 to 4, and a leaf floor of one eighth
+   of the refit's raw training rows as the initial heuristic, which
+   guarantees no count of independent observations per leaf; the plan
+   names the library parameter and its unit (`references/model-families.md`).
    Purge and embargo in the dataset builder only. Any hyperparameter
    search is declared before its first trial: space, budget, seed,
-   objective, the inner purged walk-forward, the stopping and pruning rule;
-   its trial count is its k and the null replays rerun the whole search,
-   never the winning configuration alone. Optuna always runs exactly 200
-   trials per declared study, pruned trials included; a deterministic grid
+   objective, the inner purged walk-forward, the stopping and pruning rule,
+   and the retuning schedule, one of three designs: retune at every refit;
+   retune on a sparser declared schedule (by default each refit of the
+   coarsest cadence, the dates the shortlist already uses, with finer
+   cadences reusing the last study); or tune once on an initial development
+   period, freeze, and score forecasts only after that period. Each study
+   completes on data before the forecasts it serves. Its trial count is its
+   k and the null replays rerun every study on the schedule, never the
+   winning configuration alone. Optuna runs exactly 200 trials whenever a
+   study actually runs, pruned trials included; a refit between retuning
+   dates reuses the last study and runs no trials; a deterministic grid
    keeps its enumerated size; a family for which 200 trials is infeasible
    narrows its space or is listed not fittable, and the trial count never
-   moves. A grid rung that collapses the model to the base rate is removed
-   with a note; the fold-to-fold spread is reported beside the mean
-   (`references/model-families.md`). Pass: a test that purge holds at every
-   outer and inner boundary for every cadence in the grid and that each
-   declared embargo holds where it was declared; the cap arithmetic written
-   per window rung; the tuning declaration on the page, with Optuna
-   trials = 200 for every Optuna-tuned family.
+   moves. The calibration of a probability output is declared here too: no
+   additional calibration, Platt, or isotonic. Choosing no calibration is
+   admissible when the model already outputs a probability; a raw
+   classifier score is never reported as a probability. A calibrator is
+   fitted on held-out inner predictions at each refit, never on the
+   classifier's own training predictions, and belongs to the cell in the
+   grid, the null, the judge read and live. A grid rung that collapses the
+   model to the base rate is removed with a note; the fold-to-fold spread
+   is reported beside the mean (`references/model-families.md`). Pass: a
+   test that purge holds at every outer and inner boundary for every
+   cadence in the grid and that each declared embargo holds where it was
+   declared; the cap arithmetic written per window rung; the leaf-floor
+   parameter and its unit for every tree family; the tuning declaration on
+   the page, naming its retuning design, with Optuna trials = 200 for every
+   study that runs; the calibration choice for every probability output.
 7. **Model comparison and the window grid.** Families in a ladder
    (`references/model-families.md`): champion alone; a regularised linear
    model on the shortlist (logistic for the directional read, quantile
@@ -534,16 +616,18 @@ both.
    run; when it forbids a grid null of 100 worlds, the grid is reduced and
    frozen before the null runs and the real run uses the same reduced grid;
    the null replays rerun the whole grid. An Optuna-tuned family enters the
-   grid with the hyperparameters from its declared 200-trial inner study;
-   whether that study runs once per family and window configuration or
-   once per grid cell is written on the plan before the run, never decided
-   after results, and the null replays rerun it the same way. Stochastic
-   fits run S seeds at the
-   chosen cell; the seed range is reported beside the paired interval, and a
-   seed range wider than the interval is seed noise, said so. Selection
-   rule: highest nomination oriented primary skill on the primary horizon,
-   with the comparator and orientation `references/targets-and-metrics.md`
-   declares (positive means improvement over the comparator); every raw
+   grid with the hyperparameters from its declared 200-trial inner studies;
+   whether a study runs once per family and window configuration or once
+   per grid cell is written on the plan before the run, never decided after
+   results; either way each study completes on data before the forecasts it
+   serves, on the declared retuning schedule, and the null replays rerun
+   the studies the same way. A stochastic fit forecasts with its declared
+   seed or seed ensemble; S extra seeds at the chosen cell are a stability
+   diagnostic, their range reported beside the paired interval, and a seed
+   range wider than the interval is seed noise, said so. Selection rule:
+   highest nomination oriented primary skill against the champion on the
+   primary horizon, with the orientation `references/targets-and-metrics.md`
+   declares (positive means improvement over the champion); every raw
    primary metric is reported beside it and never selects. Tie rule: for
    every candidate cell, the paired block-bootstrap interval of its
    oriented primary skill minus the best cell's, on identical forecast
@@ -567,8 +651,9 @@ both.
    page with every cell's paired interval against the champion, the null
    grid, the chosen cells, the tie set and the standing family.
 8. **Judge read.** Freeze first, on the page: feature definitions, the
-   shortlist rule, the cap, the tuning procedure, any calibrator, the
-   standing family and its cell, the refit cadence. The standing family's
+   shortlist rule, the cap, the tuning procedure and its retuning schedule,
+   any calibrator, the standing family and its cell, the refit cadence,
+   and the economic rule, when the project trades. The standing family's
    cell runs once on the judge years and that read is the result; the other
    families' chosen cells run once too and are context, labelled so. Report
    the judge oriented primary skill against the frozen champion rule (the
@@ -583,16 +668,21 @@ both.
    chosen from. A regime split (a cell that wins only in the latest year) is
    a finding, never the selector of the live spec. No second look: a
    disappointing judge read is the result, and any change informed by it
-   needs fresh outcomes before it can be confirmed. Pass: the judge page with
-   the freeze list.
+   needs fresh outcomes before it can be confirmed. A verified validity
+   failure follows the validity-failure rule at the top whatever the sign:
+   the read is kept and marked invalid, a rerun on the same judge years is
+   a diagnostic correction and never a new confirmatory test, and the
+   corrected spec confirms only on fresh matured outcomes as a labelled
+   challenger. Pass: the judge page with the freeze list.
 9. **Error analysis, calibration and stress.** Nomination and judge reads
    split by year, regime flag, volatility tercile, month and horizon;
    residual bias and autocorrelation; predicted against actual;
-   deterioration over time. Calibration by
+   deterioration over time. Calibration diagnostics by
    `references/targets-and-metrics.md`: the directional read gets a
-   reliability diagram, Brier and log loss against the base rate; the
-   quantile read gets coverage per level and pinball loss; a calibrator
-   (Platt or isotonic) is fitted on inner folds and is part of the spec.
+   reliability diagram, Brier and log loss, with the base rate's as a
+   reference; the quantile read gets coverage per level and pinball loss.
+   Nothing is fitted here: the calibration choice was declared at stage 6
+   and is part of the frozen spec.
    Stability, the inference question: knockout per surviving feature and per
    feature group; sign stability of coefficients or importances across
    refits; permutation importance and SHAP are diagnostics on nomination
@@ -625,11 +715,14 @@ both.
     standing
     family beat the champion on the judge read (else the champion alone
     runs, or nothing, and the page says which); the live spec is the frozen
-    cell rolled forward at its cadence and window, fitting on all data to
-    each run date; one code path builds research and live features, proven
-    by the consistency test on the first run; every run writes one immutable
-    forecast row (spec tag, cutoff time, input snapshot hash, prediction) and
-    every matured target one outcome record linked to it, nothing edited.
+    cell rolled forward at its cadence, trained at each declared refit date
+    on the eligible rows within its selected window and retuned on its
+    declared retuning schedule; one code path builds research and live
+    features, proven by the consistency test on the first run; every run
+    writes one immutable forecast row (spec_id, fit_id, forecast_id, cutoff
+    time, input snapshot hash, prediction, and the champion's forecast with
+    its fit_id) and every matured target one outcome record linked to it,
+    nothing edited.
     The read rule is written before the first row: the statistic, the
     minimum matured outcomes, and either a confidence sequence or one fixed
     read date; a glance at the ledger is allowed daily, a claim from it is
@@ -659,9 +752,10 @@ opens. It never sits inside the research metric.
   "what the model would have known in 2018" is written only where every
   input is grade A.
 - The cutoff, the cap, the window, the tie-break, the primary horizon, the
-  tuning space, seed, objective and stopping rule, and the read rule are
-  stated before the run that uses them, on the page, with the date; the
-  tuning budget is fixed at 200 Optuna trials whenever Optuna is used.
+  tuning space, seed, objective, stopping rule and retuning schedule, and
+  the read rule are stated before the run that uses them, on the page, with
+  the date; the tuning budget is fixed at 200 Optuna trials whenever a
+  study runs.
 - When the user pushes back on a claim: verify first (re-read, re-run,
   re-grep), never defend first; concede to evidence at once.
 - Two methods optimising the same metric on the same rows are one witness,
@@ -685,7 +779,7 @@ opens. It never sits inside the research metric.
 ## References
 
 - `references/targets-and-metrics.md`: target families, the metric per
-  target, calibration and coverage checks. Stages 1 and 9.
+  target, calibration and coverage checks. Stages 1, 6 and 9.
 - `references/data-hygiene.md`: quality checks, outliers, missing data,
   alignment, the freeze manifest. Stage 2.
 - `references/model-families.md`: the family ladder, tuning as a declared

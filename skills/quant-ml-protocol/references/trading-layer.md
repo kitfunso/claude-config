@@ -64,7 +64,9 @@ interval against no-trade and against the champion-rule strategy.
 A review threshold and a kill threshold from the backtest's own return
 distribution; an operational kill on skip or error rate; a lane too thin to
 confirm its edge at its accrual rate is kill-only, with the detectable-effect
-horizon stated. The ledger is peeked at every run, so fixed-n tests on it are
+horizon stated, taken from the ledger power rule at the declared level and
+power (`daily-read.md`) or from the confidence sequence's boundary. The
+ledger is peeked at every run, so fixed-n tests on it are
 invalid: an e-process for the kill test and a confidence sequence for the
 edge estimate keep the declared error rate at every stopping time. Physical:
 a PRA methodology notice on the benchmark or the grade pauses the lane until

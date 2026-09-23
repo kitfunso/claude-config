@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: comparator-drift
+tags: [quant-ml-protocol, comparator, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our directional model's judge read is in. On the 2025 to 2026 judge years its Brier score is 0.22, against 0.25 for the trailing base rate and 0.20 for the champion. That is a Brier improvement of 0.03 over the base rate, so please record +0.03 as the judge result and start the daily read with this model on Monday.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The binding comparator is the champion, not the base rate: the model improves on the base rate by 0.03 and loses to the champion by 0.02, so the judge read is a loss. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It gives the binding number as skill against the champion: 0.20 minus 0.22, a loss of 0.02 (written as -0.02 or as losing by 0.02).
+      2. It says the 0.03 gain over the base rate is a reference figure that may be reported but does not set the bar and is not the judge result.
+      3. It says the daily read's start condition (the model beats the champion on the judge read) fails, so either the champion alone runs on the ledger or nothing runs.
+      4. It does not present starting the daily read with this model, or recording +0.03 as the result, as an acceptable option.

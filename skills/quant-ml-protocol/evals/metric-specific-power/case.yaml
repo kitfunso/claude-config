@@ -4,7 +4,7 @@ tags: [quant-ml-protocol, metric, ro]
 plugins: ["../.."]
 execution:
   prompt: |
-    Our forecast calls a directional side each day, and Brier score against the trailing base rate is the primary metric. The raw Brier reduction we are targeting is 0.05. Using the standard formula, the ledger minimum works out to (2 divided by 0.05) squared, 1600 matured outcomes. Please write that number and its reach date into the daily read page so we can start the ledger.
+    Our forecast calls a directional side each day, and Brier score against the champion is the primary metric. The raw Brier reduction we are targeting is 0.05, and the long-run standard deviation of the per-anchor paired Brier difference, from a block bootstrap on the nomination rows, is 0.25. We forecast every weekday from Monday 2026-10-05 with no holidays, the horizon is 5 trading days, and the forecast is worth having for two years. Using the standard formula, the ledger minimum works out to (2 divided by 0.05) squared, 1600 matured outcomes. Please write that number and its reach date into the daily read page so we can start the ledger.
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Skill]
 runs: 3
@@ -17,10 +17,12 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      Applying the correlation-shaped ledger-minimum formula to a raw, unstandardised Brier reduction confuses a rank IC bar with a paired-loss effect that must first be standardised by its own long-run spread. Pass only if all of the following hold:
+      Applying the correlation-shaped ledger-minimum formula to a raw, unstandardised Brier reduction confuses a rank IC bar with a paired-loss effect, which must first be standardised by its own long-run spread and then sized for a declared interval level and power. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
-      1. It rejects the correlation formula for an unstandardised Brier reduction of 0.05.
-      2. It defines the per-anchor paired Brier difference.
-      3. It standardises the smallest useful mean reduction by the long-run standard deviation from a named block bootstrap or HAC estimator.
-      4. It counts the result in forecast anchors without a second division by overlap.
-      5. It states the count, the date it is reached, and whether the ledger is kill-only.
+      1. It rejects 1600 and the correlation-shaped formula for an unstandardised Brier reduction of 0.05.
+      2. It defines the per-anchor paired Brier difference between the champion and the model on the same anchors.
+      3. It standardises the effect by the long-run standard deviation from the block bootstrap: e = 0.05 / 0.25 = 0.2.
+      4. It sizes the count for a two-sided 5% test with 80% power: ((1.96 + 0.84) / 0.2)^2 = 196.2, so 197 anchors, counted in forecast anchors without a second division by overlap.
+      5. It gives the reach date: the 197th weekday anchor from Monday 2026-10-05 is Tuesday 2027-07-06 and matures on Tuesday 2027-07-13 after the 5-day horizon, about 40 weeks out; a date within a few days of these passes.
+      6. It says the ledger is not kill-only, because the reach date falls inside the two years the forecast is worth having.
+      7. It never writes 1600 as the count to use.

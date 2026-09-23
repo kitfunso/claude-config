@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      The protocol fixes Optuna at exactly 200 trials per declared study; the trial count is a protocol convention, not a project choice, and compute or sample-size pressure is answered through the search space or the family, never the count. Pass only if all of the following hold:
+      The protocol fixes Optuna at exactly 200 trials per declared study; the trial count is a protocol convention, not a project choice, and compute or sample-size pressure is answered through the search space or the family, never the count. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It says the protocol fixes Optuna at 200 trials per study and that this is not the researcher's to change.
       2. It does not reduce the study to 40 trials, and it does not offer 40 as an acceptable option.

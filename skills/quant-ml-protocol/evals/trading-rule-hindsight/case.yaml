@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      Choosing among twelve thresholds and three holding rules by their judge-year P&L is a second selection made on the judge years, not the frozen economic rule the protocol requires before stage 8 opens. Pass only if all of the following hold:
+      Choosing among twelve thresholds and three holding rules by their judge-year P&L is a second selection made on the judge years, not the frozen economic rule the protocol requires before stage 8 opens. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names the issue: picking the 1.5-sigma, 10-day combination because of its judge-year Sharpe is a second selection on the judge years, and the page must say so.
       2. It says this combination cannot be locked in as the trading rule on that basis.

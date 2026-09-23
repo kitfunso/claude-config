@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      The 200-trial Optuna study is its own source of multiplicity; refitting only the winning hyperparameters inside each null replay leaves that search's own selection uncounted. Pass only if all of the following hold:
+      The 200-trial Optuna study is its own source of multiplicity; refitting only the winning hyperparameters inside each null replay leaves that search's own selection uncounted. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names the gap: replaying only the final hyperparameter set understates how easily the 200-trial study finds structure in the null, because the study itself was never rerun.
       2. It says the study's trial count is the search's k and the null replays must rerun the whole 200-trial study in each null world, not the chosen configuration alone.

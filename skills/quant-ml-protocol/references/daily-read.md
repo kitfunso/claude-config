@@ -13,18 +13,32 @@ says which and why.
 ## The live spec
 
 The frozen cell from stage 8: family, shortlist rule, cap, hyperparameters or
-the declared search, calibrator, window and refit cadence. It is rolled
-forward: at each refit date of its cadence it refits on all data to that date
-through the same code path; between refits it predicts with the last fit.
-Spec tag = cell id + code commit + environment hash + dataset manifest hash.
-A change to any element is a new spec tag and a new ledger track.
+the declared search with its retuning schedule, calibrator, window and refit
+cadence. It is rolled forward through the same code path. At each declared
+refit date, train on the eligible rows within the selected window. Between
+refits, reuse the last fitted model. Studies rerun only on the declared
+retuning schedule; between retuning dates the last study's hyperparameters
+are reused.
+
+Three ids:
+
+- spec_id: frozen modelling and decision rules. Hashed from the cell id,
+  the code commit and the environment; the dataset manifest is left out.
+- fit_id: a particular scheduled refit, including its training-data
+  snapshot. The manifest's state at that fit is hashed here.
+- forecast_id: a particular prediction and input snapshot, carrying the
+  input snapshot hash and the cutoff time.
+
+Only a spec_id change opens a new ledger track. Routine refitting under the
+same frozen rules should produce a new fit_id, not erase the continuity of
+evidence for spec_id.
 
 ## The run
 
 1. Scheduled ingest.
 2. Validate incoming rows with the stage 2 checks.
 3. Point-in-time features through the research code path.
-4. Load the spec by tag.
+4. Load the spec by spec_id and the current fit by fit_id.
 5. Forecast, with probability or quantiles when declared.
 6. Apply the decision rules from the trading page, if there is one.
 7. Write the forecast row and its metadata.
@@ -43,31 +57,38 @@ future-mutation test pointed at production.
 
 ## The ledger
 
-Append-only. Forecast row: forecast id, spec tag, run time, cutoff time,
-input snapshot hash, anchor date, horizon, point forecast, probability or
-quantiles when declared, the decision when there is one. Outcome record,
-appended when the target matures: forecast id, matured value, matured time,
-the score under each declared metric. Nothing is edited; an off-grid or odd
+Append-only. Forecast row: forecast_id, spec_id, fit_id, run time, cutoff
+time, input snapshot hash, anchor date, horizon, point forecast, probability
+or quantiles when declared, the decision when there is one, and the
+champion's forecast with its fit_id, so the live comparison can be audited.
+Outcome record, appended when the target matures: forecast_id, matured
+value, matured time, the score under each declared metric. Nothing is edited; an off-grid or odd
 row gets a label and an explanation. Old-spec rows are labelled, never
 deleted: deleting one row makes every remaining row worthless.
 
 ## The read rule, declared before the first row
 
 - Statistic: the stage 1 primary metric on matured outcomes as oriented
-  primary skill against the frozen comparator (rank IC skill for the timing
-  read, MAE skill for the magnitude read, Brier skill against the base rate
-  for the directional read, pinball or CRPS skill for the distributional
-  read), with the raw metric and sign hit beside it.
-- Minimum matured outcomes before the first claim: (2 / e)^2, at least
-  30, where e is the stage 1 smallest effect worth having in the
-  primary metric, standardised as the conventions say: a rank IC as
-  itself, counted in independent outcomes (matured rows divided by
-  horizon overlap); a paired-loss metric as the smallest useful mean
-  improvement over the long-run standard deviation of the per-anchor
-  paired differences on nomination rows (block bootstrap or HAC, named
-  on the page), counted in forecast anchors and not divided again by
-  overlap. The page states the date the ledger reaches the count at
-  its accrual rate; when that date lies beyond the declared usefulness
+  primary skill against the champion, the frozen comparator rule (for a
+  loss, the champion's loss minus the model's on the same rows; for the
+  timing read, model rank IC minus champion rank IC), with the raw metric
+  and sign hit beside it. The reference baselines, the base rate among
+  them, are reported and never set the bar.
+- Minimum matured outcomes before the first claim: ((z_level + z_power) /
+  e)^2, at least 30, at the declared interval level and power (two-sided
+  95% and 80% by default, so z_level = 1.96 and z_power = 0.84), where e
+  is the stage 1 smallest effect worth having in the primary metric,
+  standardised as the conventions say: a rank IC as itself, counted in
+  independent outcomes (matured rows divided by horizon overlap); a
+  paired-loss metric as the smallest useful mean improvement over the
+  long-run standard deviation of the per-anchor paired differences on
+  nomination rows (block bootstrap or HAC, named on the page), counted in
+  forecast anchors and not divided again by overlap. The count is a
+  planning approximation, not a universal formula for rank-IC
+  differences, whole-search maxima or sequential stopping; a rank IC
+  count is rougher still, and a ledger read by a confidence sequence
+  takes its count from the sequence's boundary. The page states the date
+  the ledger reaches the count at its accrual rate; when that date lies beyond the declared usefulness
   horizon the ledger is kill-only: it can detect decay and cannot
   confirm skill, and the page says so before the first row. The judge
   read is shown beside the rule as context, never as its input.
@@ -77,8 +98,8 @@ deleted: deleting one row makes every remaining row worthless.
   the rule. A daily glance is allowed; a claim, a spec change or a stop
   informed by the ledger before the rule holds is a second look.
 - The claim: the ledger's binding statistic is the same oriented primary
-  skill, against the same frozen comparator, that nomination and the judge
-  read used; the raw metric and the declared secondaries sit beside it,
+  skill, against the champion under the same frozen rule, that nomination
+  and the judge read used; the raw metric and the declared secondaries sit beside it,
   and no live claim changes metric, comparator or orientation. The ledger
   skill with its interval is read beside the judge skill; a ledger skill
   below the judge interval is decay, said first.
@@ -91,8 +112,8 @@ nomination-year distribution, with the count outside the 1st to 99th
 percentile. Prediction drift: the forecast distribution against the
 backtest's. Accuracy: rolling oriented primary skill in the declared metric
 on matured outcomes over a declared window (td3c uses 26 weeks), against the
-same comparator as the frozen spec and the backtest's own distribution,
-alarm at its 5th percentile, with the target family's secondaries beside it
+champion as in the frozen spec, read against the backtest's own
+distribution, alarm at its 5th percentile, with the target family's secondaries beside it
 (timing: oriented rank IC skill with sign hit; magnitude: MAE skill with
 rank IC and sign hit; direction: Brier skill with reliability and log loss
 or balanced accuracy; quantile: pinball skill with coverage; distribution:
@@ -117,9 +138,11 @@ not permission to stop early.
 
 ## Retrain, challenger, fallback
 
-Retrain schedule = the cell's refit cadence, no more often. A challenger runs
-beside the incumbent on the ledger under its own tag and replaces it only
-under the same read rule on the same matured outcomes. Fallback spec: the
+Retrain schedule = the cell's refit cadence and its declared retuning
+schedule, no more often. A challenger runs beside the incumbent on the
+ledger under its own spec_id and replaces it only under the same read rule
+on the same matured outcomes; a spec corrected after a verified validity
+failure (SKILL.md, hard validity rules) runs the same way. Fallback spec: the
 champion alone, or no change. The triggers that switch to it are declared
 before the first row and the switch is a labelled ledger event: an
 operational or data-validity alarm with its predeclared trigger (a failed

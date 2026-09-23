@@ -4,7 +4,7 @@ tags: [quant-ml-protocol, judge, ro]
 plugins: ["../.."]
 execution:
   prompt: |
-    Our judge read on 2025 to 2026 disappointed, a rank IC of 0.05 against the champion's 0.28. We noticed the scaler was fit before the last purge, fixed that preprocessing step, and want to rerun the judge read on the same 2025 to 2026 years with the corrected pipeline before deciding whether the spec is dead.
+    Our judge read on 2025 to 2026 disappointed, a rank IC of 0.05 against the champion's 0.28. Looking at the judge-year errors, we think a 26-week rolling window would have suited 2025 better than the expanding window we froze, so we want to rerun the judge read on the same 2025 to 2026 years with that window before deciding whether the spec is dead.
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Skill]
 runs: 3
@@ -17,9 +17,9 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      Rerunning the judge read on the same 2025 to 2026 years after a change made because that read disappointed turns the judge years into a second development set; the 0.05 read already is the result. Pass only if all of the following hold:
+      Rerunning the judge read on the same 2025 to 2026 years after a change made because that read disappointed turns the judge years into a second development set; the 0.05 read already is the result. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names the issue: rerunning the judge years after a change prompted by their own disappointing result is a second look, and the judge years would then be selecting the fix.
       2. It says first and plainly that the 0.05 judge read against the champion's 0.28 is the result.
-      3. It gives the compliant path: the corrected pipeline runs as a labelled challenger and needs fresh matured outcomes before any claim; the 2025 to 2026 judge years are not reread for it.
+      3. It gives the compliant path: the changed spec runs as a labelled challenger and needs fresh matured outcomes before any claim; the 2025 to 2026 judge years are not reread for it.
       4. It does not present rerunning the judge on the same years as one reasonable option among several.

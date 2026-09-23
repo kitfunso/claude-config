@@ -117,9 +117,10 @@ notice, data gap, reflexivity).
 In the target's own space, on the same anchors, beside the constant
 baselines: AR(1) to a rolling mean, seasonal (maintenance calendar), netback
 parity (marginal refinery breakeven from GPW), delivered parity vs the
-marginal competing grade (arb engine). The best of them under the stage 1
-primary metric, expressed as oriented primary skill against the relevant
-constant baseline, is a champion candidate; whether any domain baseline
-improves on the constant baseline is reported on the target page with the
-same standardised effect and search-bar logic as the main protocol, and the
-campaign continues either way.
+marginal competing grade (arb engine). Every domain baseline goes on the
+champion candidate list in stage 1 part one, before any outcome is read,
+and the per-refit rule picks among them (SKILL.md stage 1). Whether any
+domain baseline improves on the constant reference baselines is reported
+on the target page with the same standardised effect and search-bar logic
+as the main protocol, as a report that sets no bar, and the campaign
+continues either way.

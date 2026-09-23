@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: tuning-leak
+tags: [quant-ml-protocol, tuning, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our nomination block runs 2016 to 2026 and the grid refits monthly. To keep compute down we ran one 200-trial Optuna study for the gradient-boosting family over the whole 2016 to 2026 nomination block, and its best hyperparameters now drive every monthly refit from January 2016 onward. Our null replays that same study in every null world, so the search is fully replayed. Please sign off the tuning section of the stage 6 page.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      One study over the whole nomination block feeds hyperparameters chosen on 2016 to 2026 outcomes into forecasts made from 2016, so every early forecast uses information from years it had not reached; replaying the study in the null counts the search but does not repair the chronology. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It names the chronology leak: hyperparameters used for a historical forecast must come from a study completed on data before that forecast, and this holds whatever the null replay does.
+      2. It gives the compliant designs: retune at every refit, retune on a sparser declared schedule (for example at each coarsest-cadence refit, reusing the last study in between), or tune once on an initial development period and score only the forecasts after it.
+      3. It keeps the budget at exactly 200 Optuna trials whenever a study runs, and saves compute through the retuning schedule or the search space, never the trial count.
+      4. It says every study on the declared schedule is rerun in each null world.
+      5. It declines to sign off the whole-block study and does not present it as one acceptable option among several.

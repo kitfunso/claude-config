@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: steel-out-of-scope
+tags: [quant-ml-protocol, scope, ro, oos]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We have 3,000 steel samples from one production campaign, each with its chemistry, rolling temperatures and a measured yield strength. We want to predict yield strength from the process inputs with LightGBM tuned by Optuna. How should we validate the model?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-not-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      This is a cross-sectional materials problem, not time-series forecasting, so a walk-forward protocol with judge years and a forecast ledger does not apply; standard cross-validation, grouped where samples share a heat or batch, is the right tool. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It answers the validation question on its own terms, with k-fold, grouped or stratified cross-validation (grouped by heat or batch where samples share one) as an acceptable scheme.
+      2. It does not impose time-series forecasting machinery: no walk-forward refits, no nomination and judge years, no forecast ledger or daily read.

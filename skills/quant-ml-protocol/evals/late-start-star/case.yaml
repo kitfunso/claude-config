@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      An 18-month rank IC of 0.45 is not equivalent evidence to a score built over the full eight-year block; a late-starting column earns a window-matched null and a flag, not a place at the top of the shortlist. Pass only if all of the following hold:
+      An 18-month rank IC of 0.45 is not equivalent evidence to a score built over the full eight-year block; a late-starting column earns a window-matched null and a flag, not a place at the top of the shortlist. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It names the issue: the 18-month IC is not comparable with scores computed over the full block, so it cannot be ranked alongside them as equivalent evidence.
       2. It says the feature cannot be claimed on that number.

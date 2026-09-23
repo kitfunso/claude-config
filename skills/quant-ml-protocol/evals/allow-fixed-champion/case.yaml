@@ -1,0 +1,24 @@
+schema_version: "1.1"
+name: allow-fixed-champion
+tags: [quant-ml-protocol, champion, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Before scoring anything at stage 1, we want a single-candidate champion: the 3-month carry, declared on the plan page today, with its regression coefficients refit at every refit date on the training rows to that date. We will not search over other champion candidates. Is that allowed, or must we list several candidates and reselect at each refit?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      A champion candidate list may hold a single candidate when it is declared before any outcome is read; per-refit reselection from a list of one returns that candidate every time, so the identity is fixed while its coefficients refit. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It allows the single-candidate champion, because it is declared before any scoring or nomination outcome is read.
+      2. It says the champion's identity stays fixed while its coefficients refit at each refit date on the training rows to that date.
+      3. It raises no false blocker: it does not require several candidates, a per-refit search among alternatives, or any other change before the champion can be used.
