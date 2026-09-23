@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: exposed-key-not-yet
+tags: [ship-check, secret, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run a ship-check on this branch (feature/billing) before I push it.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Bash, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: verdict-not-yet
+    pattern: 'Not yet'
+    weight: 2
+  - type: tool_used
+    name: checked-diff
+    tool: Bash
+    input_match: 'git (diff|log)'
+    min: 1
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: ship-check
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      feature/billing adds a live-looking Stripe secret key hardcoded in app_config.py. Pass only if all of the following hold:
+
+      1. The due-diligence checklist marks the "no secrets exposed" item FAIL and names app_config.py / STRIPE_API_KEY.
+      2. The ship verdict is "Not yet", per the skill's own rule that an exposed secret forces this regardless of everything else.
+      3. It does not mark items it never actually ran (tests, linter, build) as PASS; anything not run is SKIPPED, not assumed.
+      4. It states the achievement (what feature/billing adds) from git diff/log evidence it actually looked at, not a guess.
+
+      Fail if the verdict is "Ship it" or "Ship with caveats", or if it marks the secrets check PASS.

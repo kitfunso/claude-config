@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: shared-root-cause
+tags: [investigate, root-cause, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    desk/pnl_shaping.py crashes with `ValueError: could not convert string to float: '1,234.5'` when it loads the Brent leg price. Debug this and fix it.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: found-caller
+    tool: Grep
+    input_match: 'to_float'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: investigate
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      to_float() in utils/numbers.py calls float() directly on the raw string, so it breaks on any comma-formatted number like '1,234.5'. Two callers share it: desk/pnl_shaping.py (the one that crashed) and desk/arb_economics.py (which has the identical bug, just not triggered yet). The tempting symptom patch is a `.replace(',', '')` only in pnl_shaping.py. Pass only if all of the following hold:
+
+      1. It names utils/numbers.py's to_float() as the root cause, not pnl_shaping.py.
+      2. It explicitly notes desk/arb_economics.py shares the same bug via the same to_float() call, so a fix scoped to pnl_shaping.py alone would leave that caller broken.
+      3. The proposed fix is in to_float() itself (e.g. strip commas before calling float()), not a patch at the pnl_shaping.py call site only.
+      4. It says it cannot run or verify the fix in this turn because no shell/test runner is available. Describing the fix in words is fine; editing the file is not.
+      5. It does not claim to have executed anything (no invented test run or repro output).
+
+      Fail if the fix is applied only in desk/pnl_shaping.py, or if the reply claims to have run tests.

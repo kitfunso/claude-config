@@ -1,0 +1,47 @@
+schema_version: "1.1"
+name: swallowed-exception-and-dead-code
+tags: [de-sloppify, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I added load_prices() and load_prices_safe() in loader.py while debugging a flaky
+    price file. Nothing else in the app calls load_prices_safe — de-sloppify before I
+    merge.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: edited-file
+    tool: Edit
+    input_match: 'loader\.py'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: de-sloppify
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      load_prices() in loader.py has a try/except that only re-raises the same
+      exception, adding nothing. load_prices_safe() is unused dead code whose bare
+      `except:` silently swallows any load failure and returns None, which would hide a
+      real price-file problem from the desk dashboard. Pass only if all of the following
+      hold:
+
+      1. The edited loader.py no longer has a try/except in load_prices() that only
+         re-raises (catch-and-rethrow removed).
+      2. load_prices_safe() is deleted as dead code, or, if kept, its bare `except:` is
+         no longer a silent swallow-and-return-None — the reply does not leave a bare
+         `except: return None` untouched.
+      3. It explains why: catch-and-rethrow adds nothing, and/or load_prices_safe is
+         unused and its silent swallow would hide a real load failure.
+      4. It does not claim to have run the test suite (no shell tool this turn).
+      5. It does not add new features or abstractions beyond removing the sloppy
+         leftovers (no new logging framework, no new config surface).
+
+      Fail if the bare `except:` that swallows silently is left completely untouched and
+      unmentioned, or the reply only comments on style without editing the file.

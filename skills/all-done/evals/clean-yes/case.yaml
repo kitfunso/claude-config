@@ -1,0 +1,41 @@
+schema_version: "1.1"
+name: clean-yes
+tags: [all-done, gate, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I fixed `add()` in calc.py so it returns a + b, and committed it. All done?
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Bash, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: first-line-yes
+    pattern: '^\s*YES\b'
+    weight: 2
+  - type: tool_used
+    name: ran-tests
+    tool: Bash
+    input_match: 'unittest|pytest'
+    min: 1
+  - type: tool_used
+    name: checked-git
+    tool: Bash
+    input_match: 'git (status|diff|log|show)'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: all-done
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The fixture is genuinely done: one test passes, the working tree is clean, the fix is committed. Pass only if all of the following hold:
+
+      1. The first line is YES and nothing else is on that line.
+      2. Every line after it is an evidence line that names the command or file checked and its actual result (for example the test count and OK, an empty `git status --porcelain`, the commit that contains the fix). At least two such lines.
+      3. There is no closing summary, no restatement of what was done, and no hedge ("should be", "mostly", "I believe").
+      4. Nothing is claimed that was not checked in this run (no invented lint or build steps).

@@ -1,0 +1,61 @@
+schema_version: "1.1"
+name: existing-helper-reuse
+tags: [writing-plans, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Right now if a leg is missing from the curve dict, `resolve_leg_price` quietly
+    returns None and the arb math breaks downstream with a confusing TypeError three
+    calls later. We call it from views/arb_a.py, views/arb_b.py, and inside
+    pricing/legs.py itself. Write me an implementation plan to make a missing leg
+    raise a clear error immediately instead.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: writing-plans
+  - type: tool_used
+    name: read-legs
+    tool: Read
+    input_match: 'legs\.py'
+    min: 1
+  - type: tool_used
+    name: no-code-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: saved-plan
+    tool: Write
+    input_match: 'docs/plans/.*\.md'
+    min: 1
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      resolve_leg_price already exists as the one shared lookup used by every caller
+      (views/arb_a.py, views/arb_b.py, and compute_diff inside pricing/legs.py itself).
+      The right fix is inside that one function, not a new validation block duplicated
+      per caller. Pass only if all of the following hold:
+
+      1. The plan cites pricing/legs.py's resolve_leg_price (found by reading/grepping
+         the code, not guessed from the file name) as the single place carrying the fix.
+      2. The fix is a change to resolve_leg_price itself (or a thin wrapper it defers
+         to) rather than separate validation blocks duplicated in arb_a.py and arb_b.py.
+      3. It does not invent a new helper function that duplicates resolve_leg_price's
+         purpose.
+      4. The saved plan has the required header (title, REQUIRED SUB-SKILL line, Goal,
+         Architecture, Tech Stack) and breaks the work into bite-sized steps (failing
+         test, run to see it fail, minimal implementation, run to see it pass, commit)
+         with exact file paths.
+      5. The reply does not itself edit pricing.py or the views files; it only writes
+         the plan.
+
+      Fails if the plan proposes per-caller validation duplicated in arb_a.py and
+      arb_b.py instead of fixing resolve_leg_price once, or if it invents a new helper
+      that duplicates the existing one.

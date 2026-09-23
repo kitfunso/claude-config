@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: existing-context-declines
+tags: [context-md, no-reseed, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    This repo needs a CONTEXT.md — can you seed the domain model from the code?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-context
+    tool: Read
+    input_match: 'CONTEXT\.md'
+    min: 1
+  - type: tool_used
+    name: no-write-context
+    tool: Write
+    input_match: 'CONTEXT\.md'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-edit-context
+    tool: Edit
+    input_match: 'CONTEXT\.md'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: context-md
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      CONTEXT.md already exists with two settled terms (Order, Desk). This skill's own rule is not to re-run a seeding pass on a repo that already has a CONTEXT.md, since it overwrites settled human decisions with fresh guesses. Pass only if all of the following hold:
+
+      1. It notices CONTEXT.md already exists (by reading or listing it) before responding.
+      2. It declines to seed/bootstrap a fresh glossary, explicitly because CONTEXT.md already exists.
+      3. It points to /domain-modeling (incremental, inline updates) as the right path for any further changes instead.
+      4. It does not overwrite or replace the existing Order/Desk entries.
+
+      Fail if it re-seeds or rewrites CONTEXT.md, or if it does not notice a CONTEXT.md already exists.

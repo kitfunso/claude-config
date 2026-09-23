@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: coverage-threshold-drift
+tags: [improve-docs-architecture, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run improve-docs-architecture over CLAUDE.md and docs/ here — we keep finding the
+    test coverage threshold stated differently in different places.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: improve-docs-architecture
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      CLAUDE.md says the coverage gate is 80%; docs/TESTING.md says 90%. Both files also
+      separately state "use pytest" and "mock external APIs with unittest.mock" in
+      near-identical wording. docs/INDEX.md's entry for TESTING.md has grown into a
+      multi-sentence paragraph instead of a one-line pointer. Pass only if all of the
+      following hold:
+
+      1. The reply identifies the 80% (CLAUDE.md) vs 90% (docs/TESTING.md) coverage
+         numbers as a contradiction and treats it as severity-one / a drift bomb (per the
+         "one home per fact" and "contradictions are severity-one" standards), not a
+         minor nitpick.
+      2. It flags at least one other fact duplicated across CLAUDE.md and
+         docs/TESTING.md (for example "use pytest" or "mock external APIs with
+         unittest.mock" stated in both), naming one-home-per-fact as the standard it
+         violates.
+      3. It flags docs/INDEX.md's TESTING.md entry as having grown past one line into a
+         paragraph (the size-gate standard for index entries).
+      4. It halts and presents candidates rather than resolving the contradiction itself
+         — it must not silently pick 80% or 90% as the "real" number and rewrite a file.
+      5. It does not invent problems ungrounded in these three files (no fabricated dead
+         links or claims about files that don't exist in the fixture).
+
+      Fail if it misses the numeric contradiction, or if it edits or rewrites a file
+      instead of presenting candidates and halting.

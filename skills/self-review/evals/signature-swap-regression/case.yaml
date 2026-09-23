@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: signature-swap-regression
+tags: [self-review, regression, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I swapped the argument order in `calc_margin()` in pnl.py this session to match our other desk functions (cost first). Should be everything for this session — self-review before I wrap up.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Bash, Edit, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: checked-callers
+    tool: Grep
+    input_match: 'calc_margin'
+    min: 1
+  - type: tool_used
+    name: fixed-it
+    tool: Edit
+    min: 1
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: self-review
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      pnl.py's calc_margin() signature was changed from (revenue, cost) to (cost, revenue) but its body still reads `return revenue - cost`, and report.py's only caller still passes positional (revenue, cost) unchanged. The sign of every margin report is now flipped. Pass only if all of the following hold:
+
+      1. It checks report.py (the caller of calc_margin) as well as pnl.py, not just the function in isolation.
+      2. It names the regression: the caller now passes cost where revenue is expected (or the equivalent: the result is negated), not just "the signature changed".
+      3. It fixes it in the working tree — either restores the original parameter order, or updates report.py's call to match, so revenue and cost line up again — rather than only describing the mismatch.
+      4. It does not commit or push the fix.
+      5. It does not report the session as clean.
+
+      Fail if the reply says the swap is safe, or only renames/reorders without checking whether callers still line up.

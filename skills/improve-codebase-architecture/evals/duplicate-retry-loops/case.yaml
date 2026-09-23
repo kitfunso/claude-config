@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: duplicate-retry-loops
+tags: [improve-codebase-architecture, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Audit the architecture across feed_a.py and feed_b.py — we're about to add a
+    feed_c.py for a third price vendor.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-feeds
+    tool: Read
+    input_match: 'feed_(a|b)\.py'
+    min: 2
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: improve-codebase-architecture
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      feed_a.py and feed_b.py each implement their own copy of the same three-attempt
+      retry-with-backoff loop. Nothing is broken, but adding a third copy in feed_c.py
+      would triple the duplication. Pass only if all of the following hold:
+
+      1. The reply identifies the retry/backoff loop as duplicated between feed_a.py and
+         feed_b.py, naming both files.
+      2. It recommends extracting a shared retry helper (or equivalent module) rather
+         than writing a third copy in feed_c.py.
+      3. It flags this as urgent because feed_c.py is imminent (would triple the
+         duplication) — for example placing it in "do now" rather than "plan for later".
+      4. Any defect it claims in the retry logic itself (for example a swallowed
+         exception, retrying non-transient errors, or a missing float coercion) is
+         grounded in feed_a.py/feed_b.py as they actually read — no invented defect. Such
+         findings are a bonus, not a violation; they must not replace or overshadow the
+         duplication finding and the extraction recommendation.
+      5. It gives a scope estimate for the extraction (for example "small, 1-2 files").
+
+      Fail if it treats feed_a.py and feed_b.py as fine and misses the duplication, or
+      proposes an unrelated large refactor instead of the targeted extraction.

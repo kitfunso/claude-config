@@ -1,0 +1,43 @@
+schema_version: "1.1"
+name: already-clean-leave-it
+tags: [de-sloppify, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Just added compute_discount() in discount.py for the cargo booking flow. De-sloppify
+    it before I commit.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: de-sloppify
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      discount.py is already clean: a three-branch function with no debug artifacts, no
+      dead code, no vague names, and no speculative abstraction. Pass only if all of the
+      following hold:
+
+      1. The verdict is that discount.py is already clean: no debug artifacts, dead code,
+         vague names, or one-off abstraction found.
+      2. It does not claim to have found or removed problems that are not actually
+         present in this three-branch function (no invented debug prints, no invented
+         dead code).
+      3. It does not rewrite compute_discount into a class, add speculative parameters,
+         or otherwise restructure the function to manufacture a change.
+      4. If it mentions tests at all, it says it could not run the test suite in this
+         turn (no shell tool available) rather than claiming to have run them.
+
+      Fail if it invents a problem to justify an edit, or restructures the function
+      without a concrete found issue.

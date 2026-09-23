@@ -1,0 +1,55 @@
+schema_version: "1.1"
+name: clean-log-diff
+tags: [review, no-false-positive, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Pre-landing review please:
+
+    ```diff
+    --- a/desk/logging_utils.py
+    +++ b/desk/logging_utils.py
+    @@
+     def log_trade(desk: str, notional: float) -> None:
+    -    logger.info("trade booked desk=%s notional=%s", desk, notional)
+    +    message = f"trade booked desk={desk} notional={notional}"
+    +    logger.info(message)
+    ```
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: no-injection-claim
+    pattern: 'SQL injection|shell injection'
+    flags: i
+    match: not_contains
+    weight: 2
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: review
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The change swaps %-style logging for an f-string, but the string only ever goes to logger.info() — it is never used as a SQL query, a shell command, or anything else executed. It is a benign, non-blocking style change. Pass only if all of the following hold:
+
+      1. It does not treat the f-string as an injection vulnerability of any kind (SQL, shell, or otherwise).
+      2. The overall verdict has no blocking (P0/P1) finding on this hunk.
+      3. If it mentions anything at all about the change, it correctly identifies it as a plain log line with no downstream execution, at most a low-confidence or informational note.
+      4. It does not invent an unrelated problem to justify blocking the merge.
+
+      Fail if the reply flags this as SQL injection, shell injection, or any other blocking security issue.

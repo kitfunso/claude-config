@@ -1,0 +1,41 @@
+schema_version: "1.1"
+name: tidy-docs-leave-it
+tags: [improve-docs-architecture, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run improve-docs-architecture over docs/ here before we add a third doc — is there
+    anything to fix first?
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: improve-docs-architecture
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      docs/INDEX.md, DEPLOY.md, and ONCALL.md are small, have no duplicated facts, no
+      contradictions, no size-gate violations, and the index entries are already one
+      line each. DEPLOY.md points at the CI workflow file for the exact checks instead of
+      restating them (verifier over prose). Pass only if all of the following hold:
+
+      1. The verdict is that this corpus has no strong candidate: no duplicate fact, no
+         contradiction, no size-gate violation, and index entries stay one line each.
+      2. It does not manufacture a problem to fill out the report (no fabricated
+         duplication or contradiction not actually present in the three files).
+      3. It notes, or otherwise credits, that DEPLOY.md already follows "verifier over
+         prose" by pointing at .github/workflows/deploy.yml rather than restating the CI
+         checks in prose.
+      4. Any candidate it does list is labeled speculative / safe-to-ignore, not strong.
+      5. It gives a clear answer to the actual question asked: yes, safe to add a third
+         doc, or names the one specific thing to fix first if it disagrees.
+
+      Fail if it manufactures a "strong" candidate not grounded in an actual
+      duplicate/contradiction/size violation in the three files, or recommends a
+      restructuring before this two-page corpus needs one.

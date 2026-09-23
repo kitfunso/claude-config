@@ -1,0 +1,62 @@
+schema_version: "1.1"
+name: supersede-old-record
+tags: [record-decision, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    We just added Redis caching after all. The new desk dashboard runs about 10x more
+    queries per session than we planned for when we wrote
+    docs/decisions/2026-06-01-no-redis-cache.md, and direct DuckDB queries were
+    showing 300ms p95 under that real load (bench in load_test.py). We added a Redis
+    layer keyed on query hash with a 60s TTL. Record this decision.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: record-decision
+  - type: tool_used
+    name: wrote-new
+    tool: Write
+    input_match: 'docs/decisions/2026-09-22-.*\.md'
+    min: 1
+  - type: tool_used
+    name: names-supersedes
+    tool: Write
+    input_match: '2026-06-01-no-redis-cache'
+    min: 1
+  - type: tool_used
+    name: updated-old-via-edit
+    tool: Edit
+    input_match: '2026-06-01-no-redis-cache'
+    min: 1
+  - type: tool_used
+    name: old-not-rewritten
+    tool: Write
+    input_match: '2026-06-01-no-redis-cache'
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      docs/decisions/2026-06-01-no-redis-cache.md already exists and its own
+      "Reconsider when" clause names exactly this trigger (queries per session growing
+      well past what was benchmarked). Pass only if all of the following hold:
+
+      1. A new record is created (dated 2026-09-22) documenting the switch to Redis
+         caching, citing the new evidence (300ms p95 under ~10x load, load_test.py).
+      2. The new record names docs/decisions/2026-06-01-no-redis-cache.md as the
+         decision it supersedes.
+      3. The old record is edited in place to add a short "Superseded by <new file>"
+         note near the top, not rewritten or deleted -- its original content (Context,
+         Constraints and evidence, Decision, Alternatives, Consequences, Reconsider
+         when) stays intact apart from that added note.
+      4. Both files exist afterward in a readable state.
+
+      Fails if the old file is deleted or overwritten wholesale, the new record does
+      not name what it supersedes, or only one of the two files is touched.

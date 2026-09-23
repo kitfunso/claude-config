@@ -1,0 +1,53 @@
+schema_version: "1.1"
+name: already-implemented-no-plan-needed
+tags: [writing-plans, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    fetch_prices.py runs a live DB write every time, even when I just want to check
+    what it would fetch first. Write me an implementation plan to add a --dry-run flag
+    that skips the DB write.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: writing-plans
+  - type: tool_used
+    name: read-fetch
+    tool: Read
+    input_match: 'fetch_prices\.py'
+    min: 1
+  - type: tool_used
+    name: no-plan-written
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      fetch_prices.py already has a working --dry-run flag: main() parses it and
+      fetch_and_store() skips _store() when dry_run is True. Pass only if all of the
+      following hold:
+
+      1. The reply says this is already implemented, citing fetch_prices.py (quoting
+         or pointing at the --dry-run argument or the dry_run check).
+      2. It does not produce a bite-sized implementation plan or save anything under
+         docs/plans/.
+      3. It tells the user how to use the existing flag (for example
+         `python fetch_prices.py --dry-run`) rather than a bare "no".
+      4. It does not claim extra work is needed that the fixture does not actually
+         need.
+
+      Fails if it writes a plan to build something that already exists, or claims the
+      flag is missing without having read the file.

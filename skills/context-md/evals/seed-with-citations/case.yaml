@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: seed-with-citations
+tags: [context-md, bootstrap, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    This repo has no CONTEXT.md yet — can you bootstrap a glossary from what's already here?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: context-md
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The fixture has no CONTEXT.md. src/sleeves/allocator.py defines Sleeve; src/reporting/bucket_report.py's bucket_pnl() takes a bucket_id that its own comment says is a Sleeve.sleeve_id; README.md uses both "sleeve" and "bucket" for the same thing. This is the one-thing-two-words collision the skill exists to catch. Pass only if all of the following hold:
+
+      1. It presents a draft as a table (term, definition, source, what it replaces or maps to), not a finished write.
+      2. Every term in the draft has a citation to a real file or identifier from the fixture (no invented terms).
+      3. It explicitly calls out the Sleeve/bucket collision, citing both src/sleeves/allocator.py and src/reporting/bucket_report.py (or README.md).
+      4. The draft is small (a handful of terms, not padded to look thorough) given the tiny repo.
+      5. It does NOT write or edit CONTEXT.md yet — the draft table is shown for confirmation first; no file is written this turn.
+
+      Fail if it writes CONTEXT.md without showing the draft first, or if it invents a term with no citation.

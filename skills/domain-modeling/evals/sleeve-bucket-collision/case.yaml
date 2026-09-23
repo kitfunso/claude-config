@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: sleeve-bucket-collision
+tags: [domain-modeling, glossary, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I'm adding a new endpoint for ops to pull bulk PnL — should it call bucket_pnl() or build something off Sleeve directly? Also want to get this written up in CONTEXT.md while it's fresh.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: domain-modeling
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      src/sleeves/allocator.py defines Sleeve (a capital allocation bucket), and src/reporting/bucket_report.py's bucket_pnl() takes a bucket_id that is really a Sleeve.sleeve_id — one concept, two names, per the comment left in bucket_report.py. CONTEXT.md does not yet define either term. Pass only if all of the following hold:
+
+      1. It identifies Sleeve and "bucket" as the same underlying concept, citing both src/sleeves/allocator.py and src/reporting/bucket_report.py.
+      2. It proposes (or asks the user to confirm) one canonical term and records which name the other maps to, rather than silently picking one without surfacing the conflict.
+      3. It updates CONTEXT.md inline with the resolved term (an Edit or Write to CONTEXT.md happens in this turn), using a glossary entry (term + definition + source), not implementation detail.
+      4. CONTEXT.md is not turned into a spec: no code, no architecture notes, no file-by-file walkthrough are added to it.
+
+      Fail if it treats Sleeve and bucket as unrelated concepts, or if it writes implementation detail into CONTEXT.md.

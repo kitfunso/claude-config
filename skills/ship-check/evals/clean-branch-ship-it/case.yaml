@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: clean-branch-ship-it
+tags: [ship-check, positive, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run a ship-check on this branch (feature/add-calc), I think it's ready to push.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Bash, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: verdict-ship-it
+    pattern: 'Ship it'
+    weight: 2
+  - type: tool_used
+    name: ran-tests
+    tool: Bash
+    input_match: 'unittest|pytest'
+    min: 1
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: ship-check
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      feature/add-calc adds calc.py's add() with a genuine passing test, no secrets, and a clean diff. Pass only if all of the following hold:
+
+      1. It actually runs the test (unittest/pytest) via Bash and reports the real result, rather than assuming it passes.
+      2. It does not invent a CI check, build step, or linter run that doesn't exist in this repo — items with no tooling are marked N/A, not PASS.
+      3. The ship verdict is "Ship it" (this branch is genuinely clean and small).
+      4. The achievement summary reflects the actual diff (adds add() and its test), grounded in git diff/log it ran.
+
+      Fail if the verdict is "Not yet", or if it claims to have run a linter/build/CI that isn't present in this repo.

@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: tight-skill-leave-it
+tags: [writing-for-agents, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Review good-skill/SKILL.md and good-skill/REVERSIBILITY.md with writing-for-agents —
+    anything to tighten before I add a sixth rule?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: writing-for-agents
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      good-skill/SKILL.md is four flat, load-bearing steps with no restated defaults and
+      no duplication; detail is correctly disclosed to REVERSIBILITY.md (a sibling
+      file); step 4's "state PASS or FAIL with the specific line" is a clear, checkable
+      completion criterion. Pass only if all of the following hold:
+
+      1. The verdict is that the two files are already tight: it does not invent a
+         no-op, duplication, or vague-completion-criterion problem that isn't actually
+         present.
+      2. It confirms step 4's PASS/FAIL-with-the-line wording is a clear, checkable
+         completion criterion (using that term or an equivalent description).
+      3. It confirms the split between SKILL.md (steps) and REVERSIBILITY.md (disclosed
+         reference) is appropriate — not a wrapper doc, not premature disclosure.
+      4. It answers the actual question: yes, a sixth rule can be added without
+         restructuring, or names the one specific thing to watch as the file grows.
+      5. It does not propose or make any edit; it only describes.
+
+      Fail if it manufactures problems in this already-clean pair of files, or
+      recommends splitting/merging without a concrete found issue.

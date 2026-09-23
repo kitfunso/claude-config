@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: leftover-debug-and-strategy
+tags: [de-sloppify, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I just finished `compute_adjustment()` and `FlatFreightStrategy` in feature.py for
+    the freight arb sheet — the tests pass. De-sloppify this before I open the PR.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: edited-file
+    tool: Edit
+    input_match: 'feature\.py'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: de-sloppify
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      feature.py has an unused `import numpy as np`, a commented-out old
+      implementation, two print() debug statements, a vaguely-named `temp` variable, and
+      an AdjustmentStrategy interface with exactly one implementation and no caller that
+      varies it. Pass only if all of the following hold:
+
+      1. The edited feature.py no longer has the unused `import numpy as np`.
+      2. It no longer has the commented-out old return line, and no longer has the
+         print() debug statements.
+      3. The AdjustmentStrategy/FlatFreightStrategy split is either removed (inlining
+         compute_adjustment) or explicitly named as a one-implementation abstraction that
+         should go — the reply does not leave it in place unaddressed.
+      4. The vague `temp` variable is renamed to something that names what it holds.
+      5. If the reply mentions tests at all, it says it could not run the test suite in
+         this turn (no shell tool available) — it does not claim to have run or passed
+         tests.
+
+      Fail if the print() lines or the commented-out code are left in place, or if the
+      reply claims to have run the test suite.

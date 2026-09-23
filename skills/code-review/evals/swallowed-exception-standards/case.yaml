@@ -1,0 +1,42 @@
+schema_version: "1.1"
+name: swallowed-exception-standards
+tags: [code-review, standards, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Review the diff between the `v1` tag and HEAD in this repo against our coding standards. There's no spec or PRD for this change, just check standards.
+  max_turns: 14
+  allowed_tools: [Read, Glob, Grep, Bash, Agent, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: two-axis-format
+    pattern: '(?=[\s\S]*##?\s*Standards)(?=[\s\S]*##?\s*Spec)'
+  - type: tool_used
+    name: spawned-review
+    tool: Agent
+    min: 1
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: code-review
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The diff between v1 and HEAD adds a retry loop to fetch() that now swallows every exception with `except Exception: pass`, violating CODING_STANDARDS.md's "never swallow an exception" rule; the base version logged and re-raised. Pass only if all of the following hold:
+
+      1. The Standards section names fetch.py's `except Exception: pass` as a violation, citing CODING_STANDARDS.md's error-handling rule.
+      2. The Spec section states plainly that no spec/PRD was available for this change (it does not invent spec compliance or non-compliance).
+      3. Standards and Spec are reported as separate, clearly labeled sections, not merged into one ranked list.
+      4. It ends with a one-line summary of findings per axis, not a single cross-axis verdict.
+
+      Fail if it misses the swallowed exception, or if it fabricates a spec requirement that was never given.

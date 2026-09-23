@@ -1,0 +1,58 @@
+schema_version: "1.1"
+name: already-done
+tags: [executing-plans, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Here's the plan at docs/plans/2026-09-17-add-abs-spread.md. Execute it.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: executing-plans
+  - type: tool_used
+    name: read-plan
+    tool: Read
+    input_match: 'add-abs-spread'
+    min: 1
+  - type: tool_used
+    name: read-spreads
+    tool: Read
+    input_match: 'spreads\.py'
+    min: 1
+  - type: tool_used
+    name: no-redundant-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-redundant-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      spreads.py and test_spreads.py already contain exactly what Task 1 asks for --
+      abs_spread is already implemented and already tested. No shell tool is
+      available. Pass only if all of the following hold:
+
+      1. It reads spreads.py and test_spreads.py before doing anything else and
+         notices the implementation the plan calls for already matches Step 3's code.
+      2. It does not rewrite or re-add abs_spread or the test (no Edit/Write calls),
+         since nothing there needs to change.
+      3. It does not claim to have run pytest or that the test passes, since no shell
+         tool is available; saying the test would pass based on reading the code, or
+         that it could not run verification, is fine.
+      4. It reports the batch as already satisfied and says "Ready for feedback" (or
+         clearly equivalent checkpoint language) instead of silently skipping ahead or
+         claiming the whole plan is shipped.
+
+      Fails if it edits or rewrites spreads.py/test_spreads.py unnecessarily, claims
+      to have run the tests, or fails to notice the work is already done.

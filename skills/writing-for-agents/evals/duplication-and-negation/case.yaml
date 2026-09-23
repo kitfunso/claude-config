@@ -1,0 +1,48 @@
+schema_version: "1.1"
+name: duplication-and-negation
+tags: [writing-for-agents, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Review AGENTS.md and rules/style.md with writing-for-agents before our next agent
+    run — anything wrong with how these are written?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-agents
+    tool: Read
+    input_match: 'AGENTS\.md'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: writing-for-agents
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      AGENTS.md and rules/style.md both state the same comments rule in near-identical
+      wording (duplication: one meaning, two homes). AGENTS.md's "Don't write vague
+      code. Don't use bad variable names. Don't skip error handling. Don't forget edge
+      cases." is pure negation, which the skill's own doctrine says drags the forbidden
+      behaviour into context instead of the wanted one. Pass only if all of the
+      following hold:
+
+      1. The reply flags the comments rule as duplicated across AGENTS.md and
+         rules/style.md (same meaning, two homes) and names which copy should be cut.
+      2. It flags the "Don't write vague code..." block as negation / steering by
+         prohibition and recommends rephrasing each item as a positive instruction,
+         referencing the reasoning that a ban half-reads as an instruction to do the
+         forbidden thing.
+      3. It uses the terms "duplication" and "negation" (or explicit "positive framing")
+         rather than generic "this is repetitive" language.
+      4. It gives at least one concrete rewritten example of a negated rule turned
+         positive (not just "make these positive" with no example).
+      5. It does not edit either file; it describes the fix only.
+
+      Fail if it misses the negation pattern entirely, or edits a file instead of
+      describing the fix.

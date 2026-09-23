@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: retry-logic-staged
+tags: [git-commit-helper, message, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Use git-commit-helper to write the commit message for what's staged in fetch.py.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Bash, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: type-prefix
+    pattern: '^(feat|fix|refactor|docs|test|chore|perf|ci): [a-z]'
+    flags: m
+  - type: tool_used
+    name: checked-staged-diff
+    tool: Bash
+    input_match: 'git diff --(staged|cached)'
+    min: 1
+  - type: tool_used
+    name: no-commit
+    tool: Bash
+    input_match: 'git commit'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: git-commit-helper
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The staged change adds retry-with-backoff to get_price() because the HTTP call was flaky. Pass only if all of the following hold:
+
+      1. It reads the actual staged diff (git diff --staged) before drafting the message, rather than guessing from the prompt text alone.
+      2. The suggested first line uses one of feat/fix/refactor/docs/test/chore/perf/ci, is imperative mood, under about 50 characters, and has no trailing period.
+      3. The body (if given) explains why the change was made (flaky network / needs retries), not just a restatement of the diff.
+      4. It only drafts the message — it does not run `git commit` in this turn.
+      5. The message is specific to this diff (mentions retry, backoff, or the ConnectionError), not a generic "update fetch.py".
+
+      Fail if it invents a commit and reports success, or if the message is generic enough to apply to any change.

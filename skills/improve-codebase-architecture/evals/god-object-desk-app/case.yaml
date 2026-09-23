@@ -1,0 +1,47 @@
+schema_version: "1.1"
+name: god-object-desk-app
+tags: [improve-codebase-architecture, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Audit the architecture of desk_app.py — we keep breaking the PnL calc every time
+    someone touches the UI.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-app
+    tool: Read
+    input_match: 'desk_app\.py'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: improve-codebase-architecture
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The Desk class in desk_app.py mixes data loading (load_prices), domain PnL math
+      (compute_pnl), Streamlit UI rendering (render), and infra (send_alert, to_csv) in
+      one class. That mixing is why touching the UI risks breaking the PnL calc. Pass
+      only if all of the following hold:
+
+      1. The reply names desk_app.py's Desk class as mixing unrelated responsibilities
+         (data access, PnL business logic, UI rendering, and email/infra) — a cohesion
+         issue or "god object", not just a style complaint.
+      2. It cites concrete locations (method names like compute_pnl, render, send_alert),
+         not just "the code is messy".
+      3. It proposes splitting into separate pieces (for example a pure compute_pnl
+         function decoupled from I/O and Streamlit) and states a blast radius, risk, or
+         test strategy for the change per the skill's recommendation format.
+      4. It gives explicit priority (do now / plan for later / don't do, or an equivalent
+         ordering) rather than a flat list.
+      5. It gives at least one severity label (critical/high/medium/low).
+
+      Fail if the reply only lists cosmetic style points (naming, formatting) without
+      addressing the mixed responsibilities, or does not connect the mixing to the
+      stated symptom (UI changes breaking the PnL calc).

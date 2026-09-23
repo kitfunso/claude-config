@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: context-map-picks-right-file
+tags: [wait-what, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    wait what, you said "the route re-quoted because the fixture came in under MV." I don't get it. This is about the freight side, not the arb desk. Give me a bit of context and re-pitch that in plain English.
+  max_turns: 8
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-map
+    tool: Read
+    input_match: 'CONTEXT-MAP\.md'
+    min: 1
+  - type: tool_used
+    name: read-freight-context
+    tool: Read
+    input_match: 'freight.CONTEXT\.md'
+    min: 1
+  - type: regex
+    name: no-wrong-desk-definition
+    pattern: 'model value'
+    flags: i
+    match: not_contains
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: wait-what
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      CONTEXT-MAP.md routes freight/ terms to freight/CONTEXT.md, where MV means minimum volume (the smallest cargo size a route will quote), a different meaning from arbs/CONTEXT.md's MV (model value). Pass only if all of the following hold:
+
+      1. It follows CONTEXT-MAP.md to freight/CONTEXT.md rather than guessing or defaulting to the arb desk's definition.
+      2. It explains MV correctly as minimum volume: the smallest cargo size the route will quote.
+      3. It explains the sentence in plain terms: the booked cargo (fixture) was smaller than that minimum, so the route re-quoted.
+      4. Short, simple sentences, with a little orienting context first.
+
+      Fails if it uses or blends in the arb desk's "model value" definition, or does not disambiguate between the two desks' meanings of MV.

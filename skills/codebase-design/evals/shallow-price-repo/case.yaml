@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: shallow-price-repo
+tags: [codebase-design, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I'm about to add a `get_prices_for_desk()` method to `PriceRepo` in `price_repo.py`.
+    Before I do: is `PriceRepo` earning its keep as a class, or is it a pass-through over
+    DuckDB that we should just delete and have callers call `con.execute` directly?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-repo
+    tool: Read
+    input_match: 'price_repo\.py'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: codebase-design
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Each PriceRepo method in price_repo.py is a one-line SQL call with no added
+      invariants, validation, error translation, or caching: the interface is about as
+      complex as the implementation. Applying the deletion test, deleting PriceRepo and
+      calling con.execute directly from callers loses nothing. Pass only if all of the
+      following hold:
+
+      1. The reply names PriceRepo as shallow (a pass-through / thin wrapper): interface
+         complexity roughly equals implementation complexity, using the skill's own terms
+         (module, interface, deep/shallow) rather than generic "wrapper" language alone.
+      2. It applies the deletion test explicitly: deleting PriceRepo would move the same
+         three SQL calls unchanged into callers, so nothing is lost.
+      3. The verdict is against growing the pass-through: it recommends deleting PriceRepo
+         (callers call con.execute directly) or, if kept, says it should only survive by
+         becoming genuinely deep (validation, caching, error handling) rather than getting
+         a fourth thin method.
+      4. It does not simply add get_prices_for_desk() as asked without first answering
+         whether PriceRepo should exist.
+
+      Fail if the reply approves adding the new method without addressing whether the
+      class earns its keep, or if it recommends keeping PriceRepo without giving a reason
+      beyond "it's already there."

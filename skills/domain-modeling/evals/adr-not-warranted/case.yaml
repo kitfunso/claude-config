@@ -1,0 +1,35 @@
+schema_version: "1.1"
+name: adr-not-warranted
+tags: [domain-modeling, adr, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    We just decided to rename Purchase to Order everywhere in the code, it reads better. Should we write an ADR for that, and can you update CONTEXT.md?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: no-adr-file
+    tool: Write
+    input_match: '(?i)adr'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: domain-modeling
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      A rename is cheap to reverse (find-and-replace), not surprising to a future reader once done, and is not the result of a genuine trade-off between real alternatives — it fails at least two of the three ADR tests (hard to reverse, surprising without context, real trade-off). Pass only if all of the following hold:
+
+      1. It declines to create an ADR for this rename.
+      2. It states which of the three ADR criteria are missing (at minimum: not hard to reverse, and/or not a real trade-off).
+      3. It does not create any file under docs/adr/.
+      4. It may still update CONTEXT.md's Purchase entry to Order (this is fine and not required for a pass).
+
+      Fail if it creates an ADR for a plain rename, or if it claims an ADR is warranted here.

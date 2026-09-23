@@ -1,0 +1,42 @@
+schema_version: "1.1"
+name: print-and-missing-spec
+tags: [code-review, spec-gap, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Review the diff between the `v1` tag and HEAD against `docs/specs/csv-export.md` and our coding standards.
+  max_turns: 14
+  allowed_tools: [Read, Glob, Grep, Bash, Agent, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: two-axis-format
+    pattern: '(?=[\s\S]*##?\s*Standards)(?=[\s\S]*##?\s*Spec)'
+  - type: tool_used
+    name: spawned-both
+    tool: Agent
+    min: 2
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: code-review
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      export_trades() implements requirement 1 (CSV with date/qty/price) but never calls an audit log (requirement 2 of docs/specs/csv-export.md is missing), and it leaves a bare print() in library code, violating CODING_STANDARDS.md's no-print rule. Pass only if all of the following hold:
+
+      1. The Standards section flags the print() call in exporter.py, citing the no-print rule.
+      2. The Spec section flags requirement 2 (audit log) as missing or unimplemented, citing docs/specs/csv-export.md.
+      3. The Spec section confirms requirement 1 (CSV columns) is implemented correctly — it doesn't claim the whole spec failed, only the missing piece.
+      4. Standards and Spec are reported separately; the reply ends with a one-line summary per axis, no single cross-axis ranking.
+
+      Fail if it says the spec is fully implemented, or misses the print() statement.

@@ -1,0 +1,35 @@
+schema_version: "1.1"
+name: stale-and-contradicting
+tags: [learn, prune, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    What have we learned on this project so far? The learnings file is at learnings.jsonl — flag anything stale or contradicting before I trust it.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: no-code-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: learn
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      learnings.jsonl has two "cache-ttl" entries that directly contradict each other (cache for 60 seconds vs never cache), and one entry ("legacy-loader") points at etl/legacy_loader.py, which does not exist in this repo (stale). The other two entries (csv-bom-drop, retry-backoff) are valid and reference real files. There is no gstack CLI available (no shell), so the file must be read directly. Pass only if all of the following hold:
+
+      1. It surfaces the cache-ttl contradiction, quoting or describing both conflicting entries.
+      2. It flags the legacy-loader entry as stale because etl/legacy_loader.py does not exist (checked via Read or Glob, not assumed).
+      3. It presents csv-bom-drop and retry-backoff as valid/current.
+      4. It does not modify any .py file in etl/ (this skill manages learnings only, never code).
+      5. It does not claim to have run the gstack-learnings-search CLI (no shell available in this turn); reading the file directly is fine.
+
+      Fail if it misses the contradiction or the stale entry, or if it edits any code file.

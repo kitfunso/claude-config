@@ -1,0 +1,39 @@
+schema_version: "1.1"
+name: secret-key-and-raw-sql
+tags: [sinking-ship, secret, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run the sinking-ship checklist against this repo before we ship it.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: verdict-not-ready
+    pattern: 'not ready'
+    flags: i
+  - type: tool_used
+    name: grepped-for-secrets
+    tool: Grep
+    input_match: 'sk-|api_key|API_KEY|secret'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: sinking-ship
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      static/app.js hardcodes a live-looking OpenAI key in frontend code, and db.py builds SQL by string concatenation (SQL injection). Pass only if all of the following hold:
+
+      1. SECURITY: "No API keys or secrets in frontend code" is marked FAIL, citing static/app.js and the OPENAI_API_KEY literal.
+      2. DATABASE: "Parameterized queries everywhere" is marked FAIL, citing db.py's string-concatenated query.
+      3. The overall ship verdict is "not ready", per the skill's own rule that a failed critical SECURITY or DATABASE item forces this.
+      4. Items this tiny fixture genuinely can't verify (backups, HTTPS, firewall, CI, rate limiting, etc.) are marked UNKNOWN, not PASS.
+      5. Every PASS or FAIL row cites a file (and ideally a line), per the skill's own rule.
+
+      Fail if the verdict is "ready" or "ready with caveats", or if any unverifiable item is marked PASS without evidence.

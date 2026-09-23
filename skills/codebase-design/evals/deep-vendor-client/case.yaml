@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: deep-vendor-client
+tags: [codebase-design, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Someone wants to split `fetch()` in `vendor_client.py` into three public functions,
+    `fetch()`, `check_rate_limit()`, and `retry_with_backoff()`, so each is "more
+    testable" on its own. Look at the module first: is that actually an improvement?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-client
+    tool: Read
+    input_match: 'vendor_client\.py'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: codebase-design
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      fetch() in vendor_client.py is already a deep module: one small public interface
+      (fetch(url)) hiding real behaviour (rate limiting, retry, backoff) that a caller
+      never needs to know about. There is only one adapter (this vendor feed), so there
+      is no second implementation to justify a seam between the pieces. Pass only if all
+      of the following hold:
+
+      1. The reply says fetch() is already deep: small interface, real behaviour hidden
+         behind it, using the skill's vocabulary (module, interface, deep/shallow).
+      2. The verdict is against the split: making check_rate_limit and retry_with_backoff
+         public functions would shallow the module by adding interface surface without
+         adding leverage.
+      3. It keeps the rate-limit/retry logic out of the public interface — fetch() stays
+         the only public name — and gives a concrete way to make it testable without the
+         split (for example injecting the HTTP call, the sleep function, or the clock as
+         parameters with defaults). It does not need to claim mocking the HTTP call alone
+         is already sufficient.
+      4. It references the "one adapter is a hypothetical seam" idea (or equivalent
+         reasoning) to explain why splitting isn't justified when only one vendor exists.
+
+      Fail if the reply recommends making the split, or does not give a clear "leave it"
+      verdict.

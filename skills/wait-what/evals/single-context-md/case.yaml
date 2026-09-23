@@ -1,0 +1,34 @@
+schema_version: "1.1"
+name: single-context-md
+tags: [wait-what, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Wait, what? You just told me: "The MV delta versus CD close was inside the ff-pull band so the shaping override didn't trip; the arb leg re-priced off the stale curve until the next refresh cycle picked up the new CD." I don't follow, give me a little bit of context and re-pitch that simply.
+  max_turns: 8
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-context
+    tool: Read
+    input_match: 'CONTEXT\.md'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: wait-what
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      CONTEXT.md defines MV = model value (fair price), CD = curve date, ff-pull = the allowed drift band before forcing a re-price, shaping override = manual switch forcing an immediate re-price, arb leg = one side of the spread. The plain meaning: the model's fair price was still close enough to where the curve closed that the system didn't force a re-price, so one side of the spread kept using yesterday's curve until the scheduled refresh brought in today's. Pass only if all of the following hold:
+
+      1. It gives a little orienting context before the explanation, as asked.
+      2. The explanation is in short, simple sentences: one idea per sentence, not a single dense compound sentence stacking multiple jargon terms.
+      3. It correctly explains the substance using CONTEXT.md's own definitions (model value close enough to the close price that no forced re-price happened; the spread leg kept the old curve until the next scheduled refresh).
+      4. It does not contradict CONTEXT.md's definitions (for example does not call MV something other than model value, or CD something other than curve date).
+
+      Fails if it just repeats the original jargon-heavy sentence without simplifying it, or invents definitions that conflict with CONTEXT.md.

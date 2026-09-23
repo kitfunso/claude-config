@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: clean-layering-leave-it
+tags: [improve-codebase-architecture, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Audit the architecture of this desk app (db.py, pricing.py, app.py) before we add a
+    new position type — tell me what's actually wrong before we refactor anything.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: improve-codebase-architecture
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      db.py, pricing.py, and app.py already separate cleanly: db.py is read-only data
+      access, pricing.py is pure PnL math with no I/O, app.py just wires the two together
+      for Streamlit. There is no coupling, cohesion, or god-object problem across the
+      three files. Pass only if all of the following hold:
+
+      1. The verdict is that the current split is basically sound: no significant
+         coupling, cohesion, or god-object problem found across the three files.
+      2. It does not invent a problem to justify action (no fabricated circular
+         dependency, leaky abstraction, or duplication not grounded in the fixture).
+      3. It confirms it actually checked coupling, cohesion, and testability against the
+         three files, rather than skipping straight to "looks fine."
+      4. It does not propose restructuring the db.py/pricing.py/app.py split itself
+         (splitting further, merging files, adding a new layer). Flagging real,
+         fixture-grounded correctness bugs within the current files (for example the
+         inner join silently dropping unmatched positions, an unfiltered price table, or
+         the hardcoded PnL formula) is expected given the prompt asks what's wrong before
+         extending — these are not "restructuring" and can be marked high severity.
+      5. It answers the actual question (what to check before adding a new position
+         type) rather than a generic architecture essay.
+
+      Fail if it recommends restructuring the three-file split, or if any correctness
+      issue it raises is not grounded in db.py/pricing.py/app.py as they actually read.

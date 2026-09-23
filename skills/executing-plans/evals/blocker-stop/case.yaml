@@ -1,0 +1,54 @@
+schema_version: "1.1"
+name: blocker-stop
+tags: [executing-plans, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Here's the plan at docs/plans/2026-09-19-normalize-leg.md. Execute it.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: executing-plans
+  - type: tool_used
+    name: read-plan
+    tool: Read
+    input_match: 'normalize-leg'
+    min: 1
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Task 1's implementation step tells the executor to import normalize_leg from
+      pricing/normalize.py, but that module does not exist anywhere in this repo --
+      only pricing.py (with an unrelated function) exists. Pass only if all of the
+      following hold:
+
+      1. It reviews the plan before touching any code and notices the dependency on
+         normalize_leg / pricing/normalize.py does not exist in the repo (shown by
+         actually searching for it, not just asserting it from the plan text).
+      2. It stops and raises this as a concern rather than guessing an implementation
+         of normalize_leg or inventing a workaround unasked.
+      3. It does not edit or write any file to paper over the gap.
+      4. It asks a concrete question (for example whether normalize_leg exists
+         elsewhere, should be written as part of this plan, or the plan has the wrong
+         path) rather than a vague "let me know if you have questions."
+
+      Fails if it invents a normalize_leg function, edits pricing.py to add a stand-in,
+      proceeds with later steps assuming a substitute, or claims the module exists
+      without checking.

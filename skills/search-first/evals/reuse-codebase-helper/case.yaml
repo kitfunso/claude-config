@@ -1,0 +1,53 @@
+schema_version: "1.1"
+name: reuse-codebase-helper
+tags: [search-first, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I need retry-with-backoff around the price-fetch call in fetch_prices.py -- three
+    attempts. What's the fastest way to do this without adding a new dependency?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: search-first
+  - type: tool_used
+    name: read-lib
+    tool: Read
+    input_match: 'lib/retry\.py'
+    min: 1
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      lib/retry.py already has a retry_with_backoff decorator built for exactly this,
+      and pyproject.toml has no retry library listed. Pass only if all of the
+      following hold:
+
+      1. The reply finds and names the existing lib/retry.py helper
+         (retry_with_backoff) and recommends reusing it on the price-fetch call,
+         instead of writing new retry code or adding a new dependency.
+      2. It shows it looked at the codebase (cites lib/retry.py, ideally with the
+         function signature).
+      3. It respects the "no new dependency" constraint: it does not suggest
+         installing tenacity or another retry package.
+      4. It gives a concrete usage shape (for example decorating fetch_price with the
+         existing helper), not a vague "there's something in lib somewhere."
+
+      Fails if it proposes writing a brand-new retry loop, misses the existing helper,
+      or suggests a new dependency despite the stated constraint.

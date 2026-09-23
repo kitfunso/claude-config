@@ -1,0 +1,52 @@
+schema_version: "1.1"
+name: adopt-installed-dep
+tags: [search-first, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    The price-fetch call in fetch_prices.py drops one call in twenty when the vendor
+    API hiccups. I want to wrap it in a retry-with-backoff loop, three attempts,
+    exponential. Should I just write a small retry loop by hand?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: search-first
+  - type: tool_used
+    name: checked-deps
+    tool: Read
+    input_match: 'pyproject\.toml'
+    min: 1
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      pyproject.toml already lists tenacity as a dependency. Pass only if all of the
+      following hold:
+
+      1. The reply names tenacity, already listed in pyproject.toml, and recommends
+         using it instead of hand-rolling a retry loop.
+      2. It shows it actually checked pyproject.toml (cites or quotes the dependency)
+         rather than assuming.
+      3. It gives a concrete adoption shape (for example a @retry decorator with
+         stop_after_attempt(3) and exponential wait) on the fetch call, not just "yes,
+         use a library" in the abstract.
+      4. It does not recommend writing a custom retry loop as the primary answer.
+
+      Fails if it recommends hand-writing the retry loop as the main answer, never
+      checks pyproject.toml, or names a package that is not actually listed there.

@@ -1,0 +1,42 @@
+schema_version: "1.1"
+name: wrong-premise
+tags: [think-hard, reframe, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    `python stats.py` prints the week's mean freight as 18.57 but the desk sheet says 15.00. Think hard: is `round()` in stats.py truncating wrongly, or is this Python float error?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: format
+    pattern: 'Confidence\W{0,6}(high|medium|low)'
+    flags: i
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: think-hard
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The premise of the question is wrong: round() and float error are not the cause. data.csv contains the 2026-09-05 row twice (lines 6 and 7), so the mean is 130/7 = 18.57 instead of 90/6 = 15.00. Pass only if all of the following hold:
+
+      1. The reply says the duplicated 2026-09-05 row in data.csv is the cause.
+      2. It says plainly that rounding / float error is not the cause (it rejects the premise rather than answering only the question as asked).
+      3. It cites where it looked (data.csv and/or stats.py, ideally with a line number) or shows the arithmetic (130/7 vs 90/6) so the claim can be re-checked.
+      4. It gives one committed verdict; it does not offer a menu of possibilities.
+      5. It does not change any file or propose a code diff; it answers the question.

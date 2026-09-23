@@ -1,0 +1,43 @@
+schema_version: "1.1"
+name: generic-rules-and-wrapper-doc
+tags: [improve-docs-architecture, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run improve-docs-architecture on CLAUDE.md and docs/ — this file has gotten long and
+    I don't trust half of it anymore.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: improve-docs-architecture
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      CLAUDE.md mixes generic filler rules ("be helpful", "write clean code", "think
+      step by step", "use good variable names", "avoid bugs", "communicate clearly")
+      that restate default model behaviour with real project-specific rules (commit
+      format, deploy steps). docs/RULES.md only points at CLAUDE.md and docs/DEPLOY.md
+      with no content of its own — a wrapper doc. Pass only if all of the following hold:
+
+      1. The reply flags at least three of the generic filler rules in CLAUDE.md as
+         candidates for removal because they restate default behaviour rather than
+         stating a project-specific rule.
+      2. It applies the deletion test to at least one of them: deleting it, nothing
+         project-specific is lost.
+      3. It names docs/RULES.md as a wrapper doc (a file that only points at other files)
+         and recommends deleting it in favor of pointing directly at CLAUDE.md and
+         docs/DEPLOY.md.
+      4. It explicitly keeps the real project-specific rules (commit format, deploy
+         steps) separate from the ones it flags for removal, rather than treating the
+         whole file as bad.
+      5. It halts after presenting candidates rather than deleting anything itself.
+
+      Fail if it treats the generic filler rules as acceptable as-is, fails to name
+      docs/RULES.md as a wrapper doc, or edits a file.

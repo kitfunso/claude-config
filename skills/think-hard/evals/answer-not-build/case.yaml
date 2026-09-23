@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: answer-not-build
+tags: [think-hard, no-build, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Every dashboard page calls `db.load(sql)` and the same 20 queries run on every page rerun. Think hard: should we put `functools.lru_cache` on `load()` in db.py?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: regex
+    name: format
+    pattern: 'Confidence\W{0,6}(high|medium|low)'
+    flags: i
+  - type: tool_used
+    name: read-db
+    tool: Read
+    input_match: 'db\.py'
+    min: 1
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: think-hard
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      db.py re-reads current.txt on every load() call because the publisher swaps the pointer after each ETL run. A plain functools.lru_cache keyed on sql alone would keep serving the previous database file after a publish. Pass only if all of the following hold:
+
+      1. The reply identifies the version pointer (current.txt / current_version()) as the reason a plain lru_cache on load() is wrong: cached rows would go stale after a publish.
+      2. The verdict is either "no" or "only if the cache key includes the current version (or is invalidated when the pointer changes)". A bare "yes, add lru_cache" fails.
+      3. It shows it read db.py (quotes or cites the pointer read or the connect line).
+      4. It gives one committed verdict with a stated confidence; it does not write or propose a code diff.

@@ -1,0 +1,57 @@
+schema_version: "1.1"
+name: build-custom-informed
+tags: [search-first, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I need to compute our crack-spread rolling z-score using the desk's own
+    tenor-weighting formula: weight each of the last 20 daily crack values by
+    1 / (days_to_expiry + 1) before taking the rolling mean and std, then z-score
+    today's value against that. Is there a PyPI package for this, or should I just
+    write it?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: search-first
+  - type: tool_used
+    name: checked-deps
+    tool: Read
+    input_match: 'pyproject\.toml'
+    min: 1
+  - type: tool_used
+    name: no-edit
+    tool: Edit
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      pyproject.toml lists only pandas and numpy. No general package computes this
+      desk-specific tenor-weighted z-score. Pass only if all of the following hold:
+
+      1. The reply concludes this should be built custom: no general package
+         implements the desk's specific 1/(days_to_expiry+1) weighting before a
+         rolling z-score.
+      2. It does not invent or name a specific PyPI package that supposedly does this
+         exact proprietary calculation.
+      3. It points out the building blocks (rolling mean/std, weighting) are already
+         covered by pandas/numpy, already in pyproject.toml, so no new dependency is
+         needed even though the formula itself has to be written by hand.
+      4. It gives one committed recommendation (build custom, informed by pandas/numpy
+         primitives) rather than a noncommittal "maybe check PyPI first."
+
+      Fails if it claims a specific package does this exact proprietary formula, or
+      recommends adding a new heavy dependency for something this specific, or refuses
+      to give a clear build-vs-adopt verdict.

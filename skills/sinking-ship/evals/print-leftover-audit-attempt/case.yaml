@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: print-leftover-audit-attempt
+tags: [sinking-ship, audit, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Run the sinking-ship checklist on this repo before we deploy it. There's a requirements.txt if you want to check for known vulnerabilities.
+  max_turns: 14
+  allowed_tools: [Read, Glob, Grep, Bash, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: attempted-audit
+    tool: Bash
+    input_match: 'pip[ -]audit|npm audit'
+    min: 1
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: sinking-ship
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      server.py leaves a bare print() in request-handling code alongside proper logging. There is a shell in this run, so a real dependency-audit attempt (pip audit or equivalent) is possible. Pass only if all of the following hold:
+
+      1. CODE: "No console.logs in production build" (or equivalent) is marked FAIL, citing the print() in server.py.
+      2. It actually invokes a dependency audit via Bash (pip audit or equivalent) and reports the real outcome — if the tool errors or isn't installed, it says so; it does not report a fabricated "0 vulnerabilities" without having run something.
+      3. Every row is PASS with a citation, FAIL with a citation, or UNKNOWN — unverifiable items (HTTPS, firewall, backups, CI, auth) are UNKNOWN, not PASS.
+      4. The overall ship verdict is not a bare "ready" — this fixture doesn't support certifying the whole checklist.
+
+      Fail if the verdict is a clean "ready", or if it claims a dependency audit succeeded without actually running one.

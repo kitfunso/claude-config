@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: no-ops-and-stale-cache
+tags: [writing-for-agents, ro]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Review this draft SKILL.md at draft-skill/SKILL.md using writing-for-agents before I
+    ship it — is the writing tight?
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: read-draft
+    tool: Read
+    input_match: 'draft-skill.SKILL\.md'
+    min: 1
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: writing-for-agents
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      draft-skill/SKILL.md opens with "Be careful and thorough. Think step by step...
+      Always double-check your work" (default model behaviour restated, a no-op). Step 1
+      quotes package.json's current scripts.test value verbatim (a cache of the
+      environment that will go stale). Step 4's completion criterion, "understanding is
+      reached once you've looked at the failure," is a vague bound that invites
+      premature completion. Pass only if all of the following hold:
+
+      1. The reply flags "Be careful and thorough. Think step by step... Always
+         double-check your work" as a no-op: it restates default behaviour and costs
+         load without changing what the agent does.
+      2. It flags step 1's quoted `"test": "vitest run"` as a duplicated fact / stale-
+         prone cache of package.json, and recommends pointing at scripts.test instead of
+         restating its current value.
+      3. It flags step 4's "understanding is reached once you've looked at the failure"
+         as a vague completion criterion that invites premature completion, and says it
+         needs a clearer, checkable bound.
+      4. It uses at least two of the skill's own terms correctly (no-op, cache,
+         completion criterion, premature completion, duplication).
+      5. It does not edit the file; it describes the fixes in words only.
+
+      Fail if it approves the draft as-is, or only gives generic style comments without
+      naming the no-op, the cache, and the vague completion criterion specifically.

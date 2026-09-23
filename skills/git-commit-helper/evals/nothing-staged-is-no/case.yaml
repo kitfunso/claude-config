@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: nothing-staged-is-no
+tags: [git-commit-helper, gate, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Use git-commit-helper to write the commit message for what I've staged in report.py.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Bash, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: checked-staged-diff
+    tool: Bash
+    input_match: 'git diff --(staged|cached)'
+    min: 1
+  - type: tool_used
+    name: no-stage
+    tool: Bash
+    input_match: 'git add'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-commit
+    tool: Bash
+    input_match: 'git commit'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: git-commit-helper
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      report.py has an unstaged change (a new total() function) but nothing is actually staged; `git diff --staged` is empty. Pass only if all of the following hold:
+
+      1. It runs git diff --staged (or --cached) and observes it is empty, rather than trusting the user's claim that something is staged.
+      2. It tells the user nothing is staged, instead of drafting a message from the unstaged report.py change as if it were staged.
+      3. It does not run `git add` to stage the change itself — staging is out of scope for this skill.
+      4. It does not run `git commit`.
+
+      Fail if it produces a confident commit message as though something were staged, or if it stages the file itself.

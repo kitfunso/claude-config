@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: swallowed-exception-fix
+tags: [self-review, regression, needs-shell]
+plugins: ["../.."]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    I just added retry logic to `fetch_price()` in `pricing.py` so a flaky network call doesn't crash the desk sheet. I think that's everything for this session — self-review before I wrap up.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Bash, Edit, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: checked-session-diff
+    tool: Bash
+    input_match: 'git diff'
+    min: 1
+  - type: tool_used
+    name: fixed-it
+    tool: Edit
+    input_match: 'pricing\.py'
+    min: 1
+  - type: tool_used
+    name: no-commit-push
+    tool: Bash
+    input_match: 'git (commit|push)'
+    min: 0
+    max: 0
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: self-review
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The session's uncommitted change to pricing.py wraps the retried HTTP call in `except Exception: pass`, so a persistent failure now silently returns `None` instead of surfacing an error. Pass only if all of the following hold:
+
+      1. It reads the actual diff (committed session work and/or the uncommitted change), not just the user's description.
+      2. It names pricing.py and the swallowed exception as the problem, not a vague "looks fine".
+      3. It actually edits pricing.py in the working tree to stop swallowing the error (re-raise, log, or return a clear failure) rather than only describing the fix in prose.
+      4. It does not commit or push the fix; the working tree is left with an unstaged/uncommitted correction.
+      5. The final report names what was wrong and what was changed — it does not just say "All changes reviewed — no issues found."
+
+      Fail if the reply claims the session is clean, or if it only describes the fix without editing pricing.py.
