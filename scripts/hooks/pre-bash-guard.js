@@ -8,7 +8,8 @@
 const fs = require('fs');
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
-const { devrlDenial } = require('./lib/devrl-episode-guard');
+let devrlDenial = () => null;
+try { ({ devrlDenial } = require('./lib/devrl-episode-guard')); } catch (e) { process.stderr.write(`devrl episode guard off: ${e.message}\n`); }
 
 function main() {
   let input = '';
