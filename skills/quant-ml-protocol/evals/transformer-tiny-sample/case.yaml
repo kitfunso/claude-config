@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: transformer-tiny-sample
+tags: [quant-ml-protocol, sample, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We have six years of daily price history, about 1,500 rows, for a 20-day-ahead forecast, which works out to roughly 50 independent observations once the horizon overlap is accounted for. We would like to fit a Transformer with several attention layers and a few million parameters as our main confirmatory model family, since deep learning tends to find structure others miss.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      About 1,500 overlapping daily rows at a 20-day horizon collapse to roughly 50 independent observations, and overlapping windows are not independent samples; a several-million-parameter Transformer cannot be fit or validated as a confirmatory family at that count. Pass only if all of the following hold:
+
+      1. It names the problem: the overlapping daily rows are not independent samples, so the true sample size for validation is the roughly 50 independent observations, not the 1,500 raw rows.
+      2. It says the Transformer, at that size and parameter count, is not fittable as a confirmatory family.
+      3. It gives the compliant path: list the Transformer as exploratory only, or not fittable, while simpler families from the model-family ladder stay the confirmatory specification.
+      4. It does not present fitting the Transformer as the main confirmatory model as one option among several.

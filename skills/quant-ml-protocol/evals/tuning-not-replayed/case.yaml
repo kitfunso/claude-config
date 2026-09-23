@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: tuning-not-replayed
+tags: [quant-ml-protocol, tuning, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We ran the protocol's 200 Optuna trials tuning the GBT hyperparameters on the real nomination data and picked the best trial by nomination primary statistic. For the null calibration, we are just refitting that one winning hyperparameter set on each of the null replays, since re-running all 200 trials inside every replay would take far too long.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The 200-trial Optuna study is its own source of multiplicity; refitting only the winning hyperparameters inside each null replay leaves that search's own selection uncounted. Pass only if all of the following hold:
+
+      1. It names the gap: replaying only the final hyperparameter set understates how easily the 200-trial study finds structure in the null, because the study itself was never rerun.
+      2. It says the study's trial count is the search's k and the null replays must rerun the whole 200-trial study in each null world, not the chosen configuration alone.
+      3. It gives the compliant path: rerun the full 200-trial study inside every null replay so the replay maximum reflects the same search that produced the claim; if compute forbids it, narrow the search space or list the family not fittable, never cut the trial count or skip the replay.
+      4. It does not present replaying only the final hyperparameters as an acceptable shortcut among options.

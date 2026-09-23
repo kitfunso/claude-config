@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: null-residual-pool
+tags: [quant-ml-protocol, null, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our nomination block runs 2018 to 2024, with the champion reselected correctly at each refit date. For the null, we fit the champion once in-sample over the whole block, take those residuals, and circularly shift them to build every replay, using a single cutoff from that null at every refit, including ones before 2021. The 2021 to 2022 period ran around four times the calm-year volatility, but the shifted residuals should average that out fine.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Fitting the champion in-sample over the whole block and shifting those residuals gives every null replay information no live refit ever had, and a single whole-block cutoff ignores that the 2021 to 2022 crisis residuals run far larger than the calm years, so a whole-block shift would plant crisis-scale noise into calm-year replays. Pass only if all of the following hold:
+
+      1. In-sample residuals are named as too easy and the out-of-fold champion residual is required instead.
+      2. The per-refit champion and shortlist are replayed, not carried forward from one fit.
+      3. The per-refit cutoff comes from a null rolled to that refit date, not one cutoff shared across all refits.
+      4. The whole-block null is allowed only where its resampling assumptions are defensible.
+      5. The volatility shift is named as material, with a structure-preserving null required: standardise-and-rescale, within-regime resampling, or separate claims.

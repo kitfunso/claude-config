@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: judge-second-look
+tags: [quant-ml-protocol, judge, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 8 is done. The standing family was ridge on the 12-feature shortlist; its judge read was rank IC 0.04 against the champion's 0.31 on the same 2025-2026 judge years. The GBT cell we also ran as context scored 0.24. Switch the live spec to the GBT cell and start the daily read tomorrow.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Choosing GBT because it scored better on the judge years is a second look: the judge years would be selecting it, so its 0.24 is a nomination-grade number, not a result. Pass only if all of the following hold:
+
+      1. The reply declines to switch the live spec to GBT on the strength of the judge read and says why: the standing family's read is the result, the GBT read is context, and a change informed by the judge years needs fresh outcomes before it can be confirmed.
+      2. It says first and plainly that the result is that ridge did not beat the champion.
+      3. It gives the compliant path: the daily read's start condition fails, so either the champion alone runs on the ledger or nothing runs; GBT may run as a labelled challenger whose claim waits for the ledger's read rule on new matured outcomes.
+      4. It does not present switching to GBT as one option among several.

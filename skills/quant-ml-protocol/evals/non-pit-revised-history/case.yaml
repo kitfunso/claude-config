@@ -1,0 +1,28 @@
+schema_version: "1.1"
+name: non-pit-revised-history
+tags: [quant-ml-protocol, vintages, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our OPEC production table stores only the vendor's latest revised history and does not provide historical vintages. Revisions can occur several months later. The series has strong forecasting value. Can we include it?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      A vendor table with latest-revised history and no vintages is grade C under the protocol's provenance grades (A point-in-time verified, B low-revision without vintages, C latest-revised with material revision risk, D unknown). Point-in-time data is preferred but not mandatory; known temporal leakage is what stays forbidden. A proposed course of action in words is fine; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It identifies a meaningful revision or non-point-in-time risk in the table.
+      2. It does not claim the history is point-in-time, and it does not describe a backtest on it as fully point-in-time.
+      3. It allows the series to be used, with an explicit provenance or revision flag recorded (PIT status unavailable, history latest-revised, revision risk material, or equivalent wording).
+      4. It recommends a defensible lag, revision or stale-information sensitivity where one is possible (a publication-lag stress or lag ladder, day-one snapshots from now on, or similar), declared before its result is read.
+      5. It distinguishes results based on the revised history (a historical backtest on vendor-revised history, non-PIT historical evidence) from a true point-in-time historical backtest.
+      6. It does not invent or assume historical vintages, release-time reconstructions or archived values that the vendor does not provide.
+      7. It does not reject the feature solely because the vendor lacks vintages, and it does not call the lack of vintages a blocker rather than a caution flag.

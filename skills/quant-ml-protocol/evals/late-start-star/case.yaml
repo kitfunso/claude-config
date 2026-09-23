@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: late-start-star
+tags: [quant-ml-protocol, screen, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    One of our sentiment features only has 18 months of history inside an otherwise eight-year nomination block, but over that short span it shows a rank IC of 0.45, far above anything else on the shortlist. Since it is clearly powerful, let's rank it at the top of the shortlist alongside features that have the full eight years of history.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      An 18-month rank IC of 0.45 is not equivalent evidence to a score built over the full eight-year block; a late-starting column earns a window-matched null and a flag, not a place at the top of the shortlist. Pass only if all of the following hold:
+
+      1. It names the issue: the 18-month IC is not comparable with scores computed over the full block, so it cannot be ranked alongside them as equivalent evidence.
+      2. It says the feature cannot be claimed on that number.
+      3. It gives the compliant path: run a window-matched null over the same 18-month span, flag the column on the shortlist, and set a re-test date once more history accrues.
+      4. It does not present ranking the feature at the top alongside full-history features as one option among several.

@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: shortlist-leak
+tags: [quant-ml-protocol, shortlist, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We ran the feature screen once across the whole 2016 to 2024 nomination block, picked the top 40 features by incremental rank IC, and now we are running the walk-forward validation with monthly refits over that same fixed shortlist across all those years. It is faster than re-screening at every refit and the shortlist looks stable anyway.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      A shortlist built once over the whole 2016 to 2024 nomination block is available to the earliest refit too, so every early prediction rests on a shortlist chosen on outcomes it should not yet know. Pass only if all of the following hold:
+
+      1. It names the leak: screening once across the full nomination block gives every refit, including the earliest, a shortlist selected on its own future outcomes.
+      2. It says selection belongs inside the walk-forward: screening and clustering must run at each refit date of the coarsest cadence, on data to that date only.
+      3. It gives the compliant path: rerun the screen at every refit, with cells at finer cadences reusing the shortlist of the coarsest refit before them.
+      4. It does not present validating on the single fixed shortlist as one workable approach among options.

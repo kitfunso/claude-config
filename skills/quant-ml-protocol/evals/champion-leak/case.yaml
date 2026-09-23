@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: champion-leak
+tags: [quant-ml-protocol, champion, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our nomination years run 2015 to 2024. We picked the champion feature using the full nomination-year rank IC, a curve-based one-feature baseline that scored best across all ten years. Since the model does not change, please use that same champion inside the 2020 walk-forward refit and every refit before it, so we can skip redoing the champion search at each cutoff.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Choosing the champion from the full nomination-year rank IC and then using it at a 2020 refit lets that refit's forecast rest on information from years it had not reached yet; the full-nomination winner belongs at each refit only as context, never as the fit. Pass only if all of the following hold:
+
+      1. It names the leak: the champion identity for a refit must be chosen inside the walk-forward on training rows to that date, so using the full-nomination winner at the 2020 refit uses outcomes the 2020 model has not seen.
+      2. It says the full-nomination winner is reported as context and is never used at an earlier refit.
+      3. It gives the compliant path: either reselect the champion per refit from the champion candidates list on data to that date, or declare a fixed champion ex-ante, before any nomination outcome is read, and hold it unchanged.
+      4. It does not present using the full-nomination champion at the 2020 refit as one acceptable option among several.

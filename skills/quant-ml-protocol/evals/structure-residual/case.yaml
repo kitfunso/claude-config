@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: structure-residual
+tags: [quant-ml-protocol, structure, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    For our grade differential forecast, we regressed the realised 4-week diff change on the realised 4-week structure leg change over the same window, getting an R squared of 0.63. The residual shows a strong pattern, so we would like to use that residual series as our forecast target going forward, since it isolates what the market did not price into the differential.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Regressing the realised future diff change on the realised future structure change is ex-post attribution, done with information not available at the forecast date; it is not the same thing as an ex-ante pricing adjustment, and its residual is not a forecast target by default. Pass only if all of the following hold:
+
+      1. It names the confusion: the regression uses realised, future values of both the diff and the structure change, which makes it ex-post attribution, never an ex-ante adjustment computable at the forecast date.
+      2. It says a model built this way has found structure, not the differential, and the residual is not automatically usable as the forecast target.
+      3. It gives the compliant path: keep the regression as ex-post attribution reported with its R squared and residual standard deviation, or, only when a hedge is declared on the trading page at stage 1, use the properly defined hedged residual target with beta fitted per refit.
+      4. It does not present adopting the ex-post residual as the forecast target as one option among several.

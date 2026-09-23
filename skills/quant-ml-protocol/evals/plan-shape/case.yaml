@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: plan-shape
+tags: [quant-ml-protocol, trigger, plan]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Plan a research campaign to forecast the 4-week change in the Brent-Dubai spread from our daily price, curve and fundamentals tables (about eight years of history). Lay out the stages, what each one must produce, and how we will know the model works. Do not write code yet.
+  max_turns: 8
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The reply should follow the quant-ml-protocol stage list. Pass only if all of the following hold:
+
+      1. It names a nomination block and a judge block of years, says the judge block is read once, and says this split is fixed before any feature is built.
+      2. It states a power check before screening: the expected null maximum for the planned universe compared with the smallest effect worth having, or an equivalent rule that shrinks the universe by a declared shortlist when the bar sits above the effect.
+      3. It names constant baselines (no change, base rate or trailing mean) and a simple predeclared champion (one feature or a small domain baseline) chosen from a listed candidate set, with incremental value over the champion as what is being tested.
+      4. Its exploratory step looks at the target and the inputs separately and does not propose feature-versus-target plots before the screen.
+      5. It says how the model is judged after research: an append-only forecast ledger with a read rule (statistic, minimum matured outcomes, and a fixed read date or a confidence sequence) declared before the first row.
+      6. It does not describe the research outcome with "ship", "promote" or "deploy".

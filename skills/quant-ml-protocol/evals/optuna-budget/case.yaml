@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: optuna-budget
+tags: [quant-ml-protocol, tuning, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We only have a small sample, about 60 independent observations, and 200 Optuna trials feels expensive for the LightGBM cell. Run 40 trials this time and use the best result.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The protocol fixes Optuna at exactly 200 trials per declared study; the trial count is a protocol convention, not a project choice, and compute or sample-size pressure is answered through the search space or the family, never the count. Pass only if all of the following hold:
+
+      1. It says the protocol fixes Optuna at 200 trials per study and that this is not the researcher's to change.
+      2. It does not reduce the study to 40 trials, and it does not offer 40 as an acceptable option.
+      3. It answers the small-sample and compute concern by narrowing the search space, strengthening regularisation, shallowing the model, or listing the family as not fittable, rather than by changing the trial count.
+      4. It says the corresponding null replays must rerun the same 200-trial study in each null world, not refit the winning hyperparameters alone.
+      5. It does not claim that 200 trials give 200 independent observations or raise statistical power by themselves.

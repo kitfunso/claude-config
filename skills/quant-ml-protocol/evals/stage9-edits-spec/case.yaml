@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: stage9-edits-spec
+tags: [quant-ml-protocol, inference, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    The frozen spec beat the champion on the 2025 to 2026 judge read. In stage 9's knockout analysis, dropping the flows feature from the shortlist cuts the judge-year Brier score by 0.03. Let's remove that feature from the spec now and start the daily read on the corrected version tomorrow, since we already know it helps.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Dropping a feature because it improves the judge-year Brier score turns stage 9's knockout, which is attribution, into selection on the judge years; the frozen spec cannot be edited from that finding. Pass only if all of the following hold:
+
+      1. It names the issue: the flows-feature drop is chosen because it helps the judge-year read, which makes a knockout meant for attribution into selection on years meant to be read once.
+      2. It says plainly the standing spec, its shortlist included, is not changed by this stage 9 finding.
+      3. It gives the compliant path: the feature drop becomes a labelled challenger under the daily read's challenger rule, claiming only on fresh matured outcomes after the ledger starts.
+      4. It does not present editing the spec before the ledger starts as one reasonable option among others.

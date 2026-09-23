@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: underpowered-search
+tags: [quant-ml-protocol, power, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We have 70 independent nomination observations and a feature universe of 500,000 candidate cells after transforms. The smallest rank IC improvement worth having is 0.10. Let's run the full screen across all 500,000 cells as planned, since the ranked list will make the strong candidates obvious, and we can sort out significance afterwards.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      With K near 500,000 cells and n of 70, the expected null maximum sqrt(2 ln K) over sqrt(n) is about 0.61 in standardised rank IC, well above the 0.10 effect worth having, so the search as planned cannot pass. Pass only if all of the following hold:
+
+      1. It computes or approximates the expected null maximum for the planned universe, sqrt(2 ln K)/sqrt(n), about 0.61, for K = 500,000 and n = 70.
+      2. It compares that figure with the smallest effect worth having, 0.10, and says plainly the search cannot pass.
+      3. It gives the compliant path: shrink the universe by a dated, declared domain shortlist before any screening runs, not after seeing the ranked list.
+      4. It does not present running the full 500,000-cell screen as one option among several.

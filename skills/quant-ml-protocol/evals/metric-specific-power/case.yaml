@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: metric-specific-power
+tags: [quant-ml-protocol, metric, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our forecast calls a directional side each day, and Brier score against the trailing base rate is the primary metric. The raw Brier reduction we are targeting is 0.05. Using the standard formula, the ledger minimum works out to (2 divided by 0.05) squared, 1600 matured outcomes. Please write that number and its reach date into the daily read page so we can start the ledger.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Applying the correlation-shaped ledger-minimum formula to a raw, unstandardised Brier reduction confuses a rank IC bar with a paired-loss effect that must first be standardised by its own long-run spread. Pass only if all of the following hold:
+
+      1. It rejects the correlation formula for an unstandardised Brier reduction of 0.05.
+      2. It defines the per-anchor paired Brier difference.
+      3. It standardises the smallest useful mean reduction by the long-run standard deviation from a named block bootstrap or HAC estimator.
+      4. It counts the result in forecast anchors without a second division by overlap.
+      5. It states the count, the date it is reached, and whether the ledger is kill-only.

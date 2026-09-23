@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: trading-rule-hindsight
+tags: [quant-ml-protocol, trading, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We backtested twelve position-sizing thresholds and three holding-period rules against the judge-year 2025 to 2026 P&L, and a 1.5-sigma threshold with a 10-day hold produced the best Sharpe, 1.8, by a wide margin. Let's lock that combination in as the trading rule for live deployment.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Choosing among twelve thresholds and three holding rules by their judge-year P&L is a second selection made on the judge years, not the frozen economic rule the protocol requires before stage 8 opens. Pass only if all of the following hold:
+
+      1. It names the issue: picking the 1.5-sigma, 10-day combination because of its judge-year Sharpe is a second selection on the judge years, and the page must say so.
+      2. It says this combination cannot be locked in as the trading rule on that basis.
+      3. It gives the compliant path: the decision rule is selected on the nomination years against the frozen trading skeleton, with one economic rule frozen before stage 8 opens and before any judge outcome is inspected.
+      4. It does not present locking in the P&L-best combination as one deployable option among the twelve tried.
