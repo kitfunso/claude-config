@@ -8,6 +8,7 @@
 const fs = require('fs');
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
+const { devrlDenial } = require('./lib/devrl-episode-guard');
 
 function main() {
   let input = '';
@@ -54,6 +55,13 @@ function main() {
       // Warn on force push to main/master
       if (/git push.*--force.*\b(main|master)\b/.test(cmd) || /git push.*\b(main|master)\b.*--force/.test(cmd)) {
         emit('deny', 'Force pushing to main/master is dangerous. Use a feature branch instead.');
+      }
+
+      try {
+        const reason = devrlDenial(cmd, data.session_id);
+        if (reason) emit('deny', reason);
+      } catch (e) {
+        process.stderr.write(`devrl episode guard skipped: ${e.message}\n`);
       }
 
       // Warn on destructive commands

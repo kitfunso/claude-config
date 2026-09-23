@@ -72,6 +72,7 @@ Per-box binding lives in `settings.json`. The hook is the verifier; the prose ru
 | Resource tripwire: 40+ tool calls with no Skill/Agent/Workflow gets a notice; a command matching `.claude/tripwires.json` is denied without its protocol file, and run N x every is denied until `AUDIT <sid8> #N` is in the audit file | UserPromptSubmit; Bash / PowerShell | regex on command text; repos without `tripwires.json` | none |
 | Fable orchestrator (same script): on a Fable main thread, exec call 26+ (shell, Edit, Write, browser) since the last human message or Agent spawn is denied | Bash / PowerShell / Edit / Write / browser | Read, Grep, Glob and WebFetch are free; task notifications do not reset the leg | `CLAUDE_FABLE_EXEC_BUDGET=off` or a number |
 | Artifact deny: `permissions.deny` lists `Artifact` and `mcp__claude_ai_Claude_Docs`, so no claude.ai page gets published | calls to those tools | also blocks reading or deleting an old artifact | Keith removes the entry |
+| devrl episode: while this session holds a running episode lock, denies a git, npm, npx, vitest or codex command with no absolute `cd`, `-C` or `--prefix` in the same call, and git that throws away uncommitted work (checkout --, restore, reset --hard, clean -f, stash but list/show) | Bash | PowerShell; heredoc bodies; sub-agents only if they share the session id | `DEVRL_ALLOW_DESTRUCTIVE=1` in the command, destructive git only |
 
 ## Root Cause Over Patches (CRITICAL)
 Fix problems at their source. No speed directive authorises a patch over a root-cause fix.
