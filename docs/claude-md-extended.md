@@ -218,9 +218,9 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 
 | Role | Who fills it (verify against env) |
 |---|---|
-| Default session model, ship-gating review, synthesis (`opus`) | Opus 5.5 `claude-opus-5-5`, $4/$20 per MTok; better than Fable 5.1 at everything (Keith 2026-09-23) |
+| Default session model and every judging sub-agent: review, synthesis, planning, debugging (`opus`) | Opus 5.5 `claude-opus-5-5`, $4/$20 per MTok; better than Fable 5.1 at everything (Keith 2026-09-23) |
 | Premium with no edge over Opus 5.5 | Fable 5.1 `claude-fable-5-1`, $10/$50 per MTok, only on explicit ask |
-| Default worker (sub-agents, fan-outs) | Sonnet 5 `claude-sonnet-5`, $2/$10 per MTok |
+| Mechanical sub-agents: search, fan-outs, extraction, smoke tests (`sonnet`) | Sonnet 5 `claude-sonnet-5`, $2/$10 per MTok |
 | Trivial / mechanical | Sonnet 5 too; Haiku is banned (see Sub-agents) |
 
 - Effort ladder is `low | medium | high | xhigh | max` (`output_config.effort`; default `high`). `xhigh` is the sweet spot for coding and agentic work; `max` can overthink with diminishing returns.
@@ -229,7 +229,7 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 - The prose-voice gap seen on Opus 4.7 is retired: Opus 5.5 writes long-form prose (grants, LinkedIn, essays, X threads, README copy) itself, with no Sonnet offer. Never refuse prose work.
 
 ## Sub-agents
-- Set `model` explicitly on every spawn: `sonnet` for search, fan-outs, mechanical edits, extraction, smoke tests, summarisation, trivial passes and ordinary review; `opus` only for a ship-gating adversarial review or one synthesis pass, cap about 3 per task; `fable` only on explicit user ask. **Never `haiku`** (Keith 2026-09-13: it misjudged in both directions as a review scorer on hippo PR 191; a plugin or skill that prescribes Haiku runs that step on Sonnet).
+- Set `model` explicitly on every spawn: `opus` for any agent whose output is a judgement (every review, ship-gating or ordinary, synthesis, planning, debugging), no per-task cap since 2026-09-23; `sonnet` for mechanical work only (search, wide fan-outs, mechanical edits, extraction, smoke tests, summarisation, trivial passes), where half the per-token price buys the same result; `fable` only on explicit user ask. **Never `haiku`** (Keith 2026-09-13: it misjudged in both directions as a review scorer on hippo PR 191; a plugin or skill that prescribes Haiku runs that step on Sonnet).
 - Spawn for genuinely independent, sizeable tracks. Anything a handful of tool calls would close stays in the main loop, and so does verifying your own work.
 - **On Fable the main thread reads, decides and briefs.** Browser driving, build or test loops, and any run past about 15 exec calls go to a Sonnet agent with the commands, the files and the pass/fail check. Measured 2026-09-12: one day of four Fable windows was 1,656 main-thread requests at ~150k context each and zero delegated; the Fable orchestrator hook (Hooks table) now denies at 25.
 - Launch parallel agents in one message, split by non-overlapping files, and keep working while they run.
