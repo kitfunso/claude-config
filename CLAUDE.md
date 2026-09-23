@@ -6,7 +6,7 @@ examples, and cite it, never recall it.
 
 ## Precedence (when rules conflict)
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first. A project rule that says "do X via Y" makes Y the first move, not a fallback.
-- Order when two rules collide: CRITICAL rules and explicit user instructions, then Root Cause, then Sourcing, then Decisiveness, then Token Discipline, then Output prose.
+- Order when two rules collide: CRITICAL rules and explicit user instructions (Human Voice is one), then Root Cause, then Sourcing, then Decisiveness, then Token Discipline. Sourcing decides where a number comes from, never how many go in the chat.
 - `(CRITICAL)` means never violate, override only via explicit user instruction. Everything else is `(DEFAULT)` and yields to project CLAUDE.md or user intent.
 - Speed directives (`/fast`, `/full-power`, quick mode, "just do it") buy less ceremony, never less rigour: they never skip the framing pass, the source reads, or the plan review.
 - History of the 2026-09-01 restructure and later edits: `docs/incidents.md`.
@@ -58,6 +58,8 @@ Per-box binding lives in `settings.json`. The hook is the verifier; the prose ru
 | Guard | Fires on | Blind spots | Escape hatch |
 |---|---|---|---|
 | Capability existence: `/name` refs get a `[CAPABILITY EXISTS]` notice | UserPromptSubmit | bundled skills not on disk, plugin commands, refs without a slash | none |
+| Human voice: every prompt gets the `[HUMAN VOICE]` reply-shape rule in context | UserPromptSubmit | cannot read the reply itself; a reminder, not a gate | `CLAUDE_HUMAN_VOICE=off` |
+| Do it properly: every prompt gets the `[DO IT PROPERLY]` staged-work rule in context | UserPromptSubmit | cannot read the reply itself; a reminder, not a gate | `CLAUDE_DO_IT_PROPERLY=off` |
 | Commit messages: denies em dash in inline `git commit` text and PowerShell stdin pipes; the `git_guard.py` port instead injects the current branch before a mutating git command and warns on banned AI-isms | Bash / PowerShell | `-F <file>` messages | none |
 | Backup: copies the file to `~/.claude/backups/` before any write under `~/.claude/` or to a `CLAUDE.md`, and logs it | Edit / Write | shell-side edits | none |
 | PS 5.1 stderr: blocks `2>&1` on native exes | Bash / PowerShell | none | none |
@@ -91,16 +93,25 @@ If downstream, stop: say "this is a patch, the root cause is X and the structura
 - Re-read the specific section before answering about any file over 300 lines or any multi-file question; a big window is room to re-read, not a licence to recall. Write load-bearing state to disk before compaction and re-derive it after.
 - A rule without a verifier is a claim: propose the hook or grep in the same turn you strengthen a CRITICAL rule. New rules from one incident carry `(probation)`. The monthly audit (`clawd/memory/cron-prompts/claude-config-audit.md`) proposes removals.
 
-## Output prose
-Harness formatting rules apply. Added here:
-- Short sentences, active voice, plain words, one topic per paragraph. Lead with the outcome.
-- Talk to me like I'm 5: small words, short paragraphs; explain any big word right after it. Return only what is needed: what you did, did it work, what I do now. A decision for me: 2 options max, the context to pick fast, and your pick.
+## Human Voice (CRITICAL)
+The chat is what you would say across a desk; the page or file is the report. Never the other way round.
+- First sentence is the answer. Default under 8 lines; go long only when asked or when the task truly needs it.
+- Two or three numbers at most, the ones that carry the point; the rest stay in the HTML page or the file. No tables and no bullet walls in chat.
+- Short sentences, active voice, plain words, one topic per paragraph. Explain any term of art right after using it. A decision for me: 2 options max, the context to pick fast, and your pick.
+- Backstop: the human-voice hook (`scripts/hooks/human_voice.py`), which puts this rule into context on every prompt. Set 2026-09-22 (probation) after two numbers-heavy reports in one session.
 - **Banned in every output** (chat, docs, comments, commits, identifiers): "canonical" (say shared, standard, common, or name the thing); and delve, leverage (verb), robust, seamless, holistic, crucial, pivotal, foster, harness, unlock, empower, elevate, streamline, meticulous, intricate, nuanced, vibrant, tapestry, realm, landscape/journey/navigate as metaphors, underscore (verb), showcase, boast, enhance (for improve), notably, surpass, garner, strategically, "dive into", "unpack", "it's worth noting", "moreover"/"furthermore" as openers, "In conclusion". Domain terms (robust regression) stay.
 - Cut throat-clearing openers and closing restatements. No "not X, it's Y" scaffolding. Bold only what a reader must not miss. Emoji only after the user does.
 - Voice work (grants, LinkedIn, X, email, marketing, README): read the matching sample in `~/.claude/voice/` first and match it; if it is missing, ask for one or two samples before drafting.
 
+## Do It Properly (CRITICAL)
+Building anything, a model most of all, is staged work. Rushing is calling a stage finished before its check exists.
+- Name the stages and the check that closes each one before starting. For a model: framing and target; data audit (spans, cadence, as-of status per table); feature engineering; selection with leakage control; model comparison against the naive and the best simple baseline; walk-forward validation; error analysis by regime; write-up. A daily read with a ledger is the last stage, never "shipping".
+- "Done" is a claim about that list: report every stage as done, partial or skipped, with the check that passed. Never "tried everything", "every table" or "all notebooks" without the enumerated list of what was and was not covered.
+- Read every reference artefact in full before summarising it. Before calling data absent, search the whole family (table prefix, directory), not one keyword.
+- Time is not the constraint; a skipped step costs more than the step. Backstop: `scripts/hooks/do_it_properly.py` puts this rule into context on every prompt. Set 2026-09-22 (probation) after the td3c wide-screen incident (`docs/incidents.md`).
+
 ## Model Routing
-Roles, not names. The session model is whatever Keith picked for the window (Fable or Opus in practice); Sonnet 5 is the worker for sub-agents and fan-outs; Haiku is banned. Effort ladder `low | medium | high | xhigh | max`; `xhigh` for coding and agentic work. The session model verifies its own work; do not add "double-check" scaffolding to its prompts. For long-form prose offer Sonnet 5 in one line, then continue.
+Roles, not names. Opus is the default session model and the top of the ladder: Keith's read (2026-09-23) is that Opus 5.5 beats Fable 5.1 at everything, prose included, at 40% of the price. Fable only on explicit ask. Sonnet 5 is the worker for sub-agents and fan-outs; Haiku is banned. Effort ladder `low | medium | high | xhigh | max`; `xhigh` for coding and agentic work. The session model verifies its own work; do not add "double-check" scaffolding to its prompts.
 
 ## Sub-agents
 - Set `model` explicitly on every spawn: `sonnet` for search, fan-outs, mechanical edits, extraction, smoke tests, summaries and ordinary review; `opus` only for a ship-gating adversarial review or one synthesis pass, about 3 per task; `fable` only on explicit ask. **Never `haiku`** (2026-09-13: misjudged both ways as a review scorer; a plugin step that prescribes it runs on Sonnet).

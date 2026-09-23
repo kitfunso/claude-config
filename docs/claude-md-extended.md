@@ -218,14 +218,15 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 
 | Role | Who fills it (verify against env) |
 |---|---|
-| Highest capability, premium price | Fable 5 `claude-fable-5`, only on explicit ask |
-| Default worker (sub-agents, fan-outs) | Sonnet 5 `claude-sonnet-5` |
+| Default session model, ship-gating review, synthesis (`opus`) | Opus 5.5 `claude-opus-5-5`, $4/$20 per MTok; better than Fable 5.1 at everything (Keith 2026-09-23) |
+| Premium with no edge over Opus 5.5 | Fable 5.1 `claude-fable-5-1`, $10/$50 per MTok, only on explicit ask |
+| Default worker (sub-agents, fan-outs) | Sonnet 5 `claude-sonnet-5`, $2/$10 per MTok |
 | Trivial / mechanical | Sonnet 5 too; Haiku is banned (see Sub-agents) |
-| Legacy Opus | Opus 4.8 `claude-opus-4-8` |
 
 - Effort ladder is `low | medium | high | xhigh | max` (`output_config.effort`; default `high`). `xhigh` is the sweet spot for coding and agentic work; `max` can overthink with diminishing returns.
 - The session model verifies its own work unprompted and is strongest on long-horizon agentic work. Do not add "double-check / re-verify" scaffolding to prompts for it: that causes over-verification with no accuracy gain.
-- The prose-voice gap was seen on Opus 4.7 and is unconfirmed since. For long-form prose (grants, LinkedIn, essays, X threads, README copy, creative writing) offer Sonnet 5 in one line, then continue unless the user declines. Never refuse prose work.
+- Prices: `https://platform.claude.com/docs/en/about-claude/pricing.md`, read 2026-09-23.
+- The prose-voice gap seen on Opus 4.7 is retired: Opus 5.5 writes long-form prose (grants, LinkedIn, essays, X threads, README copy) itself, with no Sonnet offer. Never refuse prose work.
 
 ## Sub-agents
 - Set `model` explicitly on every spawn: `sonnet` for search, fan-outs, mechanical edits, extraction, smoke tests, summarisation, trivial passes and ordinary review; `opus` only for a ship-gating adversarial review or one synthesis pass, cap about 3 per task; `fable` only on explicit user ask. **Never `haiku`** (Keith 2026-09-13: it misjudged in both directions as a review scorer on hippo PR 191; a plugin or skill that prescribes Haiku runs that step on Sonnet).

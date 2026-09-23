@@ -3,6 +3,22 @@
 Stories evicted from the always-loaded rules. This file is never injected; rules
 point here with one-liners. Append new entries at the top; do not rewrite history.
 
+## 2026-09-22: td3c wide screen called complete with a table family unread
+
+On the TD3C forecast the session ran a "try everything" screen of the lake (60 base
+series, 600 cells), reported it as covering every fleet table, and proposed to "ship
+the basis as the live model". The pull had no `silver.tonnage__vlcc_*` table: the
+daily AG tonnage list (per ship: open area, days to ETA, status) and the ready-tonnage
+count were the closest thing in the lake to the reference notebooks' route boxes, and
+one of eight reference notebooks had been read before the recipe was summarised. The
+user's words: "why are you rushing so much? ... don't be lazy and skip corners, i will
+catch you and we are going to end up spending more time when you say you have done
+enough", then "this again needs to stick hard and not just in the memory md". Fix, same
+day: the Do It Properly (CRITICAL) section in the global CLAUDE.md, the
+`do_it_properly.py` UserPromptSubmit hook (same shape as `human_voice.py`), and the
+memory `td3c-do-it-properly`. Probation; the monthly audit judges whether the hook
+earned its place.
+
 ## 2026-09-14: the work box cut the same file a day later, then merged
 
 The work box (kit.sofun) audited its copy on 14 September without knowing the home
