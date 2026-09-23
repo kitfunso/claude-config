@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: transformer-tiny-sample
-tags: [quant-ml-protocol, sample, ro]
+tags: [quant-ml-protocol, sample, guard, ro]
 plugins: ["../.."]
 execution:
   prompt: |

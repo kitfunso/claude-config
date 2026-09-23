@@ -4,9 +4,9 @@ tags: [quant-ml-protocol, trigger, plan, ro]
 plugins: ["../.."]
 execution:
   prompt: |
-    Plan a research campaign to forecast the 4-week change in the Brent-Dubai spread from our daily price, curve and fundamentals tables (about eight years of history). Lay out the stages, what each one must produce, and how we will know the model works. Do not write code yet.
-  max_turns: 8
-  allowed_tools: [Read, Glob, Grep, Skill]
+    Plan a research campaign to forecast the 4-week change in the Brent-Dubai spread from our daily price, curve and fundamentals tables (about eight years of history). Lay out the stages, what each one must produce, and how we will know the model works. Put the plan in this project where we can review it. Do not write code yet.
+  max_turns: 12
+  allowed_tools: [Read, Glob, Grep, Skill, Write]
 runs: 3
 graders:
   - type: tool_used
@@ -17,7 +17,7 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      The reply should follow the quant-ml-protocol stage list. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+      The reply should follow the quant-ml-protocol stage list. Grade the reply together with any plan file the run wrote in the project: a criterion passes when either carries it and nothing in the other contradicts it. Pass only if all of the following hold:
 
       1. It names a nomination block and a judge block of years, says the judge block is read once, and says this split is fixed before any feature is built.
       2. It states a power check before screening: the expected null maximum for the planned universe compared with the smallest effect worth having, or an equivalent rule that shrinks the universe by a declared shortlist when the bar sits above the effect.

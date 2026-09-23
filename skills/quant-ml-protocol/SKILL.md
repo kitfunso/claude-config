@@ -21,8 +21,8 @@ interpretable) is stage 9. Decision (does it pay after costs and constraints)
 is the trading page. A low-error forecast can lose money; a strong backtest
 can rest on one unstable feature.
 
-Revised 2026-09-23 (fourth revision, after the 2026-09-23 review and its
-feedback). Earlier versions: `~/dev/quant-ml-protocol-draft/old/`.
+Revised 2026-09-23 (fifth revision, from the fourth revision's eval
+misses). Earlier versions: `~/dev/quant-ml-protocol-draft/old/`.
 
 ## Hard rules, defaults and data availability
 
@@ -52,9 +52,13 @@ it; trading rules never selected on judge P&L; an append-only live forecast
 ledger. These protect the research from self-deception.
 
 Defaults are starting points, not statistical truths. A project may change
-a default before the relevant search or test runs when the reason is
-written on the plan page. Changing a default after observing the result is
-a research degree of freedom and is recorded in the flexibility register.
+a default before the relevant search or test runs when the date and the
+reason are written on the plan page. Changing a default after observing the
+result is a research degree of freedom and is recorded in the flexibility
+register. The result is the outcome of the search or test the default
+governs (a screen, a null, a grid, a judge read); a look at the inputs
+alone, such as feature correlations, missingness or first dates, is not an
+outcome, so a change made after it and before that search is prospective.
 
 Blockers and caution flags. A true blocker stops every later stage: known
 target leakage, a scaler, imputer or PCA fitted on future rows, unmatured
@@ -179,8 +183,9 @@ and recorded.
   no coverage claimed; bootstrap worlds whenever an interval is needed. The
   grid null at stage 7 reruns the whole grid per world at B of at least 100
   by the same default;
-  when the compute benchmark forbids that, the grid is reduced and frozen
-  before the null runs, the real run uses the same reduced grid, and the
+  when the compute benchmark forbids that, the grid is reduced (fewer
+  cells, or a narrower Optuna space, with every study still at 200
+  trials) and frozen before the null runs, the real run uses the same reduced grid, and the
   reduced search is replayed at 100 or more; a grid null below 100 worlds,
   never below 20 (a protocol engineering floor), is labelled coarse
   wherever its cutoff or p-value is quoted. Every null is itself a model of
@@ -304,7 +309,9 @@ and the primary horizon are written on the page before the grid runs.
 ## The stages
 
 Copy `templates/pipeline-plan.html` to `docs/pipeline-plan-<date>.html` and
-fill its boxes before stage 1 starts. Each stage row holds the check that
+fill every box before stage 1 starts, the daily-read box with its
+append-only ledger and read rule included; a box not yet answerable stays
+on the page marked open, never dropped. Each stage row holds the check that
 closes it, its state (done, partial or skipped, with the number the check
 produced) and where the evidence lives. A true blocker (known leakage,
 preprocessing fitted on future rows, unmatured labels in training, the judge
@@ -335,11 +342,17 @@ both.
    on the same anchors, each with its own metric, never chosen between on
    the judge years (`references/targets-and-metrics.md`). What is subtracted
    because the market already pays it (carry, basis, roll), seam rule,
-   roll-clean construction. Forecast cutoff time, input snapshot, target mark
+   roll-clean construction. A residual from regressing the realised target
+   on other realised moves over the same window is ex-post attribution for
+   stage 9, never a forecast target; a hedged residual target needs the
+   hedge declared on the trading page here, beta fitted per refit
+   (`references/physical-diff-addendum.md`, D2 and D3). Forecast cutoff time, input snapshot, target mark
    and the scoring metric per target, because the ledger at stage 10 needs
    them. The smallest incremental effect worth having in the primary
    metric, in its raw units (the number that would change the decision),
-   and the declared interval level and power. Count n_rank per horizon
+   the span over which the forecast is worth having (stage 10 reads the
+   ledger's reach date against it), and the declared interval level and
+   power. Count n_rank per horizon
    (anchors divided by horizon overlap, a rough independent count) and,
    where the primary metric is a paired loss, n_anchor (forecast anchors,
    dependence carried by the long-run variance). Name the nomination and
@@ -385,7 +398,8 @@ both.
    sqrt(2 ln K) / sqrt(n) + z_power / sqrt(n) in standardised units, the
    expected null maximum plus the power margin, labelled rough, beside the
    standardised effect worth having. Pass: the target page carries part
-   one, dated (targets, metrics, the raw effect, the level and power, the
+   one, dated (targets, metrics, the raw effect, the span it is worth
+   having over, the level and power, the
    counts, the baseline specifications, the candidate list, the null fit
    and, when the project trades, the skeleton), then part two, dated after
    it (the standardised effect, the reference baseline scores, the bars).
@@ -613,8 +627,9 @@ both.
    only, naive and champion baselines in every cell. Cells are ranked on a frozen common set of
    forecast dates per horizon; cells that cannot cover it are reported in
    their own table. Compute is benchmarked on one full replay before the
-   run; when it forbids a grid null of 100 worlds, the grid is reduced and
-   frozen before the null runs and the real run uses the same reduced grid;
+   run; when it forbids a grid null of 100 worlds, the grid is reduced
+   (fewer cells or a narrower space, never fewer trials) and frozen before
+   the null runs and the real run uses the same reduced grid;
    the null replays rerun the whole grid. An Optuna-tuned family enters the
    grid with the hyperparameters from its declared 200-trial inner studies;
    whether a study runs once per family and window configuration or once
@@ -644,7 +659,8 @@ both.
    selected, not the data. A richer family earns its place only when the
    paired interval of its oriented primary skill improvement over the
    simpler family clears zero on identical forecast dates; otherwise the
-   simpler family stands. Raw IC, loss or metric differences never enter
+   simpler family stands. A cell declared not confirmatory (an oversized
+   sequence model, `references/model-families.md`) never earns it. Raw IC, loss or metric differences never enter
    that comparison directly; everything is converted to oriented skill
    first. The family that stands here is
    the standing family; its cell is the judge candidate. Pass: a surface
@@ -697,8 +713,10 @@ both.
    judge-year outcomes here changes the standing spec, its shortlist, its
    calibrator or its cadence; a judge-derived idea (drop feature X, add a
    regime gate) becomes a labelled challenger under the daily read's
-   challenger rule and claims only on fresh matured outcomes; knockouts on
-   the judge years are attribution, never selection. Pass: the regime page;
+   challenger rule and claims only on fresh matured outcomes, and it is
+   never scored on the judge years that suggested it, not even as a
+   diagnostic, because that read is a second look; knockouts of the frozen
+   spec on the judge years are attribution, never selection. Pass: the regime page;
    a regime-only winner labelled on the plan page; the outage behaviour
    written.
 10. **Write-up, then the daily read.** One HTML page: target, baselines, the
@@ -724,8 +742,12 @@ both.
     its fit_id) and every matured target one outcome record linked to it,
     nothing edited.
     The read rule is written before the first row: the statistic, the
-    minimum matured outcomes, and either a confidence sequence or one fixed
-    read date; a glance at the ledger is allowed daily, a claim from it is
+    minimum matured outcomes, the date the ledger reaches that minimum at
+    its accrual rate, and either a confidence sequence or one fixed read
+    date. Beside the reach date the page says whether the ledger can
+    confirm skill: when the date falls past the span the forecast is worth
+    having (stage 1), the ledger is kill-only, able to detect decay and
+    never to confirm skill. A glance at the ledger is allowed daily, a claim from it is
     not until the rule holds. Monitoring, the challenger rule, the fallback
     spec and its triggers are declared there too. The ledger is the last
     stage of research and the only judge of the model from then on. Pass:

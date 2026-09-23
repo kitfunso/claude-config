@@ -43,7 +43,10 @@ dates; a tie promotes the simpler.
    burden are defensible for the information available; a
    multi-million-parameter model on tens of effective observations is not
    confirmatory, and a small or strongly pretrained model may be when the
-   page says why. Training: normalisation
+   page says why. A cell declared not confirmatory runs as labelled
+   exploratory context: it never becomes the standing family or the judge
+   candidate, whatever its nomination interval, and the simpler family
+   stands. Training: normalisation
    fitted on the training fold; early stopping on an inner purged fold;
    AdamW, dropout or weight decay, gradient clipping; the checkpoint at the
    inner minimum; the declared seed or seed ensemble, with S extra seeds as

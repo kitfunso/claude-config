@@ -21,5 +21,5 @@ graders:
 
       1. It says the live refits must train on the eligible rows within the 52-week window at each declared monthly refit date, reusing the last fitted model between refits, not on all history.
       2. It separates three identities, in these or equivalent names: a spec_id for the frozen modelling and decision rules (cell, code, environment, with the manifest left out), a fit_id for each scheduled refit and its training-data snapshot, and a forecast_id for each prediction and its input snapshot.
-      3. It says only a spec change opens a new ledger track; routine refits and weekly data pulls produce new fit ids under the same track.
+      3. It says only a spec change opens a new ledger track: routine monthly refits make new fit ids and weekly data pulls make new forecast input snapshots, all under one spec_id track.
       4. It says the six weeks of all-history rows are labelled off-spec and kept on the append-only ledger, not deleted, and are left out of the count toward the read rule's minimum.

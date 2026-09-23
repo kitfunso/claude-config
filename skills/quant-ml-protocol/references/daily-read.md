@@ -27,11 +27,13 @@ Three ids:
 - fit_id: a particular scheduled refit, including its training-data
   snapshot. The manifest's state at that fit is hashed here.
 - forecast_id: a particular prediction and input snapshot, carrying the
-  input snapshot hash and the cutoff time.
+  input snapshot hash and the cutoff time. A data pull between refits
+  changes the forecast's input snapshot, not the fit: it makes new
+  forecast rows under the current fit_id, never a new fit_id or spec_id.
 
 Only a spec_id change opens a new ledger track. Routine refitting under the
-same frozen rules should produce a new fit_id, not erase the continuity of
-evidence for spec_id.
+same frozen rules should produce a new fit_id, and a data pull only new
+forecast rows, not erase the continuity of evidence for spec_id.
 
 ## The run
 
@@ -152,5 +154,5 @@ anytime-valid kill rule, and otherwise waits for the binding ledger read.
 
 A judge-derived idea (a feature dropped, a gate added, a cadence
 changed because of what the judge years showed) enters only as a
-labelled challenger under this rule; the standing spec is never edited
-from the judge read.
+labelled challenger under this rule, never scored on the judge years that
+suggested it; the standing spec is never edited from the judge read.
