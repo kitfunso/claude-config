@@ -110,6 +110,14 @@ function headerEnd(lines, token) {
   return i;
 }
 
+function grade(fileText, token) {
+  const lines = fileText.split(/\r?\n/);
+  const body = lines.slice(headerEnd(lines, token));
+  const comments = countComments(body, token);
+  const density = body.length ? comments / body.length : 0;
+  return { comments, total: body.length, density, over: body.length >= DENSITY_FLOOR && density > MAX_DENSITY };
+}
+
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
@@ -133,26 +141,34 @@ process.stdin.on('end', () => {
   // Density is judged on the file the edit produces, not the snippet alone, so a
   // short why-comment dropped into a big file can't read as 100% comments.
   let fileText = input.tool_name === 'Write' ? text : null;
+  let before = null;
   if (input.tool_name === 'Edit') {
     try {
-      const current = fs.readFileSync(ti.file_path, 'utf8');
-      fileText = applyEdit(current, String(ti.old_string || ''), String(ti.new_string || ''), ti.replace_all === true);
+      before = fs.readFileSync(ti.file_path, 'utf8');
+      fileText = applyEdit(before, String(ti.old_string || ''), String(ti.new_string || ''), ti.replace_all === true);
     } catch (e) {
       fileText = null;
     }
   }
 
+  const pct = (x) => Math.round(x * 100) + '%';
   let why = null;
   if (run > MAX_RUN) {
     why = run + ' comment lines in a row (budget: ' + MAX_RUN + ')';
   } else if (fileText != null) {
-    const fileLines = fileText.split(/\r?\n/);
-    const body = fileLines.slice(headerEnd(fileLines, token));
-    const comments = countComments(body, token);
-    const density = body.length ? comments / body.length : 0;
-    if (body.length >= DENSITY_FLOOR && density > MAX_DENSITY) {
-      why = comments + ' comment lines out of ' + body.length + ' in the resulting file (' +
-        Math.round(density * 100) + '%, budget: ' + Math.round(MAX_DENSITY * 100) + '%)';
+    const now = grade(fileText, token);
+    const was = before != null ? grade(before, token) : null;
+    if (was && was.over) {
+      // Debt the file already carried is not this edit's to pay; what the edit adds must meet the budget.
+      const addedComments = now.comments - was.comments;
+      const addedLines = now.total - was.total;
+      if (addedComments > 0 && addedComments > MAX_DENSITY * addedLines) {
+        why = 'an edit adding ' + addedComments + ' comment lines in ' + addedLines + ' net new lines, on a file already at ' +
+          pct(was.density) + ' (budget: ' + pct(MAX_DENSITY) + ')';
+      }
+    } else if (now.over) {
+      why = now.comments + ' comment lines out of ' + now.total + ' in the resulting file (' +
+        pct(now.density) + ', budget: ' + pct(MAX_DENSITY) + ')';
     }
   }
   if (!why) process.exit(0);

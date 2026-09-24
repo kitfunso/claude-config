@@ -12,8 +12,8 @@ and it could be 50, rewrite it. Stop climbing at the first rung that holds:
 2. Is it already in this codebase? Reuse it. Re-implementing what lives a few files
    over is the most common form of this mistake.
 3. Standard library, native platform feature, or an installed dependency? Use it,
-   unless the project's CLAUDE.md bans it (some repos are handwritten-only; there
-   this rung inverts).
+   unless the project's CLAUDE.md bans it. `bitfall` and `fifty` both open with a
+   CRITICAL handwritten-only allowlist; there this rung inverts, write it yourself.
 4. Can it be one line? Then one line.
 5. Only then, the smallest code that works.
 

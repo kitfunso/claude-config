@@ -5,6 +5,7 @@ rules/coding-standards.md. Python port of the home box's comment-budget-guard.js
 Denies the write before the file is touched when the new content has:
   - more than 3 comment lines in a row, or
   - more than 20% comment density, once the content is 15+ lines.
+    On a file already over that density, only what the edit adds is graded.
 
 Skips markdown, JSON, config files, anything under docs/, Python docstrings
 (only `#` lines count), and JSDoc blocks carrying @param / @returns.
@@ -126,6 +127,27 @@ def check_density(file_text: str, ext: str) -> str | None:
     return None
 
 
+def count_body(file_text: str, ext: str) -> tuple[int, int]:
+    lines = file_text.splitlines()
+    body = lines[header_end(lines, ext):]
+    return sum(comment_flags(body, ext)), len(body)
+
+
+# Debt the file already carried is not this edit's to pay; what the edit adds must meet the budget.
+def check_added(before: str, after: str, ext: str) -> str | None:
+    was_count, was_total = count_body(before, ext)
+    count, total = count_body(after, ext)
+    added, added_lines = count - was_count, total - was_total
+    if added > 0 and added > MAX_DENSITY * added_lines:
+        return (
+            f"the edit adds {added} comment lines in {added_lines} net new lines, on a file already "
+            f"at {was_count / was_total:.0%} comments (budget {MAX_DENSITY:.0%}). The Comments rule "
+            "(rules/coding-standards.md) says one line, two at most, WHY not WHAT. "
+            "Trim comments, then retry. Escape: CLAUDE_COMMENT_BUDGET=off."
+        )
+    return None
+
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 try:
     from record_component import record
@@ -153,6 +175,7 @@ def main() -> None:
     if not reason:
         # Density is judged on the file the edit produces, not the snippet alone.
         file_text = content if tool_name == "Write" else None
+        current = None
         if tool_name == "Edit":
             try:
                 with open(tool_input.get("file_path") or "", "r", encoding="utf-8") as fh:
@@ -163,7 +186,8 @@ def main() -> None:
             except Exception:
                 file_text = None
         if file_text is not None:
-            reason = check_density(file_text, ext)
+            legacy = current is not None and check_density(current, ext) is not None
+            reason = check_added(current, file_text, ext) if legacy else check_density(file_text, ext)
     if reason:
         record(kind="hook", name=os.path.basename(__file__), session_id=payload.get("session_id"),
                cwd=payload.get("cwd"), blocked=True, notes=reason)

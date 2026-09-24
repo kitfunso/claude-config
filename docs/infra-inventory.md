@@ -15,6 +15,7 @@ relying on one.
 | `playwright` | local, project `C:/Users/skf_s` in `~/.claude.json` | browser automation; `playwright-mcp --headless --isolated` since 2026-09-19. Without `--isolated` every session shared one on-disk profile and only the first could open a browser. Each session now gets an in-memory profile, so no login survives a browser close. Change it with `claude mcp remove playwright -s local` then `claude mcp add playwright -s local -- playwright-mcp --headless`, run from `C:/Users/skf_s` |
 | `sentry` | user | error tracking |
 | `context7` | user | library docs |
+| `reddit-mcp-buddy` | user | Reddit read tools, pinned `reddit-mcp-buddy@1.1.14`, anonymous, added 2026-09-23. From this box Reddit 403s its JSON API, so search fails and browse falls back to RSS. What works: `search.rss` and `<thread>/.rss` feeds through Git's `curl.exe` (Node's `fetch` gets 403), about 1 request a minute by the `x-ratelimit-*` headers. Script: phzse session scratchpad `reddit/pull-rss.mjs`. Higher limits need a Reddit script app (`REDDIT_CLIENT_ID`/`SECRET`), Keith's to create. In Git Bash run `command claude mcp ...`: `claude` is a shell function that adds `--remote-control` |
 
 `luminus-mcp` v0.7.0 is npm-published with a global binary but is NOT registered in
 any MCP config on this machine. Register it per its README to use it. Its ENTSO-E key

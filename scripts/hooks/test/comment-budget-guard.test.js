@@ -152,6 +152,49 @@ test('comment, code, comment, code, comment, code is allowed', () => {
   assert.strictEqual(out, null);
 });
 
+function legacyFile(name) {
+  const lines = [];
+  for (let i = 0; i < 40; i += 1) lines.push(i % 3 === 1 ? `// legacy note ${i}` : `const l${i} = ${i};`);
+  return { lines, filePath: writeTemp(name, lines.join(NL) + NL) };
+}
+
+function editOut(filePath, oldStr, newStr) {
+  return runHook(HOOK, { tool_name: 'Edit', tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr } });
+}
+
+test('over-budget file: a code-only edit allows', () => {
+  const { filePath } = legacyFile('legacy-a.js');
+  assert.strictEqual(editOut(filePath, 'const l0 = 0;', 'const l0 = 100;'), null);
+});
+
+test('over-budget file: an edit that removes a comment allows', () => {
+  const { lines, filePath } = legacyFile('legacy-b.js');
+  assert.strictEqual(editOut(filePath, lines[1] + NL + lines[2], lines[2]), null);
+});
+
+test('over-budget file: one new comment with one new code line denies', () => {
+  const { lines, filePath } = legacyFile('legacy-c.js');
+  assert.ok(isDeny(editOut(filePath, lines[0], lines[0] + NL + '// fresh note' + NL + 'const fresh = 1;')));
+});
+
+test('over-budget file: one new comment with four new code lines allows', () => {
+  const { lines, filePath } = legacyFile('legacy-d.js');
+  const added = [lines[0], '// fresh note'].concat(codeLines(4, 'n'));
+  assert.strictEqual(editOut(filePath, lines[0], added.join(NL)), null);
+});
+
+test('over-budget file: a code line swapped for a comment denies', () => {
+  const { lines, filePath } = legacyFile('legacy-e.js');
+  assert.ok(isDeny(editOut(filePath, lines[6], '// swapped in for the code')));
+});
+
+test('healthy file pushed over budget by an edit still denies', () => {
+  const base = codeLines(20, 'h');
+  [3, 9, 15].forEach((i) => { base[i] = '// existing note'; });
+  const filePath = writeTemp('healthy.js', base.join(NL) + NL);
+  assert.ok(isDeny(editOut(filePath, base[18], '// extra one' + NL + '// extra two' + NL + base[18])));
+});
+
 after(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
