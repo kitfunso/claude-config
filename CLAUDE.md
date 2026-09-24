@@ -51,7 +51,7 @@ A direct question gets a light answer: 1 to 3 lines, at most one file read, from
 - Backstop: the commit-message hook.
 
 ## Hand-Maintained Files (CRITICAL)
-Before fully rewriting any file in `~/.claude/` or any `CLAUDE.md`: show the proposed content and wait for an explicit "apply". Targeted Edits proceed normally. Never edit a file under `~/.claude/` from the shell; the backup hook only sees Edit and Write. "Refresh" means swap the stale facts, never rewrite.
+Before fully rewriting any file in `~/.claude/` or any `CLAUDE.md`: show the proposed content and wait for an explicit "apply". Targeted Edits proceed normally. Never edit a file under `~/.claude/` from the shell; the backup hook only sees Edit and Write. Git is the one exception: `~/.claude` is a checkout of claude-config, so its history is the backup; run `git status --porcelain` and commit before any pull or checkout. "Refresh" means swap the stale facts, never rewrite.
 
 ## Hooks (deterministic backstops)
 Per-box binding lives in `settings.json`. The hook is the verifier; the prose rule still binds where the hook is blind.
@@ -59,10 +59,13 @@ Per-box binding lives in `settings.json`. The hook is the verifier; the prose ru
 | Guard | Fires on | Blind spots | Escape hatch |
 |---|---|---|---|
 | Capability existence: `/name` refs get a `[CAPABILITY EXISTS]` notice | UserPromptSubmit | bundled skills not on disk, plugin commands, refs without a slash | none |
-| Human voice: every prompt gets the `[HUMAN VOICE]` reply-shape rule in context | UserPromptSubmit | cannot read the reply itself; a reminder, not a gate | `CLAUDE_HUMAN_VOICE=off` |
-| Do it properly: every prompt gets the `[DO IT PROPERLY]` staged-work rule in context | UserPromptSubmit | cannot read the reply itself; a reminder, not a gate | `CLAUDE_DO_IT_PROPERLY=off` |
+| Human voice: every prompt gets the `[HUMAN VOICE]` reply-shape rule in context, plus one sentence naming the reply check's flags on the last reply | UserPromptSubmit | a reminder, not a gate; the reply check does the measuring | `CLAUDE_HUMAN_VOICE=off` |
+| Do it properly: every prompt gets the `[DO IT PROPERLY]` staged-work rule in context | UserPromptSubmit | a reminder, not a gate; the reply check flags sweeping claims | `CLAUDE_DO_IT_PROPERLY=off` |
+| Reply check: after each reply, logs counts and flags (over 8 lines or 220 words unless depth was asked for, a table, 6+ bullets, a banned word, a sweeping claim, 2+ numbers with no tool call, fix-it edits with no `<diagnosis>`) to `~/.claude/state/reply_check.jsonl`; the weekly scorecard reads the log | Stop | logs, never blocks: a block cannot un-show a reply, it only prints a second one; counts shapes, not meaning | `CLAUDE_REPLY_CHECK=off` |
+| Rewrite gate: denies a Write over an existing `CLAUDE.md`, `~/.claude/settings.json`, or a file git tracks in `~/.claude`, unless the latest human prompt says "apply" | Write | Edit and shell writes; other untracked files such as memory; "apply" anywhere in the prompt passes | `CLAUDE_REWRITE_GATE=off` |
+| Config sync: fetches claude-config; a clean `~/.claude` that is only behind `origin/main` fast-forwards, any other tree gets new skills and commands only, inside the sparse rules | SessionStart | never merges a dirty or diverged tree; offline skips | none |
 | Commit messages: denies em dash in inline `git commit` text and PowerShell stdin pipes; the `git_guard.py` port instead injects the current branch before a mutating git command and warns on banned AI-isms | Bash / PowerShell | `-F <file>` messages | none |
-| Backup: copies the file to `~/.claude/backups/` before any write under `~/.claude/` or to a `CLAUDE.md`, and logs it | Edit / Write | shell-side edits | none |
+| Backup: saves one dated `.old-YYYYMMDD` copy per day beside any `.md`, `.json` or `.py` under `~/.claude/`, or any `CLAUDE.md`, before the edit | Edit / Write | shell-side edits; `.js`, `.html`, `.yaml` (git history covers the tracked ones) | none |
 | PS 5.1 stderr: blocks `2>&1` on native exes | Bash / PowerShell | none | none |
 | Comment budget: denies more than 3 comment lines in a row in the edit, or more than 20% comment density in the file after the edit (15+ lines); skips markdown, JSON, config, `docs/`, docstrings, JSDoc | Edit / Write | shell writes; cannot judge WHY from WHAT | `CLAUDE_COMMENT_BUDGET=off` |
 | Resource tripwire: 40+ tool calls with no Skill/Agent/Workflow gets a notice; a command matching `.claude/tripwires.json` is denied without its protocol file, and run N x every is denied until `AUDIT <sid8> #N` is in the audit file | UserPromptSubmit; Bash / PowerShell | regex on command text; repos without `tripwires.json` | none |
@@ -93,14 +96,14 @@ If downstream, stop: say "this is a patch, the root cause is X and the structura
 - Memory is point-in-time and rots silently; treat any "pending / broken / next" claim older than a week as unverified until checked against the repo. Memories inform how, never what.
 - **Writeback at ship time:** when a session closes anything recorded in memory, update the memory file in the same session, and `hippo remember` the correction on boxes that have hippo.
 - Re-read the specific section before answering about any file over 300 lines or any multi-file question; a big window is room to re-read, not a licence to recall. Write load-bearing state to disk before compaction and re-derive it after.
-- A rule without a verifier is a claim: propose the hook or grep in the same turn you strengthen a CRITICAL rule. New rules from one incident carry `(probation)`. The monthly audit (`clawd/memory/cron-prompts/claude-config-audit.md`) proposes removals.
+- A rule without a verifier is a claim: propose the hook or grep in the same turn you strengthen a CRITICAL rule. New rules from one incident carry `Set YYYY-MM-DD (probation)`, the form the weekly scorecard (`scripts/scorecard.py`) parses. After 30 days it flags them, and the monthly audit (`clawd/memory/cron-prompts/claude-config-audit.md`) proposes dropping each one or making it permanent.
 
 ## Human Voice (CRITICAL)
 The chat is what you would say across a desk; the page or file is the report. Never the other way round.
 - First sentence is the answer. Default under 8 lines; go long only when asked or when the task truly needs it.
 - Two or three numbers at most, the ones that carry the point; the rest stay in the HTML page or the file. No tables and no bullet walls in chat.
 - Short sentences, active voice, plain words, one topic per paragraph. Explain any term of art right after using it. A decision for me: 2 options max, the context to pick fast, and your pick.
-- Backstop: the human-voice hook (`scripts/hooks/human_voice.py`), which puts this rule into context on every prompt. Set 2026-09-22 (probation) after two numbers-heavy reports in one session.
+- Backstops: `scripts/hooks/human_voice.py` puts this rule into context on every prompt, and `scripts/hooks/reply_check.py` measures each reply against it. Set 2026-09-22 (probation) after two numbers-heavy reports in one session.
 - **Banned in every output** (chat, docs, comments, commits, identifiers): "canonical" (say shared, standard, common, or name the thing); and delve, leverage (verb), robust, seamless, holistic, crucial, pivotal, foster, harness, unlock, empower, elevate, streamline, meticulous, intricate, nuanced, vibrant, tapestry, realm, landscape/journey/navigate as metaphors, underscore (verb), showcase, boast, enhance (for improve), notably, surpass, garner, strategically, "dive into", "unpack", "it's worth noting", "moreover"/"furthermore" as openers, "In conclusion". Domain terms (robust regression) stay.
 - Cut throat-clearing openers and closing restatements. No "not X, it's Y" scaffolding. Bold only what a reader must not miss. Emoji only after the user does.
 - Voice work (grants, LinkedIn, X, email, marketing, README): read the matching sample in `~/.claude/voice/` first and match it; if it is missing, draft in the Human Voice style and say the samples are missing.
@@ -110,7 +113,7 @@ Building anything, a model most of all, is staged work. Rushing is calling a sta
 - Name the stages and the check that closes each one before starting. For a model: framing and target; data audit (spans, cadence, as-of status per table); feature engineering; selection with leakage control; model comparison against the naive and the best simple baseline; walk-forward validation; error analysis by regime; write-up. A daily read with a ledger is the last stage, never "shipping".
 - "Done" is a claim about that list: report every stage as done, partial or skipped, with the check that passed. Never "tried everything", "every table" or "all notebooks" without the enumerated list of what was and was not covered.
 - Read every reference artefact in full before summarising it. Before calling data absent, search the whole family (table prefix, directory), not one keyword.
-- Never skip a check to save time. A pause between stages is not a check: approved work runs straight through, and the stage report goes in the final message. Backstop: `scripts/hooks/do_it_properly.py` puts this rule into context on every prompt. Set 2026-09-22 (probation) after the td3c wide-screen incident (`docs/incidents.md`).
+- Never skip a check to save time. A pause between stages is not a check: approved work runs straight through, and the stage report goes in the final message. Backstops: `scripts/hooks/do_it_properly.py` puts this rule into context on every prompt, and `scripts/hooks/reply_check.py` flags sweeping claims. Set 2026-09-22 (probation) after the td3c wide-screen incident (`docs/incidents.md`).
 
 ## Model Routing
 Roles, not names. Opus is the default session model and the top of the ladder: Keith's read (2026-09-23) is that Opus 5.5 beats Fable 5.1 at everything, prose included, at 40% of the price. Fable only on explicit ask. Sonnet 5, at half the Opus per-token price, does mechanical sub-agent work only; Haiku is banned. Effort ladder `low | medium | high | xhigh | max`; `xhigh` for coding and agentic work. The session model verifies its own work; do not add "double-check" scaffolding to its prompts.
@@ -120,7 +123,7 @@ Roles, not names. Opus is the default session model and the top of the ladder: K
 - **On Fable the main thread reads, decides and briefs.** Browser driving, build or test loops, and any run past about 15 exec calls go to a Sonnet agent with the commands, the files and the pass/fail check.
 - Launch parallel agents in one message, split by non-overlapping files, and keep working while they run. Take a sub-agent's findings as done. Single-fact lookups never get a sub-agent. A fan-out that costs money needs the cost and a yes first.
 
-## Outside Voice (CRITICAL for plans)
+## Outside Voice (DEFAULT for plans)
 Before implementing a plan that touches locked contracts, migrations or new architecture, or that the user asked to have reviewed, send the plan to `/plan-eng-review`, `/codex`, or a `senior-code-reviewer` sub-agent briefed with the plan file and the source-of-truth docs, report capped. Consolidate the revisions (section, issue, fix), apply them, and start building; the list goes in the report. Stop only for a revision that is a genuine fork (ASK-FIRST 5) or touches a locked contract or live data. Single-step fixes and prose drafts: optional.
 
 ## Execution habits
