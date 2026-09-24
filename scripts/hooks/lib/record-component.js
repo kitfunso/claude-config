@@ -3,8 +3,10 @@
 // change what the caller was going to do.
 
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
-const DEFAULT_DB = 'C:/Users/skf_s/.claude/dev-framework/episodes.db';
+const DEFAULT_DB = path.join(os.homedir(), '.claude', 'dev-framework', 'episodes.db');
 
 function record({ kind, name, sessionId, cwd, blocked = 0, notes = null }) {
   try {

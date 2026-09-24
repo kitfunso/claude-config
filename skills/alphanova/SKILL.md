@@ -11,7 +11,7 @@ models. The rules are written down here. Cycle 2 started at round 39 and still
 repeated round 1 on a different construct (section 11). The method block below
 is the fix. Read it before anything else.
 
-**Repo:** `C:/Users/skf_s/alphanova`. Read `comp6_scientist_release/COMPETITION.md`
+**Repo:** `~/alphanova`. Read `comp6_scientist_release/COMPETITION.md`
 and the repo `CLAUDE.md` before writing model code. Full ledger:
 `research/SCOREBOARD.md` (every round, every retraction). **Every number in this
 skill, with its source and the experiments behind it, is in `evidence.md` next to

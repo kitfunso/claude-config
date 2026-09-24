@@ -61,3 +61,18 @@
 # Eval run output: generated, and it carries local temp paths.
 /skills/**/evals/results/
 /skills/**/evals/results/**
+
+# Box-local: .git/info/exclude cannot override the allowlist negations above, so
+# per-box ignores live here. Drafts in docs/plans can quote memory; this repo is public.
+/skills/*-workspace/
+/skills/*-workspace/**
+/skills/ponytail*/
+/skills/ponytail*/**
+/skills/synced/
+/skills/synced/**
+/docs/plans/*.trim.md
+/docs/plans/*.proposed.md
+/docs/plans/*.settings.json
+/docs/plans/*.agent.md
+/scripts/hooks/suggest-compact.js
+/scripts/test-comment-budget.js

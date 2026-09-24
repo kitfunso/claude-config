@@ -80,4 +80,4 @@ Gate: both listings live, the day-one watch recorded, and the post-deploy check 
 
 ## Leaving a session
 
-Write `docs/LAUNCH.md`, then `hippo remember "<app> at stage N: <gate state>" --pin` from `C:\Users\skf_s`, and update the app's memory file. Rotate any secret that appeared in chat before the session ends.
+Write `docs/LAUNCH.md`, then `hippo remember "<app> at stage N: <gate state>" --pin` from `~`, and update the app's memory file. Rotate any secret that appeared in chat before the session ends.

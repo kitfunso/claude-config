@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const budget = require('./hooks/comment-budget-guard.js');
+const HOME_PREFIX = /^.*\/Users\/[^/]+\//;
 
 // Only names that are never hand-written source. Words like assets, public, lib
 // and examples are real source directories in some repos, so they are judged by
@@ -93,7 +94,7 @@ const hits = files.map(grade).filter(Boolean).sort((a, b) => b.waste - a.waste |
 
 const byRepo = new Map();
 for (const h of hits) {
-  const rel = h.file.replace(/^.*\/skf_s\//, '');
+  const rel = h.file.replace(HOME_PREFIX, '');
   const repo = rel.split('/')[0];
   const cur = byRepo.get(repo) || { repo, files: 0, waste: 0, worstRun: 0 };
   cur.files += 1; cur.waste += h.waste; cur.worstRun = Math.max(cur.worstRun, h.run);
@@ -110,7 +111,7 @@ console.log('\nTOP ' + top + ' FILES');
 console.log('cmt/lines'.padEnd(12) + 'dens'.padStart(6) + 'run'.padStart(5) + '  file');
 for (const h of hits.slice(0, top)) {
   console.log((h.comments + '/' + h.lines).padEnd(12) + (h.density + '%').padStart(6) +
-    String(h.run).padStart(5) + '  ' + h.file.replace(/^.*\/skf_s\//, ''));
+    String(h.run).padStart(5) + '  ' + h.file.replace(HOME_PREFIX, ''));
 }
 if (jsonIdx >= 0) {
   fs.writeFileSync(args[jsonIdx + 1], JSON.stringify(hits, null, 2));

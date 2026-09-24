@@ -72,12 +72,12 @@ Every number below came from a command run on 2026-09-04. Re-run any of them.
 
 | Fact | Command |
 |---|---|
-| 45/45 policy updates unlinked, 0 fixes scorable | `python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-effect` |
-| 0 of 182 failure_modes carry `fix_applied_to` | `python -c "import sqlite3;print(sqlite3.connect(r'C:/Users/skf_s/.claude/dev-framework/episodes.db').execute('select count(*) from failure_modes where fix_applied_to is not null').fetchone())"` |
-| 114 audit firings unscored (pre-2026-08-24), 13 scored (2026-09-02) | `python -c "import sqlite3;print(sqlite3.connect(r'C:/Users/skf_s/.claude/dev-framework/episodes.db').execute(\"select case when caught is null then 'NULL' else 'scored' end k,count(*),min(created_at),max(created_at) from audit_rule_firings group by k\").fetchall())"` |
-| trigger mix: manual 20, auto-tier1 18, operator_friction 7 | `python -c "import sqlite3;print(sqlite3.connect(r'C:/Users/skf_s/.claude/dev-framework/episodes.db').execute('select trigger,count(*) from policy_updates group by trigger').fetchall())"` |
+| 45/45 policy updates unlinked, 0 fixes scorable | `python ~/.claude/dev-framework/scripts/devrl.py learn-effect` |
+| 0 of 182 failure_modes carry `fix_applied_to` | `python -c "import sqlite3;print(sqlite3.connect(r'$HOME/.claude/dev-framework/episodes.db').execute('select count(*) from failure_modes where fix_applied_to is not null').fetchone())"` |
+| 114 audit firings unscored (pre-2026-08-24), 13 scored (2026-09-02) | `python -c "import sqlite3;print(sqlite3.connect(r'$HOME/.claude/dev-framework/episodes.db').execute(\"select case when caught is null then 'NULL' else 'scored' end k,count(*),min(created_at),max(created_at) from audit_rule_firings group by k\").fetchall())"` |
+| trigger mix: manual 20, auto-tier1 18, operator_friction 7 | `python -c "import sqlite3;print(sqlite3.connect(r'$HOME/.claude/dev-framework/episodes.db').execute('select trigger,count(*) from policy_updates group by trigger').fetchall())"` |
 | `claude-config-audit` cron: 2 consecutive errors, 581s run, not delivered | `openclaw cron get 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50` |
-| Skill name is `tool_input.skill`, agent type is `tool_input.subagent_type` | `grep -o '"name":"Skill","input":{"skill":"[^"]*"' C:/Users/skf_s/.claude/projects/C--Users-skf-s/*.jsonl \| head` |
+| Skill name is `tool_input.skill`, agent type is `tool_input.subagent_type` | `grep -o '"name":"Skill","input":{"skill":"[^"]*"' ~/.claude/projects/C--Users-skf-s/*.jsonl \| head` |
 
 ### Non-goal, recorded on purpose
 
@@ -95,11 +95,11 @@ after 20 instrumented episodes carry a scored `caught` value.
 
 `tests/conftest.py` defines only `db_path`, `migrated_db` and `conn`. The fixtures the later tasks
 use do not exist anywhere in `tests/` — verify with
-`grep -rn "tmp_db\|tmp_db_with_pending_clusters" C:/Users/skf_s/.claude/dev-framework/tests/`
+`grep -rn "tmp_db\|tmp_db_with_pending_clusters" ~/.claude/dev-framework/tests/`
 (expect zero hits). Write them before the tasks that need them, or every later test fails on a
 missing fixture rather than on the behaviour under test.
 
-**Files:** Modify `C:/Users/skf_s/.claude/dev-framework/tests/conftest.py`
+**Files:** Modify `~/.claude/dev-framework/tests/conftest.py`
 
 - `tmp_db` — a migrated empty DB path, built on the existing `migrated_db`. Do not duplicate its logic.
 - `tmp_db_with_pending_clusters` — `tmp_db` plus at least two `failure_modes` rows with
@@ -131,9 +131,9 @@ Commit before starting A0b.
 **This is the first real fix. Without it every link Part A creates is erased by normal use.**
 
 **Files:**
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/episode_store.py:1046-1061` (`replace_failure_modes`)
-- Create: `C:/Users/skf_s/.claude/dev-framework/migrations/0018_acted_fix_applied_to.sql`
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_failure_mode_link_durability.py`
+- Modify: `~/.claude/dev-framework/scripts/episode_store.py:1046-1061` (`replace_failure_modes`)
+- Create: `~/.claude/dev-framework/migrations/0018_acted_fix_applied_to.sql`
+- Test: `~/.claude/dev-framework/tests/test_failure_mode_link_durability.py`
 
 **The defect.** `replace_failure_modes` initialises `fix_applied_to = None` at line 1047. The
 `prior_status` branch (1048) restores it by matching `cluster_id`. The `elif acted_statuses` branch
@@ -174,7 +174,7 @@ Then in the `elif acted_statuses` branch, restore `fix_applied_to` alongside `ap
 value from the same observation that supplied the `max(acted_at)`.
 
 **Step 4: Run the test, confirm PASS. Then run the whole suite** — this function is load-bearing:
-`python -m pytest C:/Users/skf_s/.claude/dev-framework/tests/ -q`
+`python -m pytest ~/.claude/dev-framework/tests/ -q`
 
 **Step 5: Back up the DB and migrate**, per the A2 pattern (`.bak-20260904-pre-0018`).
 
@@ -194,7 +194,7 @@ execution:
    `applied` status, **0** carrying a fix link, against 45 policy updates. `learn-effect` had nothing
    to score at all. Reproduce with
    `python -c "import sqlite3;c=sqlite3.connect('episodes.db');print(c.execute('SELECT status,COUNT(*) FROM acted_observations GROUP BY status').fetchall(),c.execute('SELECT COUNT(*) FROM failure_modes WHERE fix_applied_to IS NOT NULL').fetchone())"`
-   from `C:/Users/skf_s/.claude/dev-framework`.
+   from `~/.claude/dev-framework`.
 
 The historical 44 stay unlinked: `acted_observations.fix_applied_to` is NULL for every pre-migration
 row and the policy update that acted on each one is not recoverable from the schema. A2's backfill is
@@ -205,8 +205,8 @@ the only route to them, and it must not guess.
 ### Task A0c: Close the auto-tier1 bypass (CRIT)
 
 **Files:**
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/episode_store.py:1314-1353` (`register_memory_auto_tier1`)
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_auto_tier1_linking.py`
+- Modify: `~/.claude/dev-framework/scripts/episode_store.py:1314-1353` (`register_memory_auto_tier1`)
+- Test: `~/.claude/dev-framework/tests/test_auto_tier1_linking.py`
 
 **The defect.** `register_memory_auto_tier1` runs its own raw `INSERT INTO policy_updates` at line
 1349 and never calls `record_policy_update`. Its `cluster_id` argument only reaches
@@ -233,9 +233,9 @@ extract the shared write instead of duplicating it.
 ### Task A1: Refuse a silent `--unlinked`
 
 **Files:**
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py:1140-1152` (the `--unlinked` guard in `cmd_learn_apply`)
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py` (argparse block for `learn-apply`)
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_learn_apply_linking.py`
+- Modify: `~/.claude/dev-framework/scripts/devrl.py:1140-1152` (the `--unlinked` guard in `cmd_learn_apply`)
+- Modify: `~/.claude/dev-framework/scripts/devrl.py` (argparse block for `learn-apply`)
+- Test: `~/.claude/dev-framework/tests/test_learn_apply_linking.py`
 
 **Step 1: Write the failing test**
 
@@ -274,7 +274,7 @@ def test_unlinked_with_reason_is_accepted(tmp_db):
 
 **Step 2: Run it to verify it fails**
 
-Run: `python -m pytest C:/Users/skf_s/.claude/dev-framework/tests/test_learn_apply_linking.py -v`
+Run: `python -m pytest ~/.claude/dev-framework/tests/test_learn_apply_linking.py -v`
 Expected: FAIL, `--unlinked-reason` is not a recognised argument.
 
 **Step 3: Add the argument and the guard**
@@ -317,14 +317,14 @@ a matching column (Task A2 migration).
 
 **Step 4: Run the test to verify it passes**
 
-Run: `python -m pytest C:/Users/skf_s/.claude/dev-framework/tests/test_learn_apply_linking.py -v`
+Run: `python -m pytest ~/.claude/dev-framework/tests/test_learn_apply_linking.py -v`
 Expected: PASS, 2 passed.
 
 **Step 5: Commit**
 
 ```bash
-git -C C:/Users/skf_s/.claude add dev-framework/scripts/devrl.py dev-framework/tests/test_learn_apply_linking.py
-git -C C:/Users/skf_s/.claude commit -F <message file>
+git -C ~/.claude add dev-framework/scripts/devrl.py dev-framework/tests/test_learn_apply_linking.py
+git -C ~/.claude commit -F <message file>
 ```
 
 Message: `feat: require --unlinked-reason on unlinked learn-apply deltas`
@@ -334,13 +334,13 @@ Message: `feat: require --unlinked-reason on unlinked learn-apply deltas`
 ### Task A2: Migration for `unlinked_reason`
 
 **Files:**
-- Create: `C:/Users/skf_s/.claude/dev-framework/migrations/0018_unlinked_reason.sql`
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/episode_store.py:1136-1180` (`record_policy_update`)
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_episode_store.py`
+- Create: `~/.claude/dev-framework/migrations/0018_unlinked_reason.sql`
+- Modify: `~/.claude/dev-framework/scripts/episode_store.py:1136-1180` (`record_policy_update`)
+- Test: `~/.claude/dev-framework/tests/test_episode_store.py`
 
 **Step 1: Read the existing migration convention**
 
-Run: `ls C:/Users/skf_s/.claude/dev-framework/migrations/ && cat C:/Users/skf_s/.claude/dev-framework/migrations/0017_*.sql`
+Run: `ls ~/.claude/dev-framework/migrations/ && cat ~/.claude/dev-framework/migrations/0017_*.sql`
 There are 17 rows in `schema_migrations`; match the numbering and the file shape exactly.
 
 **Step 2: Write the failing store test**
@@ -358,7 +358,7 @@ def test_record_policy_update_persists_unlinked_reason(store):
 
 **Step 3: Run it, confirm it fails**
 
-Run: `python -m pytest C:/Users/skf_s/.claude/dev-framework/tests/test_episode_store.py -k unlinked_reason -v`
+Run: `python -m pytest ~/.claude/dev-framework/tests/test_episode_store.py -k unlinked_reason -v`
 Expected: FAIL, unexpected keyword argument.
 
 **Step 4: Write the migration and the store change**
@@ -374,9 +374,9 @@ The repo convention is a dated `.bak-` copy before any schema change (see
 `episodes.db.bak-20260901-pre-caught`).
 
 ```bash
-cp C:/Users/skf_s/.claude/dev-framework/episodes.db \
-   C:/Users/skf_s/.claude/dev-framework/episodes.db.bak-20260904-pre-0018
-python C:/Users/skf_s/.claude/dev-framework/scripts/migrate.py
+cp ~/.claude/dev-framework/episodes.db \
+   ~/.claude/dev-framework/episodes.db.bak-20260904-pre-0018
+python ~/.claude/dev-framework/scripts/migrate.py
 ```
 
 **Step 6: Run the test, confirm PASS, commit**
@@ -390,9 +390,9 @@ Message: `feat: persist unlinked_reason on policy updates (migration 0018)`
 The escape hatch was taken because linking means looking up an integer. Remove that cost.
 
 **Files:**
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py` (`cmd_learn_apply`, before the guard)
-- Reuse: `C:/Users/skf_s/.claude/dev-framework/scripts/clustering.py` (existing lexical similarity; do NOT write a new one)
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_learn_apply_linking.py`
+- Modify: `~/.claude/dev-framework/scripts/devrl.py` (`cmd_learn_apply`, before the guard)
+- Reuse: `~/.claude/dev-framework/scripts/clustering.py` (existing lexical similarity; do NOT write a new one)
+- Test: `~/.claude/dev-framework/tests/test_learn_apply_linking.py`
 
 **Step 1: Use the two helpers that already exist**
 
@@ -439,9 +439,9 @@ Propose-only. A human confirms before anything is written, because `delta_summar
 matching is fuzzy and a wrong link corrupts `learn-effect` worse than no link.
 
 **Files:**
-- Create: `C:/Users/skf_s/.claude/dev-framework/scripts/backfill_policy_links.py`
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py` (register `learn-backfill` subcommand)
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_backfill_policy_links.py`
+- Create: `~/.claude/dev-framework/scripts/backfill_policy_links.py`
+- Modify: `~/.claude/dev-framework/scripts/devrl.py` (register `learn-backfill` subcommand)
+- Test: `~/.claude/dev-framework/tests/test_backfill_policy_links.py`
 
 **Step 1: Write the failing test**
 
@@ -471,7 +471,7 @@ def test_apply_requires_confidence_threshold(tmp_db):
 
 **Step 4: Run the dry run against the live DB and read every row**
 
-Run: `python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-backfill --dry-run`
+Run: `python ~/.claude/dev-framework/scripts/devrl.py learn-backfill --dry-run`
 Expected: a 45-row table. **STOP here and show Keith.** He picks the threshold. This is an
 ASK-FIRST trigger (schema-affecting write to live data).
 
@@ -484,7 +484,7 @@ Message: `feat: add learn-backfill proposer for unlinked policy updates`
 ### Task A5: Fix the `claude-config-audit` cron
 
 **Files:**
-- Modify: `C:/Users/skf_s/clawd/memory/cron-prompts/claude-config-audit.md`
+- Modify: `~/clawd/memory/cron-prompts/claude-config-audit.md`
 - Cron id: `05558fba-d91c-4cc8-9d6f-dd5fbd6aed50`
 
 **Step 1: Reproduce before changing anything**
@@ -527,13 +527,13 @@ executed since this crash started.
 
 Run the cron manually and confirm `lastRunStatus: ok` and `lastDelivered: true`.
 
-**Step 4: Commit the prompt change** in the `clawd` repo (check `git -C C:/Users/skf_s/clawd branch` first).
+**Step 4: Commit the prompt change** in the `clawd` repo (check `git -C ~/clawd branch` first).
 
 **DONE 2026-09-04. The diagnosis above was wrong and the prompt needed no change.**
 
 The reproduction cleared check 5: `hippo status`, `hippo dedup --dry-run --threshold 0.85` and
 `hippo conflicts --status open` all exit 0 today. So the failing session was read directly:
-`C:/Users/skf_s/.openclaw/agents/main/sessions/f56b949b-8d7a-44e1-9b4e-7b6880e43e7a.jsonl`, 79 rows,
+`~/.openclaw/agents/main/sessions/f56b949b-8d7a-44e1-9b4e-7b6880e43e7a.jsonl`, 79 rows,
 08:01:41Z to 08:11:22Z on 2026-09-01. **All eight checks completed and the full report was written**,
 ending "No audit changes were made, so no commit was created." The run did not crash on a command.
 
@@ -567,13 +567,13 @@ transcript first.
 Found while reproducing A5. This is probably the highest-value item in Part A, because every other
 loop leans on hippo.
 
-**Observed 2026-09-04, cwd `C:/Users/skf_s`:**
+**Observed 2026-09-04, cwd `~`:**
 
 ```
 $ hippo status                                 -> "No .hippo directory found. Run `hippo init` first."  exit 0
 $ hippo dedup --dry-run --threshold 0.85       -> "No .hippo directory found. Run `hippo init` first."  exit 0
 $ hippo conflicts --status open                -> "No .hippo directory found. Run `hippo init` first."  exit 0
-$ ls C:/Users/skf_s/.hippo                     -> config.json, embeddings.json (13MB, modified today), episodic/, buffer/, conflicts/
+$ ls ~/.hippo                     -> config.json, embeddings.json (13MB, modified today), episodic/, buffer/, conflicts/
 $ hippo context --pinned-only --include-recent 2 -> returns 20 memories, works fine
 ```
 
@@ -590,18 +590,18 @@ from "I could not find your data". Every wrapper reports success.
 **Root cause confirmed 2026-09-04.** The same command from a project directory works:
 
 ```
-$ cd C:/Users/skf_s/clawd && hippo status
+$ cd ~/clawd && hippo status
 Total memories: 630   Episodic: 564   Semantic: 66   Pinned: 5   At risk (<0.2): 223
 ```
 
 So `~/.hippo` is the **global** store and the resolver deliberately does not treat home as a project
 store. The resolver is right. The bug is in the harness: **the SessionStart hook and the config-audit
-cron both run at cwd `C:/Users/skf_s`, where there is no project store, so they no-op forever.**
+cron both run at cwd `~`, where there is no project store, so they no-op forever.**
 This is a wiring fix, not a hippo fix. Do not change hippo's resolver.
 
 **Files:**
-- Modify: `C:/Users/skf_s/.claude/settings.json` SessionStart hook (hand-maintained: show Keith, wait for "apply")
-- Modify: `C:/Users/skf_s/clawd/memory/cron-prompts/claude-config-audit.md` check 5
+- Modify: `~/.claude/settings.json` SessionStart hook (hand-maintained: show Keith, wait for "apply")
+- Modify: `~/clawd/memory/cron-prompts/claude-config-audit.md` check 5
 
 **Step 1: Find the flag that targets the global store.**
 
@@ -616,7 +616,7 @@ consolidation line.
 **Step 3: Rewire config-audit check 5** the same way, and add the expected non-empty output to the
 check so a future no-op is visible as a FLAG rather than a silent PASS.
 
-**Step 4: Raise the exit-code issue upstream in the hippo repo** (`C:/Users/skf_s/hippo`, see
+**Step 4: Raise the exit-code issue upstream in the hippo repo** (`~/hippo`, see
 `AGENTS.md`). `hippo status` exits 0 when it finds no store, so every wrapper reads "success". That
 is worth a non-zero exit or a distinct message, and it is the reason this went unnoticed for months.
 Separate commit, separate repo, lower priority than steps 1-3.
@@ -636,9 +636,9 @@ Wrong claim 2: "`~/.hippo` is the global store and the resolver deliberately doe
 as a project store." The opposite is true. Reproduce:
 
 ```
-$ (cd C:/Users/skf_s        && hippo status)   -> Total memories: 1665   exit 0
-$ (cd C:/Users/skf_s/.claude && hippo status)  -> No .hippo directory found   exit 1
-$ (cd C:/Users/skf_s/clawd   && hippo status)  -> Total memories: 630    exit 0
+$ (cd ~        && hippo status)   -> Total memories: 1665   exit 0
+$ (cd ~/.claude && hippo status)  -> No .hippo directory found   exit 1
+$ (cd ~/clawd   && hippo status)  -> Total memories: 630    exit 0
 ```
 
 Home works. Every subdirectory fails. Hippo resolves the store as `<cwd>/.hippo` with no
@@ -646,7 +646,7 @@ upward walk, and `status`, `dedup` and `conflicts` ignore both `--global` and `H
 even though `init` and `remember` accept them. That selector gap is the real root cause.
 
 Wrong claim 3: "check 5 of the config audit is a no-op". It runs. The preflight sets
-`--workspace C:\Users\skf_s\clawd`, which has its own store, so check 5 has been auditing
+`--workspace ~/clawd`, which has its own store, so check 5 has been auditing
 clawd's 630 memories every month while the 1665-memory home store was never audited. The
 2026-09-01 report's "627 memories" is clawd's number, which is what made this look healthy.
 
@@ -656,7 +656,7 @@ non-zero exit as a FLAG rather than a silent PASS.
 
 **Not fixed, for Keith:**
 1. `status`, `dedup` and `conflicts` should honour `--global` / `HIPPO_HOME` like `init` and
-   `remember` do. That is a change in `C:/Users/skf_s/hippo`, a published npm package. The repo
+   `remember` do. That is a change in `~/hippo`, a published npm package. The repo
    working tree is on `antislop-migration` at 1.29.0 while the installed CLI is 1.38.0, so this
    needs its own branch and release cycle.
 2. `hippo session-end` (the SessionEnd hook, `settings.json:113`) inherits the session's cwd, so
@@ -679,9 +679,9 @@ backfill has landed and `learn-effect` reports a non-zero `applied fixes` count.
 ### Task B1: `component_outcomes` table
 
 **Files:**
-- Create: `C:/Users/skf_s/.claude/dev-framework/migrations/0019_component_outcomes.sql`
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/episode_store.py`
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_component_outcomes.py`
+- Create: `~/.claude/dev-framework/migrations/0019_component_outcomes.sql`
+- Modify: `~/.claude/dev-framework/scripts/episode_store.py`
+- Test: `~/.claude/dev-framework/tests/test_component_outcomes.py`
 
 **Design note (read before writing the DDL):** this goes in `episodes.db`, not a new file.
 `critic_trust_scores`, `audit_rule_firings` and `policy_updates` already live there, and the
@@ -731,18 +731,18 @@ Steps follow the A2 pattern exactly: failing test, `.bak-20260904-pre-0019` copy
 ### Task B2: PostToolUse recorder hook
 
 **Files:**
-- Create: `C:/Users/skf_s/.claude/scripts/hooks/component-recorder.js`
-- Modify: `C:/Users/skf_s/.claude/settings.json` (PostToolUse block)
-- Test: `C:/Users/skf_s/.claude/dev-framework/tests/test_component_recorder.py`
+- Create: `~/.claude/scripts/hooks/component-recorder.js`
+- Modify: `~/.claude/settings.json` (PostToolUse block)
+- Test: `~/.claude/dev-framework/tests/test_component_recorder.py`
 
-**Template:** copy `C:/Users/skf_s/.claude/scripts/hooks/suggest-compact.js` — it is the only
+**Template:** copy `~/.claude/scripts/hooks/suggest-compact.js` — it is the only
 currently registered PostToolUse hook, so its stdin-read / never-block shape is proven on this box.
 Take the field-access pattern (`input.tool_name`, `input.tool_input`) from
 `comment-budget-guard.js:87-89`.
 
 **Verified input contract:**
 - `tool_name` is `"Skill"` or `"Agent"` (both confirmed in live transcripts under
-  `C:/Users/skf_s/.claude/projects/C--Users-skf-s/*.jsonl`).
+  `~/.claude/projects/C--Users-skf-s/*.jsonl`).
 - Skill slug is `tool_input.skill`. Agent type is `tool_input.subagent_type`.
 - Also available: `session_id`, `cwd`, `transcript_path`.
 
@@ -765,12 +765,12 @@ This file is hand-maintained. Show Keith the proposed block and wait for "apply"
 ```json
 {
   "matcher": "Skill|Agent",
-  "hooks": [{ "type": "command", "command": "node \"C:/Users/skf_s/.claude/scripts/hooks/component-recorder.js\"", "timeout": 5 }]
+  "hooks": [{ "type": "command", "command": "node \"$HOME/.claude/scripts/hooks/component-recorder.js\"", "timeout": 5 }]
 }
 ```
 
 **Step 5: Verify live.** Invoke any skill, then:
-`python -c "import sqlite3;print(sqlite3.connect(r'C:/Users/skf_s/.claude/dev-framework/episodes.db').execute('select kind,name,invoked_at from component_outcomes order by id desc limit 5').fetchall())"`
+`python -c "import sqlite3;print(sqlite3.connect(r'$HOME/.claude/dev-framework/episodes.db').execute('select kind,name,invoked_at from component_outcomes order by id desc limit 5').fetchall())"`
 Expected: the skill you just ran, at the top.
 
 **Step 6: Commit.**
@@ -784,8 +784,8 @@ guards already know when they deny.
 
 **Files:**
 - Modify: `pre-bash-guard.js`, `commit-msg-guard.js`, `ps-stderr-guard.js`, `pre-write-guard.js`,
-  `comment-budget-guard.js` (each in `C:/Users/skf_s/.claude/scripts/hooks/`)
-- Create: `C:/Users/skf_s/.claude/scripts/hooks/lib/record-component.js` (one shared writer)
+  `comment-budget-guard.js` (each in `~/.claude/scripts/hooks/`)
+- Create: `~/.claude/scripts/hooks/lib/record-component.js` (one shared writer)
 
 **Do not paste the same insert into five files.** That is the "same one-line guard in N call-sites"
 patch smell from the global CLAUDE.md. Extract `record-component.js` first, then have each guard
@@ -799,9 +799,9 @@ fix all instances in one pass), verify each still denies correctly, commit.
 ### Task B4: `component-report` and the weekly read
 
 **Files:**
-- Modify: `C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py` (new `component-report` subcommand)
-- Read as a pattern, do not call: `C:/Users/skf_s/.claude/dev-framework/scripts/critic_trust.py`
-- Modify: `C:/Users/skf_s/clawd/memory/cron-prompts/devrl-weekly-learn.md`
+- Modify: `~/.claude/dev-framework/scripts/devrl.py` (new `component-report` subcommand)
+- Read as a pattern, do not call: `~/.claude/dev-framework/scripts/critic_trust.py`
+- Modify: `~/clawd/memory/cron-prompts/devrl-weekly-learn.md`
 
 **Reuse the pattern, write new SQL.** `compute_trust_counts` (`critic_trust.py:138`) is not callable
 here. It walks `steps` JOIN `episodes` (line 178-179) and counts critic verdicts, retry caps and
@@ -840,15 +840,15 @@ propose-only for pruning; the same reasoning as the audit rules.
 
 ### Task B5: Fold the manual telemetry sink into the same table
 
-`C:/Users/skf_s/.claude/skills/dev-framework/logs/telemetry.jsonl` is a hand-written gate log
+`~/.claude/skills/dev-framework/logs/telemetry.jsonl` is a hand-written gate log
 (`{timestamp, project, gate, phase, outcome, notes}`, 4055 bytes, last written 2026-09-02). It is a
 third sink for the same question. One sink, or the join in B4 lies by omission.
 
 **Files:**
-- Create: `C:/Users/skf_s/.claude/dev-framework/scripts/import_gate_telemetry.py` (one-shot importer)
-- Delete: `C:/Users/skf_s/.claude/skills/dev-framework/scripts/log-gate.ps1` (1251 bytes)
-- Delete: `C:/Users/skf_s/.claude/skills/dev-framework/scripts/telemetry-report.ps1` (3237 bytes)
-- Modify: `C:/Users/skf_s/.claude/skills/dev-framework/SKILL.md` (lines 91-115 and 138-141)
+- Create: `~/.claude/dev-framework/scripts/import_gate_telemetry.py` (one-shot importer)
+- Delete: `~/.claude/skills/dev-framework/scripts/log-gate.ps1` (1251 bytes)
+- Delete: `~/.claude/skills/dev-framework/scripts/telemetry-report.ps1` (3237 bytes)
+- Modify: `~/.claude/skills/dev-framework/SKILL.md` (lines 91-115 and 138-141)
 
 **Step 1: Import the history.** Read the JSONL, write one `component_outcomes` row per entry with
 `kind='gate'`, `name=<gate>`, `invoked_at=<timestamp>`, `cwd=<project>`. Map `outcome` to the
@@ -877,11 +877,11 @@ proof before removing anything.
 Done means all of these, run in one pass:
 
 ```bash
-python -m pytest C:/Users/skf_s/.claude/dev-framework/tests/ -q
-python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-effect
-python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-cluster
-python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py learn-effect
-python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py component-report
+python -m pytest ~/.claude/dev-framework/tests/ -q
+python ~/.claude/dev-framework/scripts/devrl.py learn-effect
+python ~/.claude/dev-framework/scripts/devrl.py learn-cluster
+python ~/.claude/dev-framework/scripts/devrl.py learn-effect
+python ~/.claude/dev-framework/scripts/devrl.py component-report
 openclaw cron get 05558fba-d91c-4cc8-9d6f-dd5fbd6aed50
 ```
 

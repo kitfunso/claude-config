@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # GSC Review: boring-math.com
 
-Repo: `C:/Users/skf_s/boring-maths/` (Astro 5 static site, Cloudflare Pages auto-deploys master).
+Repo: `~/boring-maths/` (Astro 5 static site, Cloudflare Pages auto-deploys master).
 Running checkpoint log: memory file `project_boring_maths_gsc_workflow.md`. READ IT FIRST. It holds every prior checkpoint's numbers and rulings. Compare against the newest checkpoint; append this run's checkpoint when done.
 
 ## Mode
@@ -17,7 +17,7 @@ Running checkpoint log: memory file `project_boring_maths_gsc_workflow.md`. READ
 ## 1. Pull fresh data
 
 ```bash
-cd /c/Users/skf_s/boring-maths && npm run seo:gsc-pull
+cd ~/boring-maths && npm run seo:gsc-pull
 ```
 
 - OAuth token (`scripts/seo/.gsc-token.json`) expires ~7 days. On auth failure: `npm run seo:gsc-pull -- --reauth` + browser consent (sign in as the Google account that owns the property, `sc-domain:boring-math.com`; consent is clickable via Chrome automation when already signed in).

@@ -2,7 +2,7 @@
 
 Every measurement behind `SKILL.md`, with the numbers and the source. Read this
 when you need the detail; `SKILL.md` carries the decisions. Primary source is
-`C:/Users/skf_s/alphanova/research/SCOREBOARD.md` (39 rounds, append-only).
+`~/alphanova/research/SCOREBOARD.md` (39 rounds, append-only).
 
 Cycle 1: opened 15 Aug 2026, closed ~1 Sep 2026. 34 uploads, 20 counted slots
 (rejections refund), 20 admitted, 14 rejected. Best `otv_k25` +0.0003 at rank 19.
@@ -355,7 +355,7 @@ These were adopted mid-campaign and none of them was later falsified.
 
 ## 9. Cycle 2 (Sep 1-2, 2026): the numbers the skill quotes, with sources
 
-Every figure here is regenerable from the repo (`C:/Users/skf_s/alphanova`) or the
+Every figure here is regenerable from the repo (`~/alphanova`) or the
 session transcript. Ledger line numbers are for `research/SCOREBOARD.md` as of Sep-2.
 
 **The yardstick** (`docs/EXPERIMENT-PROTOCOL.md` section 0):

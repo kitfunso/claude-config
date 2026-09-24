@@ -19,7 +19,7 @@ A complete 9-stage development pipeline that adapts to the project type. Forces 
 
 ```powershell
 # Windows (this machine default)
-powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/scan-project.ps1
+powershell -File $HOME/.claude/skills/dev-framework/scripts/scan-project.ps1
 ```
 
 ```bash
@@ -73,7 +73,7 @@ Per-stage mode contract for the `/dev-framework-rl` orchestrator: `RL-CONTRACT.m
 ### `/dev-framework status`: compact current-position readout
 
 ```powershell
-powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/status.ps1
+powershell -File $HOME/.claude/skills/dev-framework/scripts/status.ps1
 ```
 
 Prints: phase, detected types, sensitivity flags, branch, artifact completeness, next gate.
@@ -83,7 +83,7 @@ Prints: phase, detected types, sensitivity flags, branch, artifact completeness,
 Runs the scanner, compares phase against last-recorded for this project, fires `hippo capture` if changed. Designed to run on Stop hook. See `settings.json` hook setup below.
 
 ```powershell
-powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/phase-capture.ps1
+powershell -File $HOME/.claude/skills/dev-framework/scripts/phase-capture.ps1
 ```
 
 State persisted at `~/.claude/dev-framework-state.txt` (one project per line).
@@ -96,9 +96,9 @@ the rest of the harness if it lands in the same place.
 
 Log a gate outcome:
 ```bash
-python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py component-record \
+python $HOME/.claude/dev-framework/scripts/devrl.py component-record \
   gate /cso --outcome caught --phase REVIEW \
-  --cwd "C:/Users/skf_s/hippo" --notes "found XSS in markdown render"
+  --cwd "$HOME/hippo" --notes "found XSS in markdown render"
 ```
 
 Outcomes: `passed` | `caught` (gate earned its keep) | `failed` (blocked progression) | `skipped`
@@ -109,7 +109,7 @@ into one bit.
 
 Report aggregated insights:
 ```bash
-python C:/Users/skf_s/.claude/dev-framework/scripts/devrl.py component-report
+python $HOME/.claude/dev-framework/scripts/devrl.py component-report
 # Optional: --kind gate to filter, --json for machine-readable
 ```
 
@@ -130,7 +130,7 @@ and carries an `[imported from telemetry.jsonl]` marker in `notes`.
 
 To auto-fire `phase-capture` on every Stop event, add the hook config shown by:
 ```powershell
-Get-Content C:/Users/skf_s/.claude/skills/dev-framework/HOOK-SETUP.md
+Get-Content $HOME/.claude/skills/dev-framework/HOOK-SETUP.md
 ```
 
 ## Files in this skill

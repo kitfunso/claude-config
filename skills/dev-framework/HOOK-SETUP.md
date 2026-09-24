@@ -1,4 +1,4 @@
-﻿# settings.json hook setup (manual)
+# settings.json hook setup (manual)
 
 To auto-fire `phase-capture` (which fires `hippo capture` on phase transitions), add this hook block to your `~/.claude/settings.json` under `hooks`:
 
@@ -13,7 +13,7 @@ To auto-fire `phase-capture` (which fires `hippo capture` on phase transitions),
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/phase-capture.ps1"
+            "command": "powershell -ExecutionPolicy Bypass -File $HOME/.claude/skills/dev-framework/scripts/phase-capture.ps1"
           }
         ]
       }
@@ -37,7 +37,7 @@ If you already have a `Stop` hook array, append the new entry to it â€” do 
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/phase-capture.ps1"
+            "command": "powershell -ExecutionPolicy Bypass -File $HOME/.claude/skills/dev-framework/scripts/phase-capture.ps1"
           }
         ]
       }
@@ -52,7 +52,7 @@ If you already have a `Stop` hook array, append the new entry to it â€” do 
 
 Run on demand whenever you finish a phase:
 ```powershell
-powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/phase-capture.ps1
+powershell -File $HOME/.claude/skills/dev-framework/scripts/phase-capture.ps1
 ```
 
 ## How to verify the hook is working
@@ -61,7 +61,7 @@ powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/phase-captu
 2. Run any agent task that changes phase (e.g. create `PRD.md` in a discovery project â†’ moves to SCAFFOLD)
 3. Check the state file:
    ```powershell
-   Get-Content C:/Users/skf_s/.claude/dev-framework-state.txt
+   Get-Content $HOME/.claude/dev-framework-state.txt
    ```
 4. Check hippo for the capture:
    ```bash
@@ -72,5 +72,5 @@ powershell -File C:/Users/skf_s/.claude/skills/dev-framework/scripts/phase-captu
 
 Delete the hook block from `~/.claude/settings.json` and delete the state file:
 ```powershell
-Remove-Item C:/Users/skf_s/.claude/dev-framework-state.txt
+Remove-Item $HOME/.claude/dev-framework-state.txt
 ```

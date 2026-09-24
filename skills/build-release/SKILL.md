@@ -1,4 +1,4 @@
-﻿---
+---
 name: build-release
 description: Bumps iOS/Android build numbers, compile-checks the Android build, commits, pushes, then starts both Codemagic workflows for the Phzse app. Use when asked to ship a new Phzse build.
 ---
@@ -9,7 +9,7 @@ Ships a Phzse release: bump build numbers, build web assets, compile-check Andro
 
 ## Prerequisites
 
-- Must be in the `C:/Users/skf_s/phzse` project directory
+- Must be in the `$HOME/phzse` project directory
 - Git must be on the correct branch (verify first, never assume)
 
 ## Steps
@@ -19,7 +19,7 @@ Execute these steps in order. Stop and report if any step fails.
 ### 1. Verify branch
 
 ```bash
-cd "C:/Users/skf_s/phzse" && git branch
+cd "$HOME/phzse" && git branch
 ```
 
 Confirm you're on `master`. If not, warn the user before proceeding.
@@ -55,7 +55,7 @@ three iOS ones and `public/icons/moon.png`. Nothing else may write those files.
 **If any dependency changed this session** (`npm install`, `npm audit fix`, version bumps, even indirect ones), run a REAL clean install. `npm ci --dry-run` PASSES FALSELY on lockfiles that real `npm ci` rejects (proven 2026-06-10: dry-run green locally, Codemagic failed with 27 "Missing: <pkg> from lock file" errors):
 
 ```bash
-cd "C:/Users/skf_s/phzse" && npm ci
+cd "$HOME/phzse" && npm ci
 ```
 
 This wipes node_modules and installs strictly from the lockfile, exactly what Codemagic runs. Takes a few minutes; that is the price of a trustworthy gate. If no dependency changed this session, `npm ci --dry-run` is an acceptable fast path.
@@ -77,7 +77,7 @@ npm install --save-dev <missing-pkg>@<version>
 ### 5. Build web assets
 
 ```bash
-cd "C:/Users/skf_s/phzse" && npm run build
+cd "$HOME/phzse" && npm run build
 ```
 
 Wait for completion. This must succeed before proceeding.
@@ -85,13 +85,13 @@ Wait for completion. This must succeed before proceeding.
 ### 6. Sync Capacitor
 
 ```bash
-cd "C:/Users/skf_s/phzse" && npx cap sync android
+cd "$HOME/phzse" && npx cap sync android
 ```
 
 ### 7. Compile-check the Android build
 
 ```bash
-cd "C:/Users/skf_s/phzse/android" && ./gradlew bundleRelease
+cd "$HOME/phzse/android" && ./gradlew bundleRelease
 ```
 
 30-60 seconds, must finish with `BUILD SUCCESSFUL`. This is a pre-flight, nothing
@@ -236,7 +236,7 @@ git push
 green, from the repo root:
 
 ```bash
-npm run play:publish -- --key "C:/Users/skf_s/Downloads/phzse-488419-94ef93c9d510.json"
+npm run play:publish -- --key "$HOME/Downloads/phzse-488419-94ef93c9d510.json"
 ```
 
 That is a DRY RUN: it stages the change, validates the edit, then discards it. Read

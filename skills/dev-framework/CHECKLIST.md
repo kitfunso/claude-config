@@ -1,4 +1,4 @@
-﻿# Dev Framework Checklist
+# Dev Framework Checklist
 
 One-page reference. Read top to bottom on every non-trivial project. Stage definitions: PIPELINE.md.
 
@@ -95,7 +95,7 @@ Speed directives never skip a gate: see ENFORCEMENT.md.
 - **hippo**: `/self-review` -> `/review` -> `/ship-check` -> `/publish-repo`
 - **Quantamental**: `/roll-check` before signal commits; NEVER overwrite locked signals
 - **synth**: sub-agents for extraction
-- **All in `C:/Users/skf_s`**: Root Cause Over Patches framing pass
+- **All projects under `~`**: Root Cause Over Patches framing pass
 
 ## Quick gate reference
 

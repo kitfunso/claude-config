@@ -21,7 +21,7 @@ cross-episode learning, the batch ritual, critic-trust attribution
 
 Post-deploy outcomes: finalize auto-schedules a 7-day check; the `devrl-post-deploy`
 cron (daily 09:00 Europe/London, prompt at
-`C:/Users/skf_s/clawd/memory/cron-prompts/devrl-post-deploy.md`) runs the
+`~/clawd/memory/cron-prompts/devrl-post-deploy.md`) runs the
 verification protocol (`gh pr checks` + revert-grep per episode). HARD GUARD:
 never mass-mark `--clean` to clear the queue — uncertain outcomes stay `unknown`
 and go to the human via Telegram.

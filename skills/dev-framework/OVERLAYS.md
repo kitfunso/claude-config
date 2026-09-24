@@ -81,7 +81,7 @@ These projects have additional gates baked in:
 - **hippo**: `/self-review` -> `/review` -> `/ship-check` -> `/publish-repo` MANDATORY chain (v1.7.7 lesson)
 - **synth**: sub-agents for extraction MANDATORY; never claim "API auth blocked" as a stop
 - **2chain**: MCP discovery preferred over manual searches; root-cause framing applies
-- **All projects in C:/Users/skf_s**: Root Cause Over Patches framing pass required before any "fix it" task
+- **All projects under `~`**: Root Cause Over Patches framing pass required before any "fix it" task
 
 ## Confidence scoring
 

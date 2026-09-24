@@ -48,7 +48,7 @@ earned its place.
 
 ## 2026-09-14: the work box cut the same file a day later, then merged
 
-The work box (kit.sofun) audited its copy on 14 September without knowing the home
+The work box audited its copy on 14 September without knowing the home
 box had cut it on the 13th, and rewrote CLAUDE.md to about 3,400 tokens (chars / 3.8)
 with a `docs/rulebook.md` for the maintainer material. Merged on the 14th with the
 home box core as the base: it carries the Haiku ban, the Fable exec budget, the
@@ -60,7 +60,7 @@ boxes differ; the think-before-coding bullet that karpathy-guidelines.md now poi
 to; a Python port of the PS stderr guard; and a `git_guard.py` fix so `git -C /c/...`,
 `$VAR` paths and `cd X && git` no longer report "not a git repository".
 `measure_context.py` now derives the home and project paths instead of hardcoding
-skf_s. `rulebook.md` is dropped as a duplicate of the hooks table, precedence and
+a username. `rulebook.md` is dropped as a duplicate of the hooks table, precedence and
 rulebook discipline already in the core. Work-box hooks registered as of this date:
 capability existence, git guard, backup, PS stderr, comment budget (all `.py`). The
 tripwire and Fable budget are not registered there yet.
@@ -200,7 +200,7 @@ so narration split by blanks evaded the 3-in-a-row rule. Both `comment-budget-gu
 and `comment_budget_guard.py` now continue a run across blank-only lines and only a
 code line resets it. The retired ad-hoc runner `scripts/test-comment-budget.js` is
 deleted and its cases live in the node suite, 32 tests green via
-`node --test C:/Users/skf_s/.claude/scripts/hooks/test/*.test.js`. One old case was
+`node --test $HOME/.claude/scripts/hooks/test/*.test.js`. One old case was
 dropped on purpose: a divider, a blank and a 3-line jsdoc is a 4-line run and now
 denies.
 
@@ -215,7 +215,7 @@ entries appear, never the count; the lever is the hook's `--budget`.
 Trap hit once: `hippo_context_cached.py --refresh` hashes the directory string as
 given, so a backslash path writes a cache file the hook never reads. Pass the
 forward-slash form. Re-measure any one file with
-`python -c "import tiktoken,pathlib;print(len(tiktoken.get_encoding('cl100k_base').encode(pathlib.Path('C:/Users/skf_s/.claude/CLAUDE.md').read_text(encoding='utf-8'))))"`.
+`python -c "import tiktoken,pathlib;print(len(tiktoken.get_encoding('cl100k_base').encode(pathlib.Path.home().joinpath('.claude','CLAUDE.md').read_text(encoding='utf-8'))))"`.
 
 ## 2026-09-08: the tripwire hook owns its own budget
 
