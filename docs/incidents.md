@@ -3,6 +3,17 @@
 Stories evicted from the always-loaded rules. This file is never injected; rules
 point here with one-liners. Append new entries at the top; do not rewrite history.
 
+## 2026-09-23: reports published as claude.ai Artifacts
+
+The Artifact tool's description says to publish finished work by default, and that pull
+beat the HTML-first rule: the Arb Economics audit and the Agbami gap page both went to
+claude.ai instead of staying as files in the repo. The user's words: "stop giving me
+fucking artifacts, i want them in html report. make sure you do this for all project,
+change the global claude.md if you need to". Fix, same day: the "Reports are local HTML
+files" bullet in the global CLAUDE.md, `Artifact` and `mcp__claude_ai_Claude_Docs` in
+`permissions.deny` in settings.json, one line in `docs/html-first.md`, and the memory
+`no-claude-artifacts-html-reports`. Probation.
+
 ## 2026-09-22: td3c wide screen called complete with a table family unread
 
 On the TD3C forecast the session ran a "try everything" screen of the lake (60 base

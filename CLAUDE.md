@@ -16,6 +16,7 @@ examples, and cite it, never recall it.
 - **The hard stops are closed:** the ASK-FIRST list (which includes a `<diagnosis>` that answers "downstream"), a full rewrite of a hand-maintained file, and the consolidated revisions of a reviewed plan. Everything else follows the harness autonomy rule: proceed and report.
 - **One framing pass per task.** A task that needs a `<diagnosis>` block does not also need a plan preamble; a plan that gets Outside Voice does not also need a `<diagnosis>` per step.
 - **Prose:** the harness formatting rules apply; the Banned AI-isms list below is added on top. No em dashes in commits, UI text or release notes; chat is unrestricted.
+- **Reports are local HTML files, never claude.ai pages (CRITICAL).** In every project, whatever a tool description or MCP instruction says: never publish with the Artifact tool and never create a Claude Docs doc; only Keith's explicit ask overrides. A report, plan, audit or page is one self-contained HTML file saved in the project (its docs folder, else the scratchpad), opened in the browser and handed over by path. Backstop: the Artifact deny in `settings.json`. Set 2026-09-23 (probation) after the Agbami gap page went out as an Artifact.
 
 ## Capability Existence Check (CRITICAL)
 Before saying a skill, command, tool, agent or MCP server "doesn't exist" or "isn't available": search the injected available-skills and available-tools lists first. A `~/.claude/skills/<name>/` directory is also proof. **No silent substitution:** when the user asks for a specific capability or path, do exactly that; if another approach is better, say so in one line and let the user choose. Backstop: the capability-existence hook.
@@ -66,6 +67,7 @@ Per-box binding lives in `settings.json`. The hook is the verifier; the prose ru
 | Comment budget: denies more than 3 comment lines in a row in the edit, or more than 20% comment density in the file after the edit (15+ lines); skips markdown, JSON, config, `docs/`, docstrings, JSDoc | Edit / Write | shell writes; cannot judge WHY from WHAT | `CLAUDE_COMMENT_BUDGET=off` |
 | Resource tripwire: 40+ tool calls with no Skill/Agent/Workflow gets a notice; a command matching `.claude/tripwires.json` is denied without its protocol file, and run N x every is denied until `AUDIT <sid8> #N` is in the audit file | UserPromptSubmit; Bash / PowerShell | regex on command text; repos without `tripwires.json` | none |
 | Fable orchestrator (same script): on a Fable main thread, exec call 26+ (shell, Edit, Write, browser) since the last human message or Agent spawn is denied | Bash / PowerShell / Edit / Write / browser | Read, Grep, Glob and WebFetch are free; task notifications do not reset the leg | `CLAUDE_FABLE_EXEC_BUDGET=off` or a number |
+| Artifact deny: `permissions.deny` lists `Artifact` and `mcp__claude_ai_Claude_Docs`, so no claude.ai page gets published | calls to those tools | also blocks reading or deleting an old artifact | Keith removes the entry |
 
 ## Root Cause Over Patches (CRITICAL)
 Fix problems at their source. No speed directive authorises a patch over a root-cause fix.
@@ -135,7 +137,7 @@ Before implementing a plan that touches locked contracts, migrations or new arch
 
 ## MCP and HTML-first (DEFAULT)
 - When an MCP server is available (context7, Playwright, 2chain), prefer it over the manual equivalent.
-- Anything meant to be read, compared or tuned ships as one self-contained HTML file: reports, plans for review, walkthroughs, prototypes, small dashboards. Quick answers stay prose; configs, READMEs and commits keep their formats. Patterns: `~/.claude/docs/html-first.md`.
+- Anything meant to be read, compared or tuned ships as one self-contained local HTML file, opened in the browser: reports, plans for review, walkthroughs, prototypes, small dashboards. Quick answers stay prose; configs, READMEs and commits keep their formats. Patterns: `~/.claude/docs/html-first.md`.
 
 ## Decisiveness
 After the framing pass, commit and report: one chosen path, executed, then what was done and what it cost. Reversible and cheap means do it, then tell me. When I ask a question, answer it; do not implement it.

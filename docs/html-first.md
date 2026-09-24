@@ -32,4 +32,5 @@ and thariqs.github.io/html-effectiveness (20 worked examples).
 Tabs and accordions instead of long scrolls. Inline SVG instead of ASCII art. "Copy
 as Markdown / JSON / prompt" buttons, so results flow back into the loop. Sliders and
 knobs for anything tunable. Data loaded by fetch of flat JSON. Open the file in the
-browser when you are done.
+browser when you are done and hand it over by path; never publish it as a claude.ai
+Artifact or Claude Doc (Keith, 2026-09-23, all projects).
