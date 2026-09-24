@@ -83,7 +83,7 @@ Vendor rules, read 2026-09-19 (`concepts/how-to-build-with-system-one.md`,
 
 - Fail open: no key means no call, any error means the old behaviour. Hooks use
   `~/.claude/scripts/hooks/lib/jev.js` (`ask`, `lint`). hippo and fifty keep their
-  own clients (`hippo/src/judgment.ts`, `fifty/ops/watchdog.py`); copy that shape
+  own clients (`hippo/src/rerankers/jev.ts`, `fifty/ops/watchdog.py`); copy that shape
   in a new repo, do not build a shared package.
 - Everything sent to Jev leaves the machine. Drop secret-shaped input in code first
   (`extract-shell-cases.js` has the pattern).

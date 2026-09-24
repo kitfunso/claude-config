@@ -12,7 +12,7 @@ For projects building on Claude API, OpenAI, LangChain, agent frameworks, MCP se
 ### DISCOVER
 - `/benchmark-models` if model choice is open — never guess by default
 - Check existing skills, MCP servers, agent libraries via `mcp__2chain__discover_tools`
-- Per Keith preference (memory): Codex execution lanes prefer `openai-codex/gpt-5.5` (thinking high, fast on), fallback `gpt-5.4`
+- Codex lanes use the per-box pin (`model =` in `~/.codex/config.toml`, or `CODEX_REVIEW_MODEL`); `codex-review-pinned.sh` voids a review from any other model, and a review whose output carries no model line
 
 ### SCAFFOLD
 - `EVALS.md` artifact REQUIRED — define success criteria for AI behavior BEFORE building

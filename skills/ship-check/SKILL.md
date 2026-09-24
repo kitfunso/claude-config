@@ -40,7 +40,7 @@ Check each item by actually verifying, not assuming. Mark `[x]` PASS or `[ ]` SK
 
 - [ ] **Tests pass** — run the test suite, report result
 - [ ] **CI green** — if a PR or pushed branch exists, run `gh pr checks` (or the repo's CI status); a red required check forces **Not yet**
-- [ ] **Linter clean** — run linter/formatter, report result
+- [ ] **Linter clean** — run linter/formatter, report result. If the linter already exits non-zero on BASE, its exit code proves nothing: clean means zero findings on the diff's own added lines (intersect the added line numbers from `git diff BASE...HEAD --unified=0` with the linter's `file:line` output); report that count
 - [ ] **No secrets exposed** — grep changed files for `sk-`, `api_key=`, `password=`, `token=`, `secret=`, `ghp_`, `github_pat_`, `xoxb-`, `AKIA`, `npm_`, `-----BEGIN` (private keys)
 - [ ] **Output validation** — if the project CLAUDE.md names an output-validation script, run it; mark N/A if the project has none
 - [ ] **Build succeeds** — if frontend changes, does `next build` / `npm run build` pass?

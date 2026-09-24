@@ -54,8 +54,8 @@ List every defect you found. Not the worst one. All of them.
 
 ## Rules
 
-- Answer the question and wait. Fix only after he says go, then fix every item in
-  one pass.
+- Answer first, then fix every item in one pass without waiting for a go. Stop only
+  when a fix is on the ASK-FIRST list (destructive, live schema, costs money).
 - Caveats are a NO. Do not soften one into a YES.
 - If you cannot run a check (no test suite, no network, a tool failed), say NO and
   name the check you could not run.
