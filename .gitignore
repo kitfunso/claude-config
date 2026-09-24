@@ -19,6 +19,7 @@
 !/agents/
 !/agents/**
 !/.gitignore
+/rules/local-*.md
 
 # Keep shareable skill and hook source, not vendored dependencies, nested repos,
 # generated bundles, or local binary artifacts.

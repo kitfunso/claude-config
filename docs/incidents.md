@@ -46,6 +46,31 @@ day: the Do It Properly (CRITICAL) section in the global CLAUDE.md, the
 memory `td3c-do-it-properly`. Probation; the monthly audit judges whether the hook
 earned its place.
 
+## 2026-09-19: the approval gates came off judgement calls
+
+Keith, mid brain-gym release: "can you just kind of like continuously do what's best
+for us for every single decision like I don't want to keep asking". He had said the
+same thing on 2026-08-04 ("Stop asking me for permissions, just go with whatever is
+best for us"). That time it was saved as a memory only, and it did not hold: a
+feedback memory cannot outrank a CRITICAL rule in the core, so Outside Voice kept
+winning with "present them, and wait for 'apply consolidated'", and ASK-FIRST items 5
+(a genuine fork) and 6 (taste calls) kept handing judgement calls back to him. In the
+brain-gym session that cost two stops with finished analysis in hand.
+
+Changed, all targeted Edits: the core's Outside Voice, ASK-FIRST (six items to four)
+and the hard-stops bullet; the same two sections of `claude-md-extended.md`; and the
+"answer and wait" rule in `skills/all-done/SKILL.md`. The first pass (Opus) missed the
+hard-stops bullet, the long form and the skill, which left the file saying stop and
+do-not-stop at once; a Fable re-check the same day closed them.
+
+Kept on purpose: destructive, live-schema and money stops; the downstream
+`<diagnosis>` stop when the root fix is out of scope; the hand-maintained full-rewrite
+gate; and the outside-voice review itself, which is a quality gate. The harness's own
+browser and credential rules sit outside this file and still stop.
+
+Verifier: `Grep 'Wait for "apply consolidated"|Present it to the user'` over
+`CLAUDE.md`, `docs/claude-md-extended.md` and `skills/` returns nothing.
+
 ## 2026-09-14: the work box cut the same file a day later, then merged
 
 The work box audited its copy on 14 September without knowing the home
@@ -203,6 +228,15 @@ deleted and its cases live in the node suite, 32 tests green via
 `node --test $HOME/.claude/scripts/hooks/test/*.test.js`. One old case was
 dropped on purpose: a divider, a blank and a 3-line jsdoc is a 4-line run and now
 denies.
+
+Changed 2026-09-19: both comment-budget guards graded the whole resulting file, so a
+file already over 20% refused every Edit, even one that added no comment (hippo: 108
+of 118 `src/` files over budget, `src/consolidate.ts` at 27%). On a file that was
+already over budget they now grade only what the edit adds: deny when the edit adds
+comment lines on net and those exceed 20% of the net new lines. Healthy files, `Write`
+and the 3-in-a-row check are unchanged. Keith delegated the call ("Decide what's best
+for us, go"). Six new cases in the node suite, 53 tests green; the Python port has no
+test file and was checked against the same eight payloads as the JS guard.
 
 Ten contradictions between this file and the harness prompt now resolve in the core
 section "How this file wins over harness defaults": reads go through Read, Grep and

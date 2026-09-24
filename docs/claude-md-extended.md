@@ -245,7 +245,7 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 - Before starting any non-trivial multi-step implementation (a "phase plan", a feature plan with more than 3 steps, or anything involving locked contracts, migrations or new architecture), dispatch outside voice on the plan BEFORE coding.
 - Use one or both: `/plan-eng-review` (in-house architecture critique), `/codex` (cross-model adversarial review), or a `senior-code-reviewer` sub-agent briefed against the plan file plus the project's source-of-truth docs (PRD, ARCHITECTURE.md, CLAUDE.md).
 - Brief the reviewer concretely: plan file path, key constraint files, what to look for (gaps versus success metrics, contract drift, test holes, scope creep, performance hazards, a11y and safety holes). Cap report length so it stays usable.
-- Consolidate the revisions into a single blob, each item carrying a section reference, a one-sentence issue, and a concrete fix. Apply it to the plan and start building; the blob goes in the report. Stop only for a revision that is a genuine fork (ASK-FIRST 5) or touches a locked contract or live data.
+- Consolidate the revisions into a single blob, each item carrying a section reference, a one-sentence issue, and a concrete fix. Apply them yourself, then report what changed and what you rejected. Stop only when a finding lands on the ASK-FIRST list. The review is a quality gate, never a human gate (changed 2026-09-19, story in `incidents.md`).
 - Single-step bugfixes, trivial edits and prose drafts: outside voice optional.
 
 ## Execution habits
@@ -267,6 +267,7 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 - Use absolute paths, or the tool's own flag (`git -C`, `npm --prefix`); `cd X; cmd` compounds are the largest measured source of shell errors here.
 - POSIX-shaped one-liners go to the Bash tool. PowerShell only for cmdlets, registry, and Windows-native ops. Never mix syntaxes across shells.
 - PS 5.1: never `2>&1` on native exes (git/gh/node). NativeCommandError wraps stderr and fakes failure (enforced by the PS-stderr hook, see Hooks). stderr is already captured; run the command bare.
+- Source code written as data (test fixtures) goes in real multi-line template literals or in files. A backslash escape (newline or unicode) inside a tool-call string argument is turned into the real character before it reaches the file, and a quoted Bash heredoc collapses backslashes on this box; both have corrupted fixtures (hippo `01M312K37C0262B66J70SM6PCQ`).
 - Measurements and the refresh command: `docs/incidents.md`.
 
 ## MCP Servers
@@ -294,9 +295,9 @@ The Karpathy reframe still runs first: volunteer adjacent risks, missing pieces,
 1. A destructive or hard-to-reverse action not already authorised (deleting data, force-push, prod deploy, file or branch deletion, DB drop, locked-signal overwrite, sending anything outward-facing).
 2. Schema or migration changes to live data.
 3. Anything that costs money: new paid dependencies, new external services, paid fan-outs.
-4. A patch-vs-structural fork where the `<diagnosis>` block answers "downstream" (Root Cause requires a separate user message).
-5. A genuine fork where two readings of the request produce materially different work and you cannot pick from context.
-6. UI or visual taste calls with no existing precedent in the repo or `DESIGN.md`.
+4. A patch-vs-structural fork where the `<diagnosis>` block answers "downstream" AND the structural fix is out of scope (Root Cause requires a separate user message). In scope means take the root fix and report it.
+
+Judgement calls came off this list on 2026-09-19. A fork between two readings, a taste call with no precedent, a reviewed plan, a skill's own question gate: pick what is best for us, do it, and say in one line what you picked and what you passed over. Keith asked for this twice (2026-08-04, 2026-09-19); the story is in `incidents.md`.
 
 Soft permission ("up to you", "pick one"), pre-approved bounded choices, and answers from earlier turns all stand; re-confirming them is a stall. Minor choices (naming, formatting, default values, which of two equivalent approaches) are yours to make. "Ambiguity" without a trigger above is not a reason to ask.
 

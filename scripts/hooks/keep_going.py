@@ -40,14 +40,15 @@ ASK = re.compile("|".join((
     r"(?:^|\s)(?:go|proceed|ok(?:ay)?|shall we)\?\W*$",
 )), re.I)
 ASK_FIRST = re.compile(
-    r"\b(?:deploy|promot|delet|overwrit|migrat|irreversib|destructiv|publish|credential|complian|approval|ruling)"
+    r"\b(?:deploy|promot|delet|overwrit|migrat|irreversib|destructiv|publi[sc]|credential|complian|approval|ruling)"
     r"|\b(?:push(?:ed|ing)?|force|schema|prod|production|live data|costs?(?! nothing)|paid|spend|money|billing|outside|external|"
     r"third[- ]party|send|email|sign(?:ed)?[- ]?off|fork|taste|your call|password|secret|only you|yourself|"
     r"needs? you to|new conversation|restart|sudo|log ?in|permission mode)\b|\$\d", re.I)
 HANDS = re.compile(
     r"\b(?:once|when|after) (?:it|that|this|you|the (?!next)\w+)\b[^.?!]{0,40}\b(?:done|run|ran|finished|finishes|"
     r"exits|lands|completes|pasted|switched|installed|on)\b|\bonce pasted\b"
-    r"|\btell me (?:when )?(?:it's|it is|it has|you've|you have)\b", re.I)
+    r"|\btell me (?:when )?(?:it's|it is|it has|you've|you have)\b"
+    r"|\btell me (?:what|which|whether|how)\b|\bpaste (?:me|in|it)\b|\bwaiting on you\b|\bif\b[^.?!]*,\s*say so\b", re.I)
 CHOICE = re.compile(
     r"\b(?:go )?(?:\d|[A-D])\b[\"”'`*]*\s+or\s+[\"“'`*]*(?:go )?(?:\d|[A-D]|both)\b|\bwhich (?:one|option)\b"
     r"|\b(?:should I|shall I|want me to)\b[^?]*,\s+or\s+[^?]*\?|\bshortlist\b|\byou meant\b", re.I)
@@ -61,14 +62,17 @@ REASON = ("keep_going: your reply stops on {hit!r}, handing the next step back t
           "ASK-FIRST list or needs his hands (deploy, cost, destructive, a genuine fork), say which in one line and "
           "stop. Don't repeat the question.")
 
-
 def asking(reply: str) -> str:
-    """The first go-seeking phrase in the reply's last lines with no reason to stop in its sentence or the next."""
+    """The first go-seeking phrase in the reply's last lines with no reason to stop in its sentence or the next.
+
+    A wait on Keith's hands also counts from the sentence before: "Paste me X. Say go after that."
+    """
     sentences = SENTENCE.split(" ".join(prose(reply)[-TAIL_LINES:]))
     for i, sentence in enumerate(sentences):
         hit = ASK.search(sentence)
         near = " ".join(sentences[i:i + 2])
-        if hit and not (ASK_FIRST.search(near) or HANDS.search(near) or CHOICE.search(near)):
+        wide = " ".join(sentences[max(i - 1, 0):i + 2])
+        if hit and not (ASK_FIRST.search(near) or HANDS.search(wide) or CHOICE.search(near)):
             return hit.group(0).strip()
     return ""
 

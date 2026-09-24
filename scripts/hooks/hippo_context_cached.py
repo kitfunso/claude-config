@@ -17,8 +17,8 @@ import sys
 import time
 from pathlib import Path
 
-ARGS = ["context", "--pinned-only", "--include-recent", "5",
-        "--format", "additional-context"]
+# Pinned rules only: the last-N-writes add-on was global, so every prompt carried other projects' notes.
+ARGS = ["context", "--pinned-only", "--format", "additional-context"]
 CACHE_DIR = (Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
              / "cache" / "hippo-context")
 LOCK_TTL = 60.0

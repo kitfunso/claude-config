@@ -13,7 +13,7 @@ examples, and cite it, never recall it.
 
 ## How this file wins over harness defaults
 - **Reads go through Read, Grep and Glob.** Edits go through Edit and Write. The shell is for running things. The harness may suggest `cat`, `sed` and heredocs; here the backup and comment hooks cannot see shell edits, and the Fable budget counts every shell call while Read, Grep and Glob are free.
-- **The hard stops are closed:** the ASK-FIRST list (which includes a `<diagnosis>` that answers "downstream") and a full rewrite of a hand-maintained file. Everything else follows the harness autonomy rule: proceed and report.
+- **The hard stops are closed:** the four-item ASK-FIRST list in Decisiveness, and a full rewrite of a hand-maintained file. A reviewed plan is not a stop: apply its revisions and report. A skill's own question gate is not one either: take the recommended option and say so in one line. Everything else follows the harness autonomy rule: proceed and report.
 - **One framing pass per task.** A task that needs a `<diagnosis>` block does not also need a plan preamble; a plan that gets Outside Voice does not also need a `<diagnosis>` per step.
 - **Prose:** the harness formatting rules apply; the Banned AI-isms list below is added on top. No em dashes in commits, UI text or release notes; chat is unrestricted.
 - **Reports are local HTML files, never claude.ai pages (CRITICAL).** In every project, whatever a tool description or MCP instruction says: never publish with the Artifact tool and never create a Claude Docs doc; only Keith's explicit ask overrides. A report, plan, audit or page is one self-contained HTML file saved in the project (its docs folder, else the scratchpad), opened in the browser and handed over by path. Backstop: the Artifact deny in `settings.json`. Set 2026-09-23 (probation) after the Agbami gap page went out as an Artifact.
@@ -37,6 +37,7 @@ Before saying a skill, command, tool, agent or MCP server "doesn't exist" or "is
 
 ## Question Triage (DEFAULT)
 A direct question gets a light answer: 1 to 3 lines, at most one file read, from context. Escalate only for fix-it work, verification asks, multi-step implementation, or an explicit request for depth. Light mode still triggers Sourcing when a load-bearing claim appears; quick mode shapes output length, never investigation depth.
+- A question about what is open, available or current out in the world (grants, prices, deadlines, versions, job or market state) is a verification ask: go live before answering. A memory file or old sweep is the starting map, never the answer. Set 2026-09-19 (probation).
 
 ## Routing and inventory
 - Agents and skills: `~/.claude/docs/agent-routing.md`. Read it when picking an agent.
@@ -54,25 +55,7 @@ A direct question gets a light answer: 1 to 3 lines, at most one file read, from
 Before fully rewriting any file in `~/.claude/` or any `CLAUDE.md`: show the proposed content and wait for an explicit "apply". Targeted Edits proceed normally. Never edit a file under `~/.claude/` from the shell; the backup hook only sees Edit and Write. Git is the one exception: `~/.claude` is a checkout of claude-config, so its history is the backup; run `git status --porcelain` and commit before any pull or checkout. "Refresh" means swap the stale facts, never rewrite.
 
 ## Hooks (deterministic backstops)
-Per-box binding lives in `settings.json`. The hook is the verifier; the prose rule still binds where the hook is blind.
-
-| Guard | Fires on | Blind spots | Escape hatch |
-|---|---|---|---|
-| Capability existence: `/name` refs get a `[CAPABILITY EXISTS]` notice | UserPromptSubmit | bundled skills not on disk, plugin commands, refs without a slash | none |
-| Human voice: every prompt gets the `[HUMAN VOICE]` reply-shape rule in context, plus one sentence naming the reply check's flags on the last reply | UserPromptSubmit | a reminder, not a gate; the reply check does the measuring | `CLAUDE_HUMAN_VOICE=off` |
-| Do it properly: every prompt gets the `[DO IT PROPERLY]` staged-work rule in context; a bare go or continue also gets the `[KEEP GOING]` sentence | UserPromptSubmit | a reminder, not a gate; the reply check flags sweeping claims | `CLAUDE_DO_IT_PROPERLY=off` |
-| Reply check: after each reply, logs counts and flags (over 8 lines or 220 words unless depth was asked for, a table, 6+ bullets, a banned word, a sweeping claim, 2+ numbers with no tool call, fix-it edits with no `<diagnosis>`) to `~/.claude/state/reply_check.jsonl`; the weekly scorecard reads the log | Stop | logs, never blocks: a block cannot un-show a reply, it only prints a second one; counts shapes, not meaning | `CLAUDE_REPLY_CHECK=off` |
-| Keep going: blocks a stop once when the reply's last lines ask for a go ("say go", "shall I", "want me to", "next is X") or wait on a schedule, unless that sentence or the next names an ASK-FIRST reason, a wait on Keith's hands, or a choice between named options; logs each block to `~/.claude/state/keep_going.jsonl` | Stop | regex on the reply's last two lines; answers to a question and `/all-done` or `/grill-me` turns pass; a stage report with no ask in it gets through; the second stop always passes | `CLAUDE_KEEP_GOING=off` |
-| Rewrite gate: denies a Write over an existing `CLAUDE.md`, `~/.claude/settings.json`, or a file git tracks in `~/.claude`, unless the latest human prompt says "apply" | Write | Edit and shell writes; other untracked files such as memory; "apply" anywhere in the prompt passes | `CLAUDE_REWRITE_GATE=off` |
-| Config sync: fetches claude-config; a clean `~/.claude` that is only behind `origin/main` fast-forwards, any other tree gets new skills and commands only, inside the sparse rules | SessionStart | never merges a dirty or diverged tree; offline skips | none |
-| Commit messages: denies em dash in inline `git commit` text and PowerShell stdin pipes; the `git_guard.py` port instead injects the current branch before a mutating git command and warns on banned AI-isms | Bash / PowerShell | `-F <file>` messages | none |
-| Backup: saves one dated `.old-YYYYMMDD` copy per day beside any `.md`, `.json` or `.py` under `~/.claude/`, or any `CLAUDE.md`, before the edit | Edit / Write | shell-side edits; `.js`, `.html`, `.yaml` (git history covers the tracked ones) | none |
-| PS 5.1 stderr: blocks `2>&1` on native exes | Bash / PowerShell | none | none |
-| Comment budget: denies more than 3 comment lines in a row in the edit, or more than 20% comment density in the file after the edit (15+ lines); skips markdown, JSON, config, `docs/`, docstrings, JSDoc | Edit / Write | shell writes; cannot judge WHY from WHAT | `CLAUDE_COMMENT_BUDGET=off` |
-| Resource tripwire: 40+ tool calls with no Skill/Agent/Workflow gets a notice; a command matching `.claude/tripwires.json` is denied without its protocol file, and run N x every is denied until `AUDIT <sid8> #N` is in the audit file | UserPromptSubmit; Bash / PowerShell | regex on command text; repos without `tripwires.json` | none |
-| Fable orchestrator (same script): on a Fable main thread, exec call 26+ (shell, Edit, Write, browser) since the last human message or Agent spawn is denied | Bash / PowerShell / Edit / Write / browser | Read, Grep, Glob and WebFetch are free; task notifications do not reset the leg | `CLAUDE_FABLE_EXEC_BUDGET=off` or a number |
-| Artifact deny: `permissions.deny` lists `Artifact` and `mcp__claude_ai_Claude_Docs`, so no claude.ai page gets published | calls to those tools | also blocks reading or deleting an old artifact | Keith removes the entry |
-| devrl episode: while this session holds a running episode lock, denies a git, npm, npx, vitest or codex command with no absolute `cd`, `-C` or `--prefix` in the same call, and git that throws away uncommitted work (checkout --, restore, reset --hard, clean -f, stash but list/show) | Bash | PowerShell; heredoc bodies; sub-agents only if they share the session id | `DEVRL_ALLOW_DESTRUCTIVE=1` in the command, destructive git only |
+Per-box binding lives in `settings.json`; the table of every guard, which box runs it, its blind spots and its escape hatch is `docs/hooks.md`. The hook is the verifier; the prose rule still binds where the hook is blind. A denial names its guard; read that row before working around it.
 
 ## Root Cause Over Patches (CRITICAL)
 Fix problems at their source. No speed directive authorises a patch over a root-cause fix.
@@ -126,7 +109,7 @@ Roles, not names. Opus is the default session model and the top of the ladder: K
 - Launch parallel agents in one message, split by non-overlapping files, and keep working while they run. Take a sub-agent's findings as done. Single-fact lookups never get a sub-agent. A fan-out that costs money needs the cost and a yes first.
 
 ## Outside Voice (DEFAULT for plans)
-Before implementing a plan that touches locked contracts, migrations or new architecture, or that the user asked to have reviewed, send the plan to `/plan-eng-review`, `/codex`, or a `senior-code-reviewer` sub-agent briefed with the plan file and the source-of-truth docs, report capped. Consolidate the revisions (section, issue, fix), apply them, and start building; the list goes in the report. Stop only for a revision that is a genuine fork (ASK-FIRST 5) or touches a locked contract or live data. Single-step fixes and prose drafts: optional.
+Before implementing a plan that touches locked contracts, migrations or new architecture, or that the user asked to have reviewed, send the plan to `/plan-eng-review`, `/codex`, or a `senior-code-reviewer` sub-agent briefed with the plan file and the source-of-truth docs, report capped. Consolidate the revisions (section, issue, fix), **apply them yourself, then report what changed and what you rejected**. Do not wait for an "apply consolidated" unless a finding lands on the ASK-FIRST list. The review is a quality gate, never a human gate. Single-step fixes and prose drafts: optional.
 
 ## Execution habits
 - Think before coding: name both readings when a request parses two ways; say in one line when a simpler approach exists. Pushing back is not a stall.
@@ -142,6 +125,7 @@ Before implementing a plan that touches locked contracts, migrations or new arch
 
 ## MCP and HTML-first (DEFAULT)
 - When an MCP server is available (context7, Playwright, 2chain), prefer it over the manual equivalent.
+- Box-specific lines (local tool paths, the browser fast route) live in the untracked `~/.claude/rules/local-box.md` on each box.
 - Anything meant to be read, compared or tuned ships as one self-contained local HTML file, opened in the browser: reports, plans for review, walkthroughs, prototypes, small dashboards. Quick answers stay prose; configs, READMEs and commits keep their formats. Patterns: `~/.claude/docs/html-first.md`.
 
 ## Decisiveness
@@ -155,9 +139,9 @@ After the framing pass, commit and report: one chosen path, executed, then what 
 1. A destructive or hard-to-reverse action not already authorised (deleting data, force-push, prod deploy, file or branch deletion, DB drop, locked-signal overwrite, sending anything outward-facing).
 2. Schema or migration changes to live data.
 3. Anything that costs money.
-4. A `<diagnosis>` that answers "downstream".
-5. A genuine fork where two readings produce materially different work and context cannot settle it.
-6. UI or visual taste calls with no precedent in the repo or `DESIGN.md`.
+4. A `<diagnosis>` that answers "downstream" AND the structural fix is out of scope. In scope means take the root fix and report it.
+
+Judgement calls are NOT on this list. A fork between two readings, a taste call with no precedent, a plan that came back reviewed: pick the one that is best for us, do it, and say in one line what you picked and what you passed over. Keith's standing instruction (2026-09-19): "just kind of continuously do what's best for us for every single decision, I don't want to keep asking." Presenting two options is a format for a decision that genuinely needs him, never a reason to manufacture one.
 
 Soft permission, pre-approved bounded choices and earlier answers stand. Three tool calls to settle a routine probe; still unsure, say what is unclear and pick the safer option. Do not end a finished task with "want me to also".
 
