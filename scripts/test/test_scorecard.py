@@ -46,12 +46,13 @@ def reply(ts: str, flags: list[str]) -> str:
     return json.dumps({"ts": ts, "session": "s1", "lines": 4, "words": 60, "tools": 2, "flags": flags})
 
 
-def write_eval(skills: Path, skill: str, started: str, passed: int, total: int) -> Path:
+def write_eval(skills: Path, skill: str, started: str, passed: int, total: int, case: str = "c1") -> Path:
     """One case whose with-skill arm passes `passed` of `total` runs; the without arm always passes and must be ignored."""
+    (skills / skill / "evals" / case).mkdir(parents=True, exist_ok=True)
     path = skills / skill / "evals" / "results" / started / "aggregate-result.json"
     path.parent.mkdir(parents=True)
     arms = {"with": [{"passed": i < passed} for i in range(total)], "without": [{"passed": True}] * 3}
-    path.write_text(json.dumps({"schemaVersion": 1, "cases": [{"name": "c1", "arms": arms}]}), encoding="utf-8")
+    path.write_text(json.dumps({"schemaVersion": 1, "cases": [{"name": case, "arms": arms}]}), encoding="utf-8")
     return path
 
 
@@ -197,8 +198,25 @@ def test_reply_log_with_nothing_in_the_window_is_no_data(tmp_path: Path) -> None
     assert sc.reply_metric(sc.read_reply_log(path, WEEK_START)).value is None
 
 
-def test_read_eval_counts_with_skill_runs_only(tmp_path: Path) -> None:
-    assert sc.read_eval(write_eval(tmp_path, "critique", "2026-09-22T10-31-27-554Z", 1, 3)) == (1, 3)
+def test_eval_metric_counts_with_skill_runs_only(tmp_path: Path) -> None:
+    write_eval(tmp_path, "critique", "2026-09-22T10-31-27-554Z", 1, 3)
+    assert sc.eval_metric(tmp_path).note == "lowest: critique 1/3"
+
+
+def test_eval_metric_takes_the_newest_run_of_each_case(tmp_path: Path) -> None:
+    write_eval(tmp_path, "wtf", "2026-09-22T10-00-00-000Z", 0, 3, case="c1")
+    write_eval(tmp_path, "wtf", "2026-09-22T11-00-00-000Z", 3, 3, case="c2")
+    write_eval(tmp_path, "wtf", "2026-09-24T12-00-00-000Z", 2, 3, case="c1")
+    result = sc.eval_metric(tmp_path)
+    assert result.note == "lowest: wtf 5/6"
+    assert "newest run per case, dated 2026-09-22 to 2026-09-24" in result.details
+
+
+def test_eval_metric_ignores_cases_no_longer_on_disk(tmp_path: Path) -> None:
+    write_eval(tmp_path, "wtf", "2026-09-22T10-00-00-000Z", 3, 3, case="kept")
+    write_eval(tmp_path, "wtf", "2026-09-22T11-00-00-000Z", 0, 3, case="gone")
+    (tmp_path / "wtf" / "evals" / "gone").rmdir()
+    assert sc.eval_metric(tmp_path).note == "lowest: wtf 3/3"
 
 
 def test_eval_metric_skips_skills_that_cannot_fire_in_an_eval(tmp_path: Path) -> None:
@@ -213,7 +231,7 @@ def test_eval_metric_skips_skills_that_cannot_fire_in_an_eval(tmp_path: Path) ->
     assert "not scored, disable-model-invocation never fires in an eval: manual" in result.details
 
 
-def test_eval_metric_uses_the_latest_run_per_skill(tmp_path: Path) -> None:
+def test_eval_metric_uses_the_latest_run_of_a_rerun_case(tmp_path: Path) -> None:
     write_eval(tmp_path, "critique", "2026-09-22T09-49-05-940Z", 0, 3)
     write_eval(tmp_path, "critique", "2026-09-22T10-31-27-554Z", 3, 3)
     write_eval(tmp_path, "wtf", "2026-09-22T10-28-40-308Z", 1, 2)
@@ -250,6 +268,15 @@ def test_approval_gaps_counts_short_go_prompts_within_one_session() -> None:
     assert [round(gap, 1) for gap, _, _ in time_ledger.approval_gaps(rows)] == [4.0]
     assert sc.approvals_metric(rows, WEEK_START, 7).value == 1
     assert sc.approvals_metric([], WEEK_START, 7).value is None
+
+
+def test_approval_gaps_skip_a_go_after_a_usage_limit() -> None:
+    t = datetime(2026, 9, 23, 10, tzinfo=timezone.utc)
+    replies = [("build it", "You've hit your weekly limit · resets Sep 28, 5am (Europe/London)"),
+               ("continue", "Built. You've hit your weekly limit on nothing else."), ("go", "")]
+    rows = [{"session": "a", "prompt": prompt, "t0": t + timedelta(minutes=10 * i),
+             "t1": t + timedelta(minutes=10 * i + 5), "last_text": text} for i, (prompt, text) in enumerate(replies)]
+    assert [r["prompt"] for _, _, r in time_ledger.approval_gaps(rows)] == ["go"]
 
 
 def assistant_row(rid: str, ts: str) -> str:

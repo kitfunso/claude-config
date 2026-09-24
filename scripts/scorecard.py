@@ -236,15 +236,24 @@ def sync_metric(repo: Path, fetch: bool) -> Result:
     return Result(1.0 if clean and level else 0.5, shown, details=(shown, *notes))
 
 
-def latest_evals(skills: Path) -> dict[str, Path]:
-    """Newest aggregate-result.json per skill: result folders are named by UTC start time, so sort order is time order."""
-    return {path.parts[-5]: path for path in sorted(skills.glob("*/evals/results/*/aggregate-result.json"))}
+def latest_cases(skills: Path) -> tuple[dict[str, dict[str, tuple[str, list[bool]]]], list[str]]:
+    """Per skill, the newest (day, with-skill run passes) of each case still on disk, plus unreadable-file notes.
 
-
-def read_eval(path: Path) -> tuple[int, int]:
-    """(with-skill runs that passed, with-skill runs) from a `claude plugin eval` aggregate-result.json."""
-    runs = [run for case in json.loads(path.read_text(encoding="utf-8"))["cases"] for run in case["arms"]["with"]]
-    return sum(bool(run["passed"]) for run in runs), len(runs)
+    A targeted `claude plugin eval --case` rerun replaces only the cases it ran. Result folders are
+    named by UTC start time, so sort order is time order."""
+    newest: dict[str, dict[str, tuple[str, list[bool]]]] = {}
+    bad: list[str] = []
+    for path in sorted(skills.glob("*/evals/results/*/aggregate-result.json")):
+        skill, day = path.parts[-5], path.parts[-2][:10]
+        try:
+            runs = {case["name"]: [bool(run["passed"]) for run in case["arms"]["with"]]
+                    for case in json.loads(path.read_text(encoding="utf-8"))["cases"]}
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            bad.append(f"unreadable: {skill} {path.parts[-2]} ({type(exc).__name__}: {exc})")
+            continue
+        newest.setdefault(skill, {}).update(
+            (name, (day, case_runs)) for name, case_runs in runs.items() if (skills / skill / "evals" / name).is_dir())
+    return newest, bad
 
 
 def manual_only(skill_dir: Path) -> bool:
@@ -256,31 +265,29 @@ def manual_only(skill_dir: Path) -> bool:
 
 
 def eval_metric(skills: Path) -> Result:
-    rates, bad, manual = [], [], []
-    for skill, path in latest_evals(skills).items():
+    newest, bad = latest_cases(skills)
+    rates, days, manual = [], [], []
+    for skill, cases in newest.items():
         if manual_only(skills / skill):
             manual.append(skill)
             continue
-        try:
-            passed, total = read_eval(path)
-        except (OSError, ValueError, KeyError, TypeError) as exc:
-            bad.append(f"unreadable: {skill} ({type(exc).__name__}: {exc})")
-            continue
-        if total:
-            rates.append((passed / total, skill, passed, total, path.parts[-2][:10]))
+        runs = [passed for _, case_runs in cases.values() for passed in case_runs]
+        if runs:
+            rates.append((sum(runs) / len(runs), skill, sum(runs), len(runs)))
+            days.extend(day for day, _ in cases.values())
         else:
             bad.append(f"no with-skill runs: {skill}")
     if not rates:
         return Result(None, "no data yet", details=tuple(bad) or ("no aggregate-result.json under skills/*/evals/results",))
     rates.sort()
+    days.sort()
     mean = statistics.mean(rate for rate, *_ in rates)
-    low = ", ".join(f"{skill} {passed}/{total}" for _, skill, passed, total, _ in rates[:3])
+    low = ", ".join(f"{skill} {passed}/{total}" for _, skill, passed, total in rates[:3])
     ties = sum(rate == rates[0][0] for rate, *_ in rates)
-    days = sorted(day for *_, day in rates)
     skipped = (f"not scored, disable-model-invocation never fires in an eval: {', '.join(manual)}",) if manual else ()
     details = (f"lowest three (with-skill runs passed/total): {low}"
                + (f"; {ties} skills tie at {rates[0][0]:.0%}" if ties > 3 else ""),
-               f"latest run per skill, dated {days[0]} to {days[-1]}", *skipped, *bad)
+               f"newest run per case, dated {days[0]} to {days[-1]}", *skipped, *bad)
     return Result(mean, f"{mean:.0%} mean over {len(rates)} skills", note=f"lowest: {low}", details=details)
 
 

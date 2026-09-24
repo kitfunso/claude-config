@@ -23,6 +23,7 @@ APPROVAL = re.compile(
     r"confirm(ed)?|ship it|lgtm|carry on|keep going|all of them|both)\b",
     re.I,
 )
+LIMIT_HIT = re.compile(r"^\W*(?:you've hit your [\w-]+ limit|[\w -]*usage limit reached)\b", re.I)
 WAKERS = (
     ("workflow", r"workflow"),
     ("monitor", r"monitor"),
@@ -136,9 +137,12 @@ def hours(c: Counter, n: int = 8) -> list:
 
 
 def approval_gaps(rows: list[dict]) -> list[tuple[float, dict, dict]]:
-    """(idle minutes, prompt before, approval) for each approval-only prompt answering a reply in the same session."""
+    """(idle minutes, prompt before, approval) for each approval-only prompt answering a reply in the same session.
+
+    A go after a usage-limit notice is left out: the limit ended that turn, not a choice to stop."""
     return [((r["t0"] - prev["t1"]).total_seconds() / 60, prev, r) for prev, r in zip(rows, rows[1:])
-            if prev["session"] == r["session"] and len(r["prompt"]) <= 60 and APPROVAL.match(r["prompt"])]
+            if prev["session"] == r["session"] and len(r["prompt"]) <= 60 and APPROVAL.match(r["prompt"])
+            and not LIMIT_HIT.match(prev["last_text"])]
 
 
 def stops(rows: list[dict], show: bool) -> None:
