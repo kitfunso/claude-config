@@ -15,6 +15,7 @@ the session.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -45,10 +46,10 @@ MSYS_DRIVE = re.compile(r"^/([a-zA-Z])/")
 
 
 def resolve_dir(raw: str | None, cwd: str | None) -> str:
-    # The command text is Git Bash syntax: translate /c/... and skip $VAR paths.
+    # The command text is Git Bash syntax: expand ~, translate /c/... and skip $VAR paths.
     if not raw or raw.startswith("$"):
         return cwd or "."
-    return MSYS_DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", raw)
+    return MSYS_DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", os.path.expanduser(raw))
 
 
 def current_branch(directory: str) -> str | None:
