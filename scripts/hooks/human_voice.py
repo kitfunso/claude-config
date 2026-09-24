@@ -2,8 +2,9 @@
 """UserPromptSubmit hook: backstop for the Human Voice rule in ~/.claude/CLAUDE.md.
 
 Injects the reply-shape rule into context on every prompt, so it sits in the freshest
-context instead of a 4k-token rules file where it lost every conflict. Escape hatch:
-CLAUDE_HUMAN_VOICE=off. Always exits 0; a broken guard must not break the session.
+context instead of a 4k-token rules file where it lost every conflict. When reply_check.py
+flagged this session's last reply, one sentence naming the flags follows the rule. Escape
+hatch: CLAUDE_HUMAN_VOICE=off. Always exits 0; a broken guard must not break the session.
 """
 
 from __future__ import annotations
@@ -11,6 +12,12 @@ from __future__ import annotations
 import json
 import os
 import sys
+
+try:
+    from reply_check import feedback
+except Exception:  # noqa: BLE001 - the flag sentence is optional, the rule is not
+    def feedback(_: str) -> str:
+        return ""
 
 RULE = (
     "[HUMAN VOICE] Keith's standing rule, outranks the pull to cite everything: reply like a "
@@ -22,13 +29,21 @@ RULE = (
 )
 
 
+def session_of(raw: bytes) -> str:
+    try:
+        return str(json.loads(raw).get("session_id") or "")
+    except (ValueError, AttributeError):
+        return ""
+
+
 def main() -> int:
     if os.environ.get("CLAUDE_HUMAN_VOICE", "").lower() == "off":
         return 0
-    sys.stdin.read()
+    note = feedback(session_of(sys.stdin.buffer.read()))
     json.dump(
         {
-            "hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": RULE},
+            "hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
+                                   "additionalContext": f"{RULE}\n{note}" if note else RULE},
             "suppressOutput": True,
         },
         sys.stdout,
@@ -39,5 +54,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except Exception:  # noqa: BLE001 - a guard must never break the session
+    except Exception as exc:  # noqa: BLE001 - a guard must never break the session
+        print(f"human_voice: {type(exc).__name__}: {exc}", file=sys.stderr)
         sys.exit(0)
