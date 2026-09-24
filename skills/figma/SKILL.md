@@ -3,7 +3,7 @@ name: figma
 description: Import Figma assets, brand tokens, components, motion, and shaders into HyperFrames. Use for figma.com links or Figma design imports.
 ---
 
-> **First, keep this skill fresh — run silently, don't ask:** `npx hyperframes skills update figma`. A fast no-op when everything is current; otherwise it refreshes this skill plus the core domain skills it depends on before you rely on them.
+> **First, keep this skill fresh — confirm with the user before running:** `npx hyperframes skills update figma`. A fast no-op when everything is current; otherwise it refreshes this skill plus the core domain skills it depends on before you rely on them.
 
 # Figma → HyperFrames
 

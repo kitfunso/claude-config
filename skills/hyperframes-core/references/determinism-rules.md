@@ -8,27 +8,14 @@ GSAP is the primary runtime. The core requirement is generic: animation state mu
 
 For GSAP:
 
-- Create the timeline **synchronously** during page initialization.
 - Use `gsap.timeline({ paused: true })`.
-- Register it on `window.__timelines["<composition-id>"]`.
-- The key must match `data-composition-id` on the composition root.
+- Register it on `window.__timelines["<composition-id>"]`, keyed by the composition root's `data-composition-id`. You do **not** need to write `window.__timelines = window.__timelines || {}` first: the runtime creates the registry before your inline scripts evaluate.
+- **Building inside an async callback is supported.** `document.fonts.ready(...)` and friends are the documented setup path. What you must not do is **register the key before the build finishes**. An empty timeline registered early is treated as ready and nested empty, so the animation renders blank (`lint`: `gsap_timeline_registered_before_async_build`, error). Assign `window.__timelines[id] = tl` at the **end** of the callback, after the tweens are added, and optionally call `window.__hfForceTimelineRebind()` right after.
+- If the key does not match the root's `data-composition-id`, the runtime still binds it **when it is the only registered timeline**. With two or more registered, a mismatched key leaves the render frozen at t=0.
 - **Do not** call `tl.play()` for render-critical motion.
-- **Do not** build timelines inside `async`, `Promise`, `setTimeout`, or event handlers — the renderer can sample before they finish.
 - **Do not** create empty tweens only to set duration; use `data-duration` on the clip instead.
-- **Do not** `gsap.set()` clip elements from later scenes — they are not in the DOM at page load. Use `tl.set(selector, vars, time)` inside the timeline at or after the clip's `data-start`.
 
-Use the `hyperframes-animation` skill for tween syntax, position parameters, eases, and performance rules.
-
-### Duration Contract For Non-GSAP Runtimes
-
-The render engine needs a positive total duration before it will capture a single frame — without one, capture fails outright with "Composition has zero duration." A GSAP timeline supplies this automatically. CSS, WAAPI, and Lottie compositions have no timeline object, so the runtime infers duration itself:
-
-- **CSS**: longest `animation-delay` + `animation-duration` × finite `animation-iteration-count` across animated elements (offset by each element's `data-start`). `animation-iteration-count: infinite` cannot be inferred.
-- **WAAPI**: longest `element.animate()` effect's `getComputedTiming().endTime`. Infinite `iterations` cannot be inferred.
-- **Lottie**: the registered animation's native length (`totalFrames / frameRate`, or the dotLottie player's own `duration`) — always finite regardless of `loop`.
-- **Three.js**: **not inferable**. The `three` adapter only forwards time via `hf-seek` — it has no `AnimationClip`/`AnimationMixer` inspection.
-
-`data-duration` on the root `[data-composition-id]` element is therefore optional whenever every non-GSAP animation on the page is finite (CSS/WAAPI with finite iteration counts, or Lottie). It is **required** when: the composition has an infinite/unbounded CSS or WAAPI animation, the composition uses Three.js, or there is no GSAP timeline and no animation signal at all for any adapter to discover. `npx hyperframes lint` enforces exactly this (`root_composition_missing_duration_source`) — see the runtime/adapter-specific docs under `hyperframes-animation/adapters/` for the full contract per runtime.
+Use the `hyperframes-animation` skill for tween syntax, position parameters, eases, and performance rules. Non-GSAP duration inference lives in `hyperframes-animation/adapters/`.
 
 ## Determinism Rules
 
@@ -42,7 +29,8 @@ Rendered frames must be reproducible from the requested time. Do **not** use any
 
 Also avoid:
 
-- Animating anything outside the visual-property allowlist: `opacity`, `x`, `y`, `scale`, `rotation`, `color`, `backgroundColor`, `borderRadius`, and transforms. Never tween `display` or raw `visibility`. GSAP `autoAlpha` is allowed on a registered seekable timeline because it interpolates opacity and changes visibility only at the hidden endpoint. A zero-duration `tl.set(..., { visibility: "hidden" | "visible" })` is also allowed at an explicit beat boundary for a deterministic hard kill. Both exceptions apply only to non-clip elements or wrappers inside a clip. Never target a `.clip` element: HyperFrames timing owns its lifecycle and visibility.
+- Tweening `display`, raw `visibility`, or `autoAlpha` **on a clip element**: HyperFrames timing owns a clip's visibility, and `lint` rejects it (`gsap_animates_clip_element`). Fade with `opacity`, or tween a child wrapper. Do not tween `class="clip"`.
+- There is no fixed allowlist of animatable properties. `lint` enforces a **denylist**, so `filter`, `clipPath`, `strokeDashoffset`, `width`, `height` and similar are all legitimate targets. Prefer transforms and opacity where you have the choice, for performance rather than correctness. The per-runtime detail lives in `hyperframes-animation/adapters/`.
 - Animating the same property on the same element from multiple timelines at the same time — GSAP's overwrite behavior is order-dependent and can flip between renders.
 
 ## Layout Contract
@@ -63,9 +51,3 @@ Build the visible end-state in static HTML and CSS first, then animate from/to t
 - **Do not** use `<br>` in body text. Forced breaks ignore the actual rendered font width and produce an extra break when the line already wraps naturally, causing overlap. Let text wrap via `max-width`. Exception: short display titles where each word is deliberately on its own line.
 - **Transformed elements must be block-level + sized.** `transform`/`scaleX`/`scaleY` is a no-op on an inline `<span>`, and scaling an auto-width (0px) element shows nothing → invisible bars/fills. Give them `display: block`/`inline-block`/flex-item **and** a real `width`/`height` (e.g. `width: 100%` inside a sized parent). _(Silent — automated gates may miss it.)_
 - **Absolutely-positioned decoratives that pulse or overshoot** (`yoyo` scale, `back.out`) need clearance at their **peak** size and must not straddle an `overflow: hidden` edge — else they overlap a neighbor or get clipped. Position for the largest frame, not the resting one. _(silent.)_
-
-## Why This Matters
-
-The renderer takes a time value and produces a pixel buffer. There is no notion of "playback" — every frame is a fresh seek. Any state that depends on having reached this frame _through_ a prior frame (timers, accumulated state, event-driven animations) will desync when the renderer samples out of order or in parallel.
-
-If you find yourself reaching for `setTimeout`, `requestAnimationFrame`, or `addEventListener` to drive a visual, rebuild it as a tween on the timeline instead.
