@@ -15,7 +15,7 @@ graders:
   - type: tool_used
     name: read-draft
     tool: Read
-    input_match: 'draft-skill.SKILL\.md'
+    input_match: 'draft-skill[\\/]+SKILL\.md'
     min: 1
   - type: tool_used
     name: skill-fired

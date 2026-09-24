@@ -1,6 +1,6 @@
 ---
 name: improve-codebase-architecture
-description: Audit codebase architecture and propose concrete structural fixes: coupling, cohesion, boundaries, testability.
+description: Audit the architecture of a codebase, subsystem, or set of files and propose ranked structural fixes for coupling, cohesion, layering, duplication, and testability. Use when the user asks to audit, review, or assess architecture or structure, asks what is structurally wrong before a refactor or a new feature, or says changes in one area keep breaking another.
 ---
 
 Audit the codebase's **architecture** and propose concrete improvements. This is structural work, not style nitpicking.

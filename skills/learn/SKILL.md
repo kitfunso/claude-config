@@ -2,7 +2,7 @@
 name: learn
 preamble-tier: 2
 version: 1.0.0
-description: Manage project learnings.
+description: "Manage project learnings: log, show, search, prune, or export them. Use whenever someone asks to log a learning or whether a lesson is worth keeping, what we have learned, or to check learnings for stale or contradicting entries."
 triggers:
   - show learnings
   - what have we learned
@@ -848,6 +848,9 @@ For each learning in the output:
    opposite `insight` values. Flag: "CONFLICT: [key] has contradicting entries —
    [insight A] vs [insight B]"
 
+An entry that passes both checks still holds: list it as current. Code that does not
+yet follow a pattern, or still has a pitfall, is no reason to doubt the entry.
+
 Present each flagged entry via AskUserQuestion:
 - A) Remove this learning
 - B) Keep it
@@ -939,7 +942,9 @@ Present the stats in a readable table format.
 
 ## Manual add
 
-The user wants to manually add a learning. Use AskUserQuestion to gather:
+The user wants to manually add a learning. First check it is worth keeping: an obvious
+fact or a one-time transient error is not a learning. If it is one, say so and why in two
+or three lines, log nothing, and stop. Otherwise use AskUserQuestion to gather:
 1. Type (pattern / pitfall / preference / architecture / tool)
 2. A short key (2-5 words, kebab-case)
 3. The insight (one sentence)

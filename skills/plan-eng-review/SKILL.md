@@ -824,6 +824,8 @@ C) A specific file, directory, or path.
 
 Recommendation: A when a branch diff exists, otherwise B. Reply with A, B, or C. STOP and wait for the answer — only after the user picks do you run the Design Doc Check and Step 0 against that target.
 
+4. A plan pasted into the request does not answer the gate on its own: the user may still want the branch diff reviewed, with the plan as background. Show the options anyway, recommend B, and stop. The gate is answered only when the user has explicitly picked a target (a letter, or words that name the target).
+
 ## Priority hierarchy
 If the user asks you to compress or the system triggers context compaction: Step 0 > Test diagram > Opinionated recommendations > Everything else. Never skip Step 0 or the test diagram. Do not preemptively warn about context limits -- the system handles compaction automatically.
 

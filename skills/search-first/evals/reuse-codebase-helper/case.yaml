@@ -19,7 +19,7 @@ graders:
   - type: tool_used
     name: read-lib
     tool: Read
-    input_match: 'lib/retry\.py'
+    input_match: 'lib[\\/]+retry\.py'
     min: 1
   - type: tool_used
     name: no-edit

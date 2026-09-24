@@ -13,11 +13,10 @@ execution:
   allowed_tools: [Read, Glob, Grep, Edit, Write, Skill]
 runs: 3
 graders:
-  - type: tool_used
+  - type: regex
     name: edited-file
-    tool: Edit
-    input_match: 'loader\.py'
-    min: 1
+    target: trace
+    pattern: '"name":"(?:Edit|Write)","input":\{(?:"\w+":(?:true|false|null|-?\d+|"(?:[^"\\]|\\.)*"),)*"file_path":"[^"]*loader\.py"'
   - type: tool_used
     name: skill-fired
     tool: Skill

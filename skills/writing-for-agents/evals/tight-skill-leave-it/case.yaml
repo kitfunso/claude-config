@@ -6,8 +6,8 @@ context:
   scaffold_script: scaffold.sh
 execution:
   prompt: |
-    Review good-skill/SKILL.md and good-skill/REVERSIBILITY.md with writing-for-agents —
-    anything to tighten before I add a sixth rule?
+    Review good-skill/SKILL.md and good-skill/DROPS-AND-RENAMES.md with writing-for-agents.
+    Anything to tighten before I add a fourth rule?
   max_turns: 10
   allowed_tools: [Read, Glob, Grep, Skill]
 runs: 3
@@ -21,8 +21,8 @@ graders:
     weight: 2
     criteria: |
       good-skill/SKILL.md is four flat, load-bearing steps with no restated defaults and
-      no duplication; detail is correctly disclosed to REVERSIBILITY.md (a sibling
-      file); step 4's "state PASS or FAIL with the specific line" is a clear, checkable
+      no duplication; detail is correctly disclosed to DROPS-AND-RENAMES.md (a sibling
+      file); step 4's "State PASS, or FAIL with the specific file and line" is a clear, checkable
       completion criterion. Pass only if all of the following hold:
 
       1. The verdict is that the two files are already tight: it does not invent a
@@ -30,9 +30,9 @@ graders:
          present.
       2. It confirms step 4's PASS/FAIL-with-the-line wording is a clear, checkable
          completion criterion (using that term or an equivalent description).
-      3. It confirms the split between SKILL.md (steps) and REVERSIBILITY.md (disclosed
-         reference) is appropriate — not a wrapper doc, not premature disclosure.
-      4. It answers the actual question: yes, a sixth rule can be added without
+      3. It confirms the split between SKILL.md (steps) and DROPS-AND-RENAMES.md (disclosed
+         reference) is appropriate: not a wrapper doc, not premature disclosure.
+      4. It answers the actual question: yes, a fourth rule can be added without
          restructuring, or names the one specific thing to watch as the file grows.
       5. It does not propose or make any edit; it only describes.
 

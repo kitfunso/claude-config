@@ -21,6 +21,8 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
+Part of the review: check with Glob/Grep that every file, module and function the plan imports, modifies or builds on exists. A missing one is a concern to raise before any edit, even the plan's first test step.
+
 ### Step 2: Execute Batch
 **Default: First 3 tasks**
 
@@ -35,6 +37,8 @@ When batch complete:
 - Show what was implemented
 - Show verification output
 - Say: "Ready for feedback."
+
+If a step could not run (no shell for tests or git), say so and never report a pass or a commit you did not see. That is not a blocker to stop on: report the batch as usual. If the batch needed no changes because the code already matches the plan, say so and show what you checked. Either way, end with "Ready for feedback."
 
 ### Step 4: Continue
 Based on feedback:

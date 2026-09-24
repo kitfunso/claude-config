@@ -2,9 +2,10 @@
 name: review
 version: 1.0.0
 description: |
-  Pre-landing PR review. Analyzes diff against the base branch for SQL safety, LLM trust
-  boundary violations, conditional side effects, and other structural issues. Use when
-  asked to "review this PR", "code review", "pre-landing review", or "check my diff".
+  Pre-landing PR review. Analyzes diff against the base branch, or a diff pasted into the
+  chat, for SQL safety, LLM trust boundary violations, conditional side effects, and other
+  structural issues. Use when asked to "review this PR", "code review", "pre-landing review",
+  or "check my diff", or to check changes before they merge or land.
   Proactively suggest when the user is about to merge or land code changes.
 allowed-tools:
   - Bash
@@ -239,4 +240,5 @@ If no documentation files exist, skip this step silently.
 - **Fix-first, not read-only.** AUTO-FIX items are applied directly. ASK items are only applied after user approval. Never commit, push, or create PRs — that's /ship's job.
 - **Be terse.** One line problem, one line fix. No preamble.
 - **Only flag real problems.** Skip anything that's fine.
+- **Severity sets the landing verdict.** Only critical findings (P0/P1) block landing. Informational findings (P2/P3) are non-blocking notes: never tell the user not to land over them alone.
 - **Use Greptile reply templates from greptile-triage.md.** Every reply includes evidence. Never post vague replies.

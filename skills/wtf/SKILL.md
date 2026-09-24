@@ -1,6 +1,6 @@
 ---
 name: wtf
-description: Plain-English debrief of recent work, a named thing, a decision, or project status. Use for 'wtf is X', '/wtf', '/wtf status'.
+description: Plain-English debrief of recent work, a named thing, a decision, or project status. Use whenever a message opens with 'wtf' ('wtf is X', 'wtf, is X live?'), and for '/wtf' and '/wtf status'.
 ---
 
 # /wtf: plain-English debrief
@@ -50,9 +50,20 @@ One short report (max ~120 words), only what matters right now, in this order:
    with its next checkpoint time.
 4. **Live**: what shipped recently and is confirmed healthy.
 
+Every section follows the Broken rule: when it's empty, leave it out, in any
+wording. "In flight: nothing" and a sentence saying no jobs are running are the
+same padding; the verdict line already says whether anything needs the user.
+
 Rules: every claim carries how it's known, verified this session ("checked
 just now"), or from memory with a date ("as of 27-Jul"). Memory older than a
-week is stated as unverified. No history lecture; only what's actionable today.
+week is stated as unverified. What the user tells you this turn is a source
+too: report it as theirs ("per you"). If you can't check it from where you are
+(the work isn't in the folder you can see, or you have no shell), say so in one
+clause and move on, without adding what it isn't ("not broken"). It never goes
+under Broken and is never a pending item: Broken needs a check that found a
+different state, and a check you couldn't run is never something the user must
+decide or do. No history lecture; only what's
+actionable today.
 End with the verdict line(s): one "You need to decide/do: ..." per pending item,
 or "Nothing needs you."
 

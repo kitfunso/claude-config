@@ -4,28 +4,24 @@ mkdir -p good-skill
 cat > good-skill/SKILL.md <<'EOF'
 ---
 name: db-migration-check
-description: Verify a DB migration is reversible and backward compatible before merging. Use when a PR touches a migrations/ file.
+description: DB migration reversibility and backward compatibility. Use when a PR touches a migrations/ file.
 ---
 
-# DB Migration Check
-
-1. Read the migration file. Confirm it has both `up` and `down` functions
-   defined and non-empty.
-2. Grep the codebase for the column or table the migration touches. Confirm
-   no query assumes the new shape until the migration has actually run (no
-   same-PR read of a column the migration adds).
-3. Check the migration against the reversibility rules in
-   [REVERSIBILITY.md](REVERSIBILITY.md).
-4. State PASS or FAIL with the specific line that broke a rule, or PASS with
-   nothing to report.
+1. For each migration in the PR, confirm `down` reverses every schema change
+   in `up`.
+2. If a migration drops or renames a column or table, apply every rule in
+   [DROPS-AND-RENAMES.md](DROPS-AND-RENAMES.md).
+3. Grep the base branch and the PR branch for every column and table the
+   PR's migrations touch, except dropped ones. Confirm each reference to them
+   works against both the old and the new schema.
+4. State PASS, or FAIL with the specific file and line behind each failure.
 EOF
-cat > good-skill/REVERSIBILITY.md <<'EOF'
-# Reversibility rules
+cat > good-skill/DROPS-AND-RENAMES.md <<'EOF'
+# Drop and rename rules
 
-- A column drop must ship in a separate migration from the code that stops
-  reading it, at least one deploy apart.
-- A rename must add-then-backfill-then-drop across three migrations, never a
-  single rename statement.
-- `down` must restore the exact prior schema, not a best-effort
-  approximation.
+- A drop ships only once the code on both the base branch and the PR branch
+  has stopped using the column or table.
+- A drop is the only operation in its migration.
+- A rename follows expand-contract, and this PR carries exactly one of its
+  phases.
 EOF

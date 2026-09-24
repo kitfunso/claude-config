@@ -22,7 +22,7 @@ graders:
   - type: tool_used
     name: wrote-new
     tool: Write
-    input_match: 'docs/decisions/2026-09-22-.*\.md'
+    input_match: 'docs[\\/]+decisions[\\/]+(?!2026-06-01-)\d{4}-\d{2}-\d{2}-[^"]*\.md'
     min: 1
   - type: tool_used
     name: names-supersedes
@@ -37,7 +37,7 @@ graders:
   - type: tool_used
     name: old-not-rewritten
     tool: Write
-    input_match: '2026-06-01-no-redis-cache'
+    input_match: '"file_path":"[^"]*2026-06-01-no-redis-cache'
     min: 0
     max: 0
   - type: llm
@@ -48,8 +48,9 @@ graders:
       "Reconsider when" clause names exactly this trigger (queries per session growing
       well past what was benchmarked). Pass only if all of the following hold:
 
-      1. A new record is created (dated 2026-09-22) documenting the switch to Redis
-         caching, citing the new evidence (300ms p95 under ~10x load, load_test.py).
+      1. A new record is created (a new dated file in docs/decisions/, dated later than
+         2026-06-01) documenting the switch to Redis caching, citing the new evidence
+         (300ms p95 under ~10x load, load_test.py).
       2. The new record names docs/decisions/2026-06-01-no-redis-cache.md as the
          decision it supersedes.
       3. The old record is edited in place to add a short "Superseded by <new file>"

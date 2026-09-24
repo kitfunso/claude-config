@@ -1,9 +1,10 @@
 ---
 type: llm
 weight: 2
+focus: trace
 ---
 
-There is no existing P&L-by-desk page in this empty repo, so this is a genuine greenfield multi-step build. Pass only if all of the following hold:
+There is no existing P&L-by-desk page in this empty repo, so this is a genuine greenfield multi-step build. The saved plan is the content of the agent's Write call to docs/plans/ (the skill's own template text in the trace does not count); the chat reply is the agent's final message. Pass only if all of the following hold:
 
 1. The saved plan has the required header: a title, a "REQUIRED SUB-SKILL: Use executing-plans" callout, and Goal / Architecture / Tech Stack fields.
 2. Work is broken into bite-sized tasks, each with exact file paths (Create/Modify/Test) and steps in the write-test / run-to-fail / implement / run-to-pass / commit shape, not one undifferentiated block of instructions.

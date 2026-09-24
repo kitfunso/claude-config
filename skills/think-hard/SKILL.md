@@ -61,11 +61,14 @@ Question: <what is really being asked. Name the reframe if there is one.>
 Answer:   <the verdict, one or two lines>
 Why:      <the two or three things that decide it, each with its source: file:line, command, URL>
 Counter:  <the strongest case against, and why it loses. Or that it wins.>
-Assumes:  <the assumption that would flip this, and whether it was checked>
-Confidence: <high | medium | low> - <what would move it>
+Assumes:  <the one assumption that would flip this, and whether it was checked>
+Confidence: <high | medium | low> - <the one check that would move it most>
 ```
 
-Then stop. No summary of what he just read.
+The block is the whole reply and fits in about 20 lines. A skipped step or a source you could
+not open goes in Assumes. When several checks would help, name only the one that would move the
+answer most; listing two is a menu. Then stop: nothing outside the six fields, no summary of
+what he just read, no offer to build.
 
 ## Rules
 

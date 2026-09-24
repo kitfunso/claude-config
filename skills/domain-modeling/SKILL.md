@@ -7,6 +7,8 @@ description: Build and sharpen a project's domain model. Use when discussing cod
 
 Actively build and sharpen the project's domain model as you design. This is the *active* discipline: challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely *reading* `CONTEXT.md` for vocabulary is not this skill: that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
 
+The model work rides along with the user's own question or task and never replaces it. Lead your final message with the answer to what they asked, with its file:line evidence, even if you already worked it out while reading: the user sees none of your reasoning or tool output. Then say what changed in `CONTEXT.md`, then any questions.
+
 ## File structure
 
 Most repos have a single context:
@@ -57,9 +59,13 @@ When domain relationships are being discussed, stress-test them with specific sc
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?"
 
+When the code uses two names for one concept, say so in your reply and cite where each name lives (file:line). Then pick one term and list the other under `_Avoid_`.
+
 ### Update CONTEXT.md inline
 
 When a term is resolved, update `CONTEXT.md` right there. Don't batch these up: capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+
+The glossary update and any questions go alongside the answer to the user's question, never in place of it.
 
 `CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
 

@@ -1,6 +1,6 @@
 ---
 name: no-ai-slop
-description: Edit drafts into sharper, human writing while preserving voice, or flag AI-slop patterns in someone else's text.
+description: Edit drafts into sharper, human writing while preserving voice, or flag AI-slop patterns in someone else's text. Use when someone shares writing to improve before it goes out, or asks whether text reads as AI.
 ---
 
 # No AI slop
@@ -24,7 +24,7 @@ If the goal is unclear, ask what the reader should think, feel, or do after read
 ## Editing principles
 
 - **Preserve the writer's real voice.** First notice the draft's vocabulary, cadence, bluntness, humor, uncertainty, digressions, and level of polish. Keep the traits that feel personal to the writer. Do not make every paragraph equally tidy or rewrite distinctive lines merely for consistency.
-- **Make the minimum effective edit.** Fix AI patterns, errors, repetition, and unclear passages. Leave strong human sentences alone. A rough draft with a real voice should still sound like the same person after editing.
+- **Make the minimum effective edit.** Fix AI patterns, errors, repetition, and unclear passages. Leave strong human sentences alone. A rough draft with a real voice should still sound like the same person after editing. When the draft is already clean, the minimum is close to zero: say so first, return it nearly untouched, and fix only real errors. In a chat message or quick email, comma splices, dropped subjects, and run-on spoken sentences are voice, not errors.
 - **Lead with the point when the setup adds nothing.** Cut generic throat-clearing. Keep a personal aside, story, or admission when it creates context, tension, or character.
 - **Front-load only when it improves clarity.** Put conclusions early when that helps the reader. Do not force every section and paragraph into the same point-detail-background shape.
 - **Keep the user's meaning.** Don't invent claims, examples, stats, or opinions. If something is unclear, ask.
@@ -85,7 +85,7 @@ Often-empty phrases: it's worth noting, it's important to note, at the end of th
 
 **Formatting slop.** Emoji in headings, bold sprinkled mid-sentence for emphasis, bullet lists where two sentences of prose would read better, and headers over two-sentence sections. Format should follow the content, not decorate it.
 
-**Em dashes.** Do not use them as a default rhythm crutch. In short copy, use none. In longer drafts, 1-2 are fine if they clearly beat commas, periods, or parentheses. Remove clusters and decorative dashes.
+**Em dashes.** Do not use them as a default rhythm crutch. Add none to short copy. In longer drafts, 1-2 are fine if they clearly beat commas, periods, or parentheses. Remove clusters and decorative dashes, but leave a single dash the writer used naturally.
 
 ## Workflow
 

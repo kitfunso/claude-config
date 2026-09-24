@@ -32,7 +32,7 @@ graders:
   - type: tool_used
     name: saved-plan
     tool: Write
-    input_match: 'docs/plans/.*\.md'
+    input_match: 'docs[\\/]+plans[\\/]+[^"]*\.md'
     min: 1
   - type: llm
     name: criteria

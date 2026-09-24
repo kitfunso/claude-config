@@ -14,7 +14,7 @@ graders:
   - type: tool_used
     name: no-adr-file
     tool: Write
-    input_match: '(?i)adr'
+    input_match: '[Aa][Dd][Rr]'
     min: 0
     max: 0
   - type: tool_used

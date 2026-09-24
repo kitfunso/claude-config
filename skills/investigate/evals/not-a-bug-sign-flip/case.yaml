@@ -17,6 +17,11 @@ graders:
     min: 0
     max: 0
   - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
     name: skill-fired
     tool: Skill
     input_match: investigate

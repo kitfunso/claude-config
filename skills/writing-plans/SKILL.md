@@ -117,3 +117,5 @@ Then pick the execution mode yourself — auto-decide, no menu:
 - **Parallel Session** only when the plan is too large for this session's remaining context, or the user asked for a separate session: guide them to open a new session in the worktree. REQUIRED SUB-SKILL: executing-plans.
 
 Name the choice in one line and start. The user can redirect.
+
+If you cannot start yet (the first task needs a repo, data or answer you don't have), still name the chosen mode in that one line, then say what it waits on.

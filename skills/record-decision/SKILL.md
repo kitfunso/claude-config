@@ -1,6 +1,6 @@
 ---
 name: record-decision
-description: "Recording a durable decision: at ship time, or when asked to 'record this decision' or 'write an ADR'."
+description: "Recording a durable decision, or judging whether a change needs one: at ship time, when asked to 'record this decision' or 'write an ADR', or when asked whether a change needs a decision record."
 ---
 
 # Record Decision

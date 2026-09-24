@@ -2,7 +2,7 @@
 name: investigate
 preamble-tier: 2
 version: 1.0.0
-description: Systematic debugging with root cause investigation. (gstack)
+description: Systematic debugging with root cause investigation. Use when asked to debug, investigate or fix a bug, an error, or a result that looks wrong. (gstack)
 allowed-tools:
   - Bash
   - Read
@@ -837,7 +837,7 @@ Gather context before forming any hypothesis.
 
 1. **Collect symptoms:** Read the error messages, stack traces, and reproduction steps. If the user hasn't provided enough context, ask ONE question at a time via AskUserQuestion.
 
-2. **Read the code:** Trace the code path from the symptom back to potential causes. Use Grep to find all references, Read to understand the logic.
+2. **Read the code:** Trace the code path from the symptom back to potential causes. Use Grep to find all references, Read to understand the logic. When the fault sits in a shared function, Grep the repo for its name to list every caller, even if you think you have seen them all. Fix the fault where it lives, in the shared function: a patch at the one call site that crashed leaves the other callers with the same bug. Then make sure the change is safe for each caller on that list.
 
 3. **Check recent changes:**
    ```bash
@@ -984,6 +984,8 @@ Before writing ANY fix, verify your hypothesis.
 ---
 
 ## Phase 4: Implementation
+
+**No way to run it, no edit.** If this session cannot run code or tests (no shell), change no file, by Edit or by Write, even when the user asked for the fix. Give the root cause, the fix in words (file, function, the change) and the command that would verify it, say plainly it is unverified, and offer to apply it. This is the "never apply a fix you cannot verify" rule below.
 
 Once root cause is confirmed:
 

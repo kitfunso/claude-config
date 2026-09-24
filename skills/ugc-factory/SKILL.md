@@ -3,7 +3,7 @@ name: ugc-factory
 type: standalone
 version: 0.1.0
 category: marketing
-description: Interview-driven UGC ad factory. Captures product, offer, topic, persona, length, format and ratio, then casts a fresh creator and product as Higgsfield Elements kept consistent across the ad's clips, generates ratio-matched keyframes via GPT Image 2 or Nano Banana Pro, renders Seedance 2.0 clips, and stitches them into a finished UGC ad with optional B-roll. Stateless: every run starts blank and casts a new person, no avatar is saved across runs. Use when the user says "ugc factory", "/ugc-factory", "make a UGC ad", "UGC video ad", "AI creator ad", or wants an AI spokesperson product ad.
+description: Interview-driven UGC ad factory. Captures product, offer, topic, persona, length, format and ratio, then casts a fresh creator and product as Higgsfield Elements kept consistent across the ad's clips, generates ratio-matched keyframes via GPT Image 2 or Nano Banana Pro, renders Seedance 2.0 clips, and stitches them into a finished UGC ad with optional B-roll. Stateless, so every run starts blank and casts a new person; no avatar is saved across runs. Use when the user says "ugc factory", "/ugc-factory", "make a UGC ad", "UGC video ad", "AI creator ad", or wants an AI spokesperson product ad.
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__higgsfield__models_explore, mcp__higgsfield__show_reference_elements, mcp__higgsfield__generate_image, mcp__higgsfield__generate_video, mcp__higgsfield__media_upload, mcp__higgsfield__media_upload_widget, mcp__higgsfield__media_confirm, mcp__higgsfield__job_status, mcp__higgsfield__show_generations]
 metadata:
   version: 0.1.0

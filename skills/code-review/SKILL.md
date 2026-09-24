@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Reviews a diff on two axes: repo standards and spec/PRD match. Use to review a branch, PR, or diff since a commit."
+description: "Reviews a diff on two axes: repo standards (plus a built-in code-smell baseline) and spec/PRD match. Use to review a branch, PR, pasted diff, or the changes since a commit or tag, even when the repo has no standards doc or spec."
 ---
 
 Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
@@ -21,6 +21,8 @@ Whatever the user said is the fixed point: a commit SHA, branch name, tag, `main
 Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
 
 Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel sub-agents.
+
+If the user pasted the diff, or there is no shell to run git, the pasted text is the diff: skip the git commands and put the diff text itself in each sub-agent prompt, since they can't run git either.
 
 ### 2. Identify the spec source
 
@@ -71,11 +73,11 @@ Send a single message with two `Agent` tool calls. Use the `general-purpose` sub
 - The path or fetched contents of the spec.
 - The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
 
-If the spec is missing, skip the Spec sub-agent and note this in the final report.
+If the spec is missing, skip the Spec sub-agent and note this under the `## Spec` heading in the final report. Still spawn the Standards sub-agent, even for a small diff in a repo with no standards file: the smell baseline always applies, and a fresh context reviews the diff without this conversation's framing.
 
 ### 5. Aggregate
 
-Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Keep the two axes' reports separate and unranked against each other (see _Why two axes_).
+Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Always print both headings; if an axis was skipped, say why under its heading. Keep the two axes' reports separate and unranked against each other (see _Why two axes_).
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Never a single winner across axes.
 

@@ -1,6 +1,6 @@
 ---
 name: search-first
-description: Research-before-coding workflow. Use before implementing a feature to check for existing libraries, MCP servers, or patterns.
+description: Research-before-coding workflow. Use before adding any capability (feature, helper, integration) or dependency, and whenever the user asks whether a package or library exists for something, how to add it, or whether to build, reuse or adopt it, even when the answer looks obvious, since what the project already has changes the answer. Checks the project's own code and declared dependencies first, then libraries, MCP servers, or patterns.
 ---
 
 # Search First
@@ -15,10 +15,10 @@ Research before coding. Check for existing solutions before writing custom code.
 - Is this a solved problem?
 
 ### 2. Search Sources (in order)
-1. **Package registries** — npm, PyPI, crates.io for the relevant language
-2. **MCP servers** — Check if an MCP integration exists
-3. **GitHub** — Search for existing implementations
-4. **Existing codebase** — Check if something similar already exists in the project
+1. **Existing codebase**: grep for a helper that already does this, and read the dependency file (pyproject.toml, package.json) for a library that is already installed
+2. **Package registries** — npm, PyPI, crates.io for the relevant language
+3. **MCP servers** — Check if an MCP integration exists
+4. **GitHub** — Search for existing implementations
 
 ### 3. Evaluate Candidates
 Score on: functionality match, maintenance status, community size, documentation quality, license compatibility, dependency footprint.
@@ -35,6 +35,8 @@ Score on: functionality match, maintenance status, community size, documentation
 ### 5. Implement
 - If adopting: install, configure, write thin wrapper if needed
 - If building: use discovered patterns as reference, not starting from scratch
+
+If the user asked a question rather than for the change (should I build this, is there a package, how should I do this), answer it: the verdict first, then the evidence (file and line, or the dependency entry), then a short usage sketch. Edit or create files only once they ask for the change.
 
 ## Common Shortcuts
 

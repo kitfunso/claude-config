@@ -17,9 +17,14 @@ graders:
     min: 0
     max: 0
   - type: tool_used
+    name: no-write
+    tool: Write
+    min: 0
+    max: 0
+  - type: tool_used
     name: found-caller
-    tool: Grep
-    input_match: 'to_float'
+    tool: Read
+    input_match: 'arb_economics'
     min: 1
   - type: tool_used
     name: skill-fired

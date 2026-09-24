@@ -27,7 +27,8 @@ graders:
     min: 1
   - type: regex
     name: announce
-    pattern: 'using the executing-plans skill'
+    target: trace
+    pattern: '^(?:(?!"name":"(?:Edit|Write)","input")[\s\S])*?"role":"assistant","content":\[\{"type":"text","text":"(?:[^"\\]|\\.)*?using the executing-plans skill'
     flags: i
   - type: regex
     name: checkpoint

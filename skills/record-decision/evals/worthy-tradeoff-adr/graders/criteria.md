@@ -1,9 +1,10 @@
 ---
 type: llm
 weight: 2
+focus: trace
 ---
 
-This passes the worthiness test: a preferred design (Redis caching) was abandoned after a benchmark exposed a real constraint. A record should be written. Pass only if all of the following hold:
+This passes the worthiness test: a preferred design (Redis caching) was abandoned after a benchmark exposed a real constraint. A record should be written. The record is the content of the agent's Write call to docs/decisions/ (the skill's own template text in the trace does not count); the closing reply may only point to it. Pass only if all of the following hold:
 
 1. The written record follows the template: Date, Status, Context, Constraints and evidence, Decision, Alternatives considered, Consequences, Reconsider when.
 2. The evidence section cites the actual numbers given (40ms Redis vs 12ms direct DuckDB, bench_redis_vs_duckdb.py, the 20 dashboard queries) rather than a vague "we benchmarked it and it was slower."

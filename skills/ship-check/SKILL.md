@@ -36,7 +36,7 @@ Then one sentence on the real-world impact: does this affect users, performance,
 
 ## 4. Due diligence checklist
 
-Check each item by actually verifying, not assuming. Mark `[x]` PASS or `[ ]` SKIPPED/FAIL with a reason.
+Check each item by actually verifying, not assuming. Mark `[x]` PASS or `[ ]` SKIPPED/FAIL with a reason. An item that doesn't apply is `[ ]` N/A with a reason; only `[x]` items count toward X/10 passed. For a FAIL, cite the file (and line) behind it.
 
 - [ ] **Tests pass** — run the test suite, report result
 - [ ] **CI green** — if a PR or pushed branch exists, run `gh pr checks` (or the repo's CI status); a red required check forces **Not yet**
@@ -71,8 +71,10 @@ Check each item by actually verifying, not assuming. Mark `[x]` PASS or `[ ]` SK
 ## Rules
 
 - If tests fail or secrets are exposed, verdict is **Not yet** regardless of everything else.
+- A credential-shaped literal in the diff (key, token, password, webhook URL) counts as an exposed secret even if the value looks like a placeholder: the diff can't prove it's fake. Say to move it out of source, and to rotate it if it's real.
 - If the work is incomplete (TODO comments, placeholder logic, half-implemented features), say so directly.
 - If you didn't actually run tests or build, mark those items SKIPPED — don't pretend.
+- With no shell, mark every item that needs one SKIPPED with the reason "no shell to run it".
 
 ---
 
