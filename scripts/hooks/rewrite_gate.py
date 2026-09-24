@@ -13,6 +13,7 @@ names the error and the hook exits 0; a broken guard must not break the session.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import subprocess
@@ -86,8 +87,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format="%(name)s: %(message)s")
     try:
         main()
     except Exception as exc:  # noqa: BLE001 - a guard must never break the session
-        print(f"rewrite_gate: {type(exc).__name__}: {exc}", file=sys.stderr)
+        logging.getLogger("rewrite_gate").error("%s: %s", type(exc).__name__, exc)
     sys.exit(0)

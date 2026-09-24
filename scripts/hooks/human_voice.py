@@ -10,6 +10,7 @@ hatch: CLAUDE_HUMAN_VOICE=off. Always exits 0; a broken guard must not break the
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 
@@ -52,8 +53,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format="%(name)s: %(message)s")
     try:
         sys.exit(main())
     except Exception as exc:  # noqa: BLE001 - a guard must never break the session
-        print(f"human_voice: {type(exc).__name__}: {exc}", file=sys.stderr)
+        logging.getLogger("human_voice").error("%s: %s", type(exc).__name__, exc)
         sys.exit(0)
