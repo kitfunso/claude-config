@@ -6,6 +6,7 @@ Run: python -m unittest discover -s scripts/hooks/test -p "test_*.py"
 import json
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -98,13 +99,14 @@ class RefreshLock(unittest.TestCase):
 
 
 class CacheFile(unittest.TestCase):
-    def test_the_name_is_the_hash_of_the_cwd_string(self):
-        self.assertEqual(hook.cache_file("C:/Users/skf_s").name,
-                         "c6ee4209f2ca5659.json")
+    def test_the_name_is_the_hash_of_the_cwd_and_the_query(self):
+        with mock.patch.object(hook, "ARGS", ["context", "--pinned-only"]):
+            old = hook.cache_file("C:/Users/skf_s")
+        self.assertNotEqual(hook.cache_file("C:/Users/skf_s"), old)
 
-    def test_a_backslash_path_is_a_different_cache(self):
-        self.assertNotEqual(hook.cache_file("C:/Users/skf_s"),
-                            hook.cache_file("C:\\Users\\skf_s"))
+    def test_a_backslash_path_is_the_same_cache(self):
+        self.assertEqual(hook.cache_file("C:/Users/skf_s"),
+                         hook.cache_file("C:\\Users\\skf_s\\"))
 
 
 class Dedupe(unittest.TestCase):

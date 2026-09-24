@@ -7,7 +7,6 @@ so they approximate what Claude Code injects: deltas are exact, levels are close
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import sys
@@ -18,6 +17,8 @@ import tiktoken
 
 HOME = Path.home()
 CLAUDE_DIR = HOME / ".claude"
+sys.path.insert(0, str(CLAUDE_DIR / "scripts" / "hooks"))
+import hippo_context_cached  # noqa: E402
 # Claude Code names the project dir from the cwd: C:\Users\x -> C--Users-x.
 PROJECT_KEY = re.sub(r"[^A-Za-z0-9]", "-", str(HOME))
 ENC = tiktoken.get_encoding("cl100k_base")
@@ -66,8 +67,7 @@ def listing(paths: list[Path]) -> tuple[str, int]:
 
 
 def hippo_payload(cwd: str) -> tuple[str, str]:
-    digest = hashlib.sha1(cwd.encode("utf-8")).hexdigest()[:16]
-    cache = CLAUDE_DIR / "cache" / "hippo-context" / f"{digest}.json"
+    cache = hippo_context_cached.cache_file(cwd)
     if not cache.exists():
         return "", f"no cache for {cwd}"
     raw = cache.read_text(encoding="utf-8")

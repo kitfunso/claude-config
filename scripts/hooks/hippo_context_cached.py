@@ -31,7 +31,9 @@ def hippo() -> str | None:
 
 
 def cache_file(cwd: str) -> Path:
-    return CACHE_DIR / f"{hashlib.sha1(cwd.encode('utf-8')).hexdigest()[:16]}.json"
+    """One key per folder and query: slash style never splits it, and a changed query never serves the old cache."""
+    key = "\0".join([cwd.replace("\\", "/").rstrip("/"), *ARGS])
+    return CACHE_DIR / f"{hashlib.sha1(key.encode('utf-8')).hexdigest()[:16]}.json"
 
 
 def lock_file() -> Path:
