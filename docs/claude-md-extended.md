@@ -11,7 +11,7 @@ its incident; cite the section, never recall it.
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first; treat global rules as defaults. A project rule that says "do X via Y" makes Y the first move, not a fallback after A fails.
 - Order when two rules collide: CRITICAL rules and explicit user instructions, then Root Cause, then Sourcing, then Decisiveness, then Token Discipline, then Output prose.
 - Labels: `(CRITICAL)` means NEVER violate, override only via explicit user instruction. Everything else is `(DEFAULT)` and yields to project CLAUDE.md or user intent.
-- Speed directives (`/fast`, `/full-power`, `/ship`, quick mode, "just do it", "do all N now") buy less ceremony, never less rigour: they never skip the framing pass, the source reads, or the plan review.
+- Speed directives (`/fast`, `/full-power`, `/ship`, quick mode, "just do it", "do all N now") buy less ceremony, never less rigour: they skip the plan review and the stage reports, never the tests, the source reads or the root-cause fix.
 - History of the 2026-09-01 restructure and the later rule edits: `docs/incidents.md`.
 
 ## Capability Existence Check (CRITICAL)
@@ -241,7 +241,7 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 - Before starting any non-trivial multi-step implementation (a "phase plan", a feature plan with more than 3 steps, or anything involving locked contracts, migrations or new architecture), dispatch outside voice on the plan BEFORE coding.
 - Use one or both: `/plan-eng-review` (in-house architecture critique), `/codex` (cross-model adversarial review), or a `senior-code-reviewer` sub-agent briefed against the plan file plus the project's source-of-truth docs (PRD, ARCHITECTURE.md, CLAUDE.md).
 - Brief the reviewer concretely: plan file path, key constraint files, what to look for (gaps versus success metrics, contract drift, test holes, scope creep, performance hazards, a11y and safety holes). Cap report length so it stays usable.
-- Consolidate the revisions into a single blob, each item carrying a section reference, a one-sentence issue, and a concrete fix. Present it to the user. Wait for "apply consolidated" or equivalent before patching the plan.
+- Consolidate the revisions into a single blob, each item carrying a section reference, a one-sentence issue, and a concrete fix. Apply it to the plan and start building; the blob goes in the report. Stop only for a revision that is a genuine fork (ASK-FIRST 5) or touches a locked contract or live data.
 - Single-step bugfixes, trivial edits and prose drafts: outside voice optional.
 
 ## Execution habits

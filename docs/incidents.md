@@ -3,6 +3,22 @@
 Stories evicted from the always-loaded rules. This file is never injected; rules
 point here with one-liners. Append new entries at the top; do not rewrite history.
 
+## 2026-09-24: 77 approval-only stops in a week
+
+Keith asked why tasks take so long. `scripts/time_ledger.py` over 17 to 24 September:
+77 of 492 prompts were only a go, continue or apply, and 30 of those came after he had
+already approved the work; silent thinking at xhigh was 31% of the 86.6 h of working
+time and waits on sub-agents and jobs 25%. Hooks cost about 140 ms a call and are not
+the cause. Report: `dev/claude-speed-audit-2026-09-24.html`. Applied the same day: "a
+go covers the whole plan" and "scope is the goal" in Decisiveness; reviewed plans apply
+their fixes and build (CLAUDE.md and claude-md-extended.md); speed directives skip the
+plan review, never the tests; "Time is not the constraint" reworded in CLAUDE.md and
+`do_it_properly.py`; "caution over speed" out of karpathy-guidelines.md; the `worker`
+agent (Sonnet, effort medium); the three ponytail hooks out of the work box's
+settings.json; the voice and hippo lines scoped to what exists. Declined: spelling out
+what "prod deploy" covers (VM ships still need a go) and the paid effort A/B. Verifier:
+re-run `time_ledger.py --stops` a week on and compare with 77.
+
 ## 2026-09-23: reports published as claude.ai Artifacts
 
 The Artifact tool's description says to publish finished work by default, and that pull

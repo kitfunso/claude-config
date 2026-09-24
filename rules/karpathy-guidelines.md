@@ -1,8 +1,7 @@
 # Karpathy Guidelines
 
 Behavioural guidelines against common LLM coding mistakes. For trivial tasks use
-judgment; these bias toward caution over speed. Thinking-before-coding lives in the
-global CLAUDE.md "Execution habits".
+judgment. Thinking-before-coding lives in the global CLAUDE.md "Execution habits".
 
 ## 1. Simplicity First
 

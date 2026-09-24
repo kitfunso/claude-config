@@ -8,8 +8,8 @@ fastapi-pro. Restore by moving the file back.
 
 ## Agents
 
-Applies on a box that has `~/.claude/agents/` definitions. Where that directory is
-absent, use the injected agent-types list instead.
+A row applies only where its agent shows in the injected agent-types list; that list
+is the authority on what is installed.
 
 | Agent | Use Case |
 |-------|----------|
@@ -22,6 +22,7 @@ absent, use the injected agent-types list instead.
 | `senior-code-reviewer` | Code quality, security review |
 | `data-engineer` | Pipelines, ETL |
 | `database-optimizer` | Query optimization, indexing |
+| `worker` | Mechanical sub-task with a complete brief (search, extraction, mechanical edits, smoke tests); Sonnet at effort medium |
 
 The five Quantamental agents (`commodity-backtest`, `signal-validator`, `data-auditor`,
 `model-diff`, `smoke-test-frontend`) and its four skills (`model-improve`, `roll-check`,

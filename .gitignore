@@ -16,6 +16,8 @@
 !/hooks/**
 !/scripts/
 !/scripts/**
+!/agents/
+!/agents/**
 !/.gitignore
 
 # Keep shareable skill and hook source, not vendored dependencies, nested repos,

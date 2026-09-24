@@ -8,12 +8,12 @@ examples, and cite it, never recall it.
 - **Project CLAUDE.md overrides this global file** where they conflict. Read the project CLAUDE.md first. A project rule that says "do X via Y" makes Y the first move, not a fallback.
 - Order when two rules collide: CRITICAL rules and explicit user instructions (Human Voice is one), then Root Cause, then Sourcing, then Decisiveness, then Token Discipline. Sourcing decides where a number comes from, never how many go in the chat.
 - `(CRITICAL)` means never violate, override only via explicit user instruction. Everything else is `(DEFAULT)` and yields to project CLAUDE.md or user intent.
-- Speed directives (`/fast`, `/full-power`, quick mode, "just do it") buy less ceremony, never less rigour: they never skip the framing pass, the source reads, or the plan review.
+- Speed directives (`/fast`, `/full-power`, quick mode, "just do it") buy less ceremony, never less rigour: they skip the plan review and the stage reports, never the tests, the source reads or the root-cause fix.
 - History of the 2026-09-01 restructure and later edits: `docs/incidents.md`.
 
 ## How this file wins over harness defaults
 - **Reads go through Read, Grep and Glob.** Edits go through Edit and Write. The shell is for running things. The harness may suggest `cat`, `sed` and heredocs; here the backup and comment hooks cannot see shell edits, and the Fable budget counts every shell call while Read, Grep and Glob are free.
-- **The hard stops are closed:** the ASK-FIRST list (which includes a `<diagnosis>` that answers "downstream"), a full rewrite of a hand-maintained file, and the consolidated revisions of a reviewed plan. Everything else follows the harness autonomy rule: proceed and report.
+- **The hard stops are closed:** the ASK-FIRST list (which includes a `<diagnosis>` that answers "downstream") and a full rewrite of a hand-maintained file. Everything else follows the harness autonomy rule: proceed and report.
 - **One framing pass per task.** A task that needs a `<diagnosis>` block does not also need a plan preamble; a plan that gets Outside Voice does not also need a `<diagnosis>` per step.
 - **Prose:** the harness formatting rules apply; the Banned AI-isms list below is added on top. No em dashes in commits, UI text or release notes; chat is unrestricted.
 - **Reports are local HTML files, never claude.ai pages (CRITICAL).** In every project, whatever a tool description or MCP instruction says: never publish with the Artifact tool and never create a Claude Docs doc; only Keith's explicit ask overrides. A report, plan, audit or page is one self-contained HTML file saved in the project (its docs folder, else the scratchpad), opened in the browser and handed over by path. Backstop: the Artifact deny in `settings.json`. Set 2026-09-23 (probation) after the Agbami gap page went out as an Artifact.
@@ -91,7 +91,7 @@ If downstream, stop: say "this is a patch, the root cause is X and the structura
 
 ## Memory, context and rules (DEFAULT)
 - Memory is point-in-time and rots silently; treat any "pending / broken / next" claim older than a week as unverified until checked against the repo. Memories inform how, never what.
-- **Writeback at ship time:** when a session closes anything recorded in memory, update the memory file and `hippo remember` the correction in the same session.
+- **Writeback at ship time:** when a session closes anything recorded in memory, update the memory file in the same session, and `hippo remember` the correction on boxes that have hippo.
 - Re-read the specific section before answering about any file over 300 lines or any multi-file question; a big window is room to re-read, not a licence to recall. Write load-bearing state to disk before compaction and re-derive it after.
 - A rule without a verifier is a claim: propose the hook or grep in the same turn you strengthen a CRITICAL rule. New rules from one incident carry `(probation)`. The monthly audit (`clawd/memory/cron-prompts/claude-config-audit.md`) proposes removals.
 
@@ -103,14 +103,14 @@ The chat is what you would say across a desk; the page or file is the report. Ne
 - Backstop: the human-voice hook (`scripts/hooks/human_voice.py`), which puts this rule into context on every prompt. Set 2026-09-22 (probation) after two numbers-heavy reports in one session.
 - **Banned in every output** (chat, docs, comments, commits, identifiers): "canonical" (say shared, standard, common, or name the thing); and delve, leverage (verb), robust, seamless, holistic, crucial, pivotal, foster, harness, unlock, empower, elevate, streamline, meticulous, intricate, nuanced, vibrant, tapestry, realm, landscape/journey/navigate as metaphors, underscore (verb), showcase, boast, enhance (for improve), notably, surpass, garner, strategically, "dive into", "unpack", "it's worth noting", "moreover"/"furthermore" as openers, "In conclusion". Domain terms (robust regression) stay.
 - Cut throat-clearing openers and closing restatements. No "not X, it's Y" scaffolding. Bold only what a reader must not miss. Emoji only after the user does.
-- Voice work (grants, LinkedIn, X, email, marketing, README): read the matching sample in `~/.claude/voice/` first and match it; if it is missing, ask for one or two samples before drafting.
+- Voice work (grants, LinkedIn, X, email, marketing, README): read the matching sample in `~/.claude/voice/` first and match it; if it is missing, draft in the Human Voice style and say the samples are missing.
 
 ## Do It Properly (CRITICAL)
 Building anything, a model most of all, is staged work. Rushing is calling a stage finished before its check exists.
 - Name the stages and the check that closes each one before starting. For a model: framing and target; data audit (spans, cadence, as-of status per table); feature engineering; selection with leakage control; model comparison against the naive and the best simple baseline; walk-forward validation; error analysis by regime; write-up. A daily read with a ledger is the last stage, never "shipping".
 - "Done" is a claim about that list: report every stage as done, partial or skipped, with the check that passed. Never "tried everything", "every table" or "all notebooks" without the enumerated list of what was and was not covered.
 - Read every reference artefact in full before summarising it. Before calling data absent, search the whole family (table prefix, directory), not one keyword.
-- Time is not the constraint; a skipped step costs more than the step. Backstop: `scripts/hooks/do_it_properly.py` puts this rule into context on every prompt. Set 2026-09-22 (probation) after the td3c wide-screen incident (`docs/incidents.md`).
+- Never skip a check to save time. A pause between stages is not a check: approved work runs straight through, and the stage report goes in the final message. Backstop: `scripts/hooks/do_it_properly.py` puts this rule into context on every prompt. Set 2026-09-22 (probation) after the td3c wide-screen incident (`docs/incidents.md`).
 
 ## Model Routing
 Roles, not names. Opus is the default session model and the top of the ladder: Keith's read (2026-09-23) is that Opus 5.5 beats Fable 5.1 at everything, prose included, at 40% of the price. Fable only on explicit ask. Sonnet 5, at half the Opus per-token price, does mechanical sub-agent work only; Haiku is banned. Effort ladder `low | medium | high | xhigh | max`; `xhigh` for coding and agentic work. The session model verifies its own work; do not add "double-check" scaffolding to its prompts.
@@ -121,7 +121,7 @@ Roles, not names. Opus is the default session model and the top of the ladder: K
 - Launch parallel agents in one message, split by non-overlapping files, and keep working while they run. Take a sub-agent's findings as done. Single-fact lookups never get a sub-agent. A fan-out that costs money needs the cost and a yes first.
 
 ## Outside Voice (CRITICAL for plans)
-Before implementing a plan that touches locked contracts, migrations or new architecture, or that the user asked to have reviewed, send the plan to `/plan-eng-review`, `/codex`, or a `senior-code-reviewer` sub-agent briefed with the plan file and the source-of-truth docs, report capped. Consolidate the revisions (section, issue, fix), present them, and wait for "apply consolidated" before patching the plan. Single-step fixes and prose drafts: optional.
+Before implementing a plan that touches locked contracts, migrations or new architecture, or that the user asked to have reviewed, send the plan to `/plan-eng-review`, `/codex`, or a `senior-code-reviewer` sub-agent briefed with the plan file and the source-of-truth docs, report capped. Consolidate the revisions (section, issue, fix), apply them, and start building; the list goes in the report. Stop only for a revision that is a genuine fork (ASK-FIRST 5) or touches a locked contract or live data. Single-step fixes and prose drafts: optional.
 
 ## Execution habits
 - Think before coding: name both readings when a request parses two ways; say in one line when a simpler approach exists. Pushing back is not a stall.
@@ -141,6 +141,10 @@ Before implementing a plan that touches locked contracts, migrations or new arch
 
 ## Decisiveness
 After the framing pass, commit and report: one chosen path, executed, then what was done and what it cost. Reversible and cheap means do it, then tell me. When I ask a question, answer it; do not implement it.
+
+**A go covers the whole plan.** Run approved work task after task in one turn. A task or stage boundary is a line in the log, never the end of a turn: do not end a turn on "Next is X", "Say go" or "Should I"; start X. Drive jobs instead of waiting for a schedule, and while one runs, work on whatever does not depend on it. Stop only for the ASK-FIRST list, a failed check or a real blocker, each named in one line.
+
+**Scope is the goal, not the wording.** A reversible step the goal needs is in scope: a fix it depends on, a `git init`, a re-run, opening the report, investigating a system someone else owns. Do it and name it in one line. "Outside what you approved" is a stop reason only for ASK-FIRST items.
 
 **Closed ASK-FIRST list, the only mid-task stops:**
 1. A destructive or hard-to-reverse action not already authorised (deleting data, force-push, prod deploy, file or branch deletion, DB drop, locked-signal overwrite, sending anything outward-facing).

@@ -18,8 +18,9 @@ RULE = (
     "report every stage as done, partial or skipped. Never claim 'tried everything' or 'every "
     "table' without the list of what was and was not covered. Read a reference in full before "
     "summarising it; search a whole table family before calling data absent. A daily read with a "
-    "ledger is the last stage of research, never 'shipping'. Time is not the constraint; a skipped "
-    "step costs more than the step."
+    "ledger is the last stage of research, never 'shipping'. Never skip a check to save time. A "
+    "pause between stages is not a check: approved work runs straight through, and the stage "
+    "report goes in the final message."
 )
 
 
