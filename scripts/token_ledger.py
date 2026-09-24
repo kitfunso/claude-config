@@ -121,10 +121,10 @@ def charge(ledger: Ledger, items: list, usage: dict, p: tuple, who: str) -> floa
     return total
 
 
-def final_output(path: Path) -> dict[str, tuple[int, int]]:
+def final_output(lines: list[str]) -> dict[str, tuple[int, int]]:
     """(output, thinking) per request: subagent transcripts log partial counts on a request's first entry."""
     final: dict[str, tuple[int, int]] = {}
-    for line in path.open(encoding="utf-8", errors="replace"):
+    for line in lines:
         try:
             d = json.loads(line)
         except ValueError:
@@ -137,8 +137,11 @@ def final_output(path: Path) -> dict[str, tuple[int, int]]:
     return final
 
 
-def walk(path: Path, ledger: Ledger, since: str, session: str, who: str) -> None:
-    final = final_output(path)
+def walk(path: Path, ledger: Ledger, since: str, session: str, who: str, until: str = "9999") -> None:
+    # One read for both passes: a live session appends between two reads, leaving requests the first pass never saw.
+    with path.open(encoding="utf-8", errors="replace") as fh:
+        lines = list(fh)
+    final = final_output(lines)
     tool_names: dict[str, str] = {}
     items: list[list] = []
     pending: list[tuple[str, int]] = []
@@ -146,15 +149,16 @@ def walk(path: Path, ledger: Ledger, since: str, session: str, who: str) -> None
     prev_prefix = prev_out = 0
     prev_ts = ""
     model = ""
-    for line in path.open(encoding="utf-8", errors="replace"):
+    for line in lines:
         try:
             d = json.loads(line)
         except ValueError:
             continue
         kind = d.get("type")
+        in_window = since <= d.get("timestamp", "") < until
         if kind == "system" and d.get("subtype") == "compact_boundary":
             meta = d.get("compactMetadata") or {}
-            if d.get("timestamp", "") >= since:
+            if in_window:
                 ledger.compactions.append((session, meta.get("preTokens", 0), meta.get("postTokens", 0), model))
             items, pending, prev_prefix = [], [], 0
         elif kind == "attachment":
@@ -164,13 +168,12 @@ def walk(path: Path, ledger: Ledger, since: str, session: str, who: str) -> None
         elif kind == "user":
             new = user_items(d, tool_names)
             pending.extend(new)
-            in_window = d.get("timestamp", "") >= since
             if (d.get("origin") or {}).get("kind") == "human" and in_window:
                 ledger.sessions[session]["human prompts"] += 1
             for block in d["message"]["content"] if isinstance(d["message"]["content"], list) and in_window else []:
                 if block.get("type") == "tool_result" and block.get("is_error"):
                     ledger.tool_errors[tool_names.get(block.get("tool_use_id"), "?")] += 1
-            if d.get("isCompactSummary") and ledger.compactions and ledger.compactions[-1][0] == session and d.get("timestamp", "") >= since:
+            if d.get("isCompactSummary") and ledger.compactions and ledger.compactions[-1][0] == session and in_window:
                 s, pre, post, m = ledger.compactions[-1]
                 p = price(m or "opus-5-5")
                 est = pre * p[2] / 1e6 + text_len(d["message"]["content"]) / CHARS_PER_TOKEN * p[1] / 1e6
@@ -182,7 +185,7 @@ def walk(path: Path, ledger: Ledger, since: str, session: str, who: str) -> None
             for block in msg.get("content") or []:
                 if block.get("type") == "tool_use":
                     tool_names[block["id"]] = block["name"]
-                    if d.get("timestamp", "") >= since:
+                    if in_window:
                         ledger.tool_calls[block["name"]] += 1
                         ledger.tool_sessions[block["name"]].add(session)
             rid = d.get("requestId") or msg.get("id")
@@ -207,7 +210,7 @@ def walk(path: Path, ledger: Ledger, since: str, session: str, who: str) -> None
             pending = []
             ts = d.get("timestamp", "")
             out, think = final[rid]
-            if ts >= since:
+            if in_window:
                 dollars = charge(ledger, items, usage, p, who)
                 w1h = (usage.get("cache_creation") or {}).get("ephemeral_1h_input_tokens", 0)
                 ledger.billed += (usage["input_tokens"] * p[0] + out * p[1] + usage["cache_read_input_tokens"] * p[2]
@@ -229,15 +232,16 @@ def walk(path: Path, ledger: Ledger, since: str, session: str, who: str) -> None
             prev_prefix, prev_out, prev_ts = prefix, out, d.get("timestamp", "")
 
 
-def run(since: str) -> Ledger:
+def run(since: str, until: str = "9999") -> Ledger:
+    """Price every request with since <= timestamp < until, main threads and their subagents."""
     ledger = Ledger()
     for main in sorted(PROJECTS.glob("*/*.jsonl")):
         session = main.stem
-        walk(main, ledger, since, session, "main")
+        walk(main, ledger, since, session, "main", until)
         for sub in sorted((main.parent / session / "subagents").glob("*.jsonl")):
             meta_path = sub.with_suffix(".meta.json")
             meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-            walk(sub, ledger, since, session, f"subagent: {meta.get('agentType', '?')}")
+            walk(sub, ledger, since, session, f"subagent: {meta.get('agentType', '?')}", until)
     return ledger
 
 

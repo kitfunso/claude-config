@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import statistics
+import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -134,14 +135,18 @@ def hours(c: Counter, n: int = 8) -> list:
     return [(k, round(v / 3600, 1)) for k, v in c.most_common(n)]
 
 
+def approval_gaps(rows: list[dict]) -> list[tuple[float, dict, dict]]:
+    """(idle minutes, prompt before, approval) for each approval-only prompt answering a reply in the same session."""
+    return [((r["t0"] - prev["t1"]).total_seconds() / 60, prev, r) for prev, r in zip(rows, rows[1:])
+            if prev["session"] == r["session"] and len(r["prompt"]) <= 60 and APPROVAL.match(r["prompt"])]
+
+
 def stops(rows: list[dict], show: bool) -> None:
-    gaps = []
-    for prev, r in zip(rows, rows[1:]):
-        if prev["session"] == r["session"] and len(r["prompt"]) <= 60 and APPROVAL.match(r["prompt"]):
-            gaps.append((r["t0"] - prev["t1"]).total_seconds() / 60)
-            if show:
-                tail = " ".join(prev["last_text"].split())[-160:]
-                print(f"  {gaps[-1]:6.1f} min [{r['prompt'][:22]!r}] <- ...{tail}")
+    found = approval_gaps(rows)
+    gaps = [gap for gap, _, _ in found]
+    for gap, prev, r in found if show else []:
+        tail = " ".join(prev["last_text"].split())[-160:]
+        print(f"  {gap:6.1f} min [{r['prompt'][:22]!r}] <- ...{tail}")
     capped = sum(min(g, 60) for g in gaps) / 60
     print(f"approval-only replies {len(gaps)} of {len(rows)} prompts: idle median {statistics.median(gaps) if gaps else 0:.1f} min, "
           f"total {sum(gaps) / 60:.1f} h, {capped:.1f} h with each stop capped at 60 min")
@@ -168,6 +173,15 @@ def report(rows: list[dict], show_stops: bool) -> None:
     print(f"tool errors {sum(errs.values())}, hook denials {hooks}; top: {errs.most_common(5)}")
 
 
+def load_rows(since: str = "", until: str = "9999", skip: str = "") -> list[dict]:
+    """One measured row per human prompt across every main-thread transcript, in file then prompt order."""
+    rows = []
+    for path in sorted(PROJECTS.glob("*/*.jsonl")):
+        if not (skip and path.stem.startswith(skip)):
+            rows += [dict(measure(s), session=path.stem[:8]) for s in spans(path, since, until)]
+    return rows
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--since", default="")
@@ -175,11 +189,9 @@ def main() -> None:
     ap.add_argument("--skip", default="")
     ap.add_argument("--stops", action="store_true", help="print what the last reply said before each approval-only prompt")
     args = ap.parse_args()
-    rows = []
-    for path in sorted(PROJECTS.glob("*/*.jsonl")):
-        if not (args.skip and path.stem.startswith(args.skip)):
-            rows += [dict(measure(s), session=path.stem[:8]) for s in spans(path, args.since, args.until)]
-    report(rows, args.stops)
+    # Redirected output takes the ANSI code page on Windows, which cannot encode every character in a quoted reply.
+    sys.stdout.reconfigure(errors="replace")
+    report(load_rows(args.since, args.until, args.skip), args.stops)
 
 
 if __name__ == "__main__":
