@@ -293,8 +293,8 @@ def pre_tool_use(payload: dict) -> dict | None:
     protocol = cfg.get("protocol_file")
     if protocol and not (root / protocol).is_file():
         return deny(f"[TRIPWIRE] {root / protocol} is missing. A campaign run needs the protocol "
-                    "file first: load /quant-ml-protocol, write Stage 0 (sample-size math, "
-                    "decision rule, registry), then re-run.")
+                    "file first: load /quant-ml-protocol, write its plan page with stage 0 "
+                    "(prior art) and stage 1 (framing, target and power) closed, then re-run.")
     if blocks is None:
         blocks = load_tool_uses(transcript)
     sid = str(payload.get("session_id") or "session")[:8]

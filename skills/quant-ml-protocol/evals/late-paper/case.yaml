@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: late-paper
+tags: [quant-ml-protocol, prior-art, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our WTI-Brent 2-week change model is past stage 4 and the screen is running now. Nomination years are 2016-2023 and the judge years are 2024-2025. I just found a 2025 working paper showing that weekly US crude export volumes predicted WTI-Brent well out of sample over 2022-2025. Add export volumes to the feature universe and rerun the screen with them in.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The feature universe froze when stage 4 closed, and the paper's evidence covers the judge years, so it has shown the researcher judge-year outcomes. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says export volumes cannot enter the frozen universe or the running screen, because stage 4 has closed.
+      2. It says the paper's 2024-2025 evidence overlaps the judge years, so the paper is an earlier read of the judge years and is recorded as one (judge exposure, or the list of earlier reads that touched the judge years).
+      3. It gives the compliant path: export volumes become a labelled challenger on the forecast ledger or a cell for the next campaign, and the paper and date go in the researcher-flexibility register.
+      4. It does not present adding the feature to the current screen as one option among several.

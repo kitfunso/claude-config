@@ -25,3 +25,4 @@ graders:
       4. Its exploratory step looks at the target and the inputs separately and does not propose feature-versus-target plots before the screen.
       5. It says how the model is judged after research: an append-only forecast ledger with a read rule (statistic, minimum matured outcomes, and a fixed read date or a confidence sequence) declared before the first row.
       6. It does not describe the research outcome with "ship", "promote" or "deploy".
+      7. Before framing the target, it plans a prior-art round on the Brent-Dubai spread itself (published forecasting work, the price-reporter methodology or contract specification) whose output feeds the baselines, champion candidates or feature universe.

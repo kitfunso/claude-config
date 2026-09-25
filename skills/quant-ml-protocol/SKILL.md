@@ -1,12 +1,12 @@
 ---
 name: quant-ml-protocol
-description: "Time-series forecasting research (price, spread, freight rate, differential): the staged pipeline from framing to the daily read, each stage closed by a named check with a pass condition. Use when planning, running, reviewing or reading any such model, including a feature screen, a window grid, a judge read, a calibration check or a forecast ledger. Not for cross-sectional or non-temporal ML."
+description: "Time-series forecasting research (price, spread, freight rate, differential): the staged pipeline from framing to the daily read, each stage closed by a named check with a pass condition. Use when planning, running, reviewing or reading any such model, including a prior-art round, a feature screen, a window grid, a judge read, a calibration check or a forecast ledger. Not for cross-sectional or non-temporal ML."
 ---
 
 # Quant ML Protocol
 
-A research campaign is one HTML plan page in the project's `docs/` and ten
-stages, each closed by a named check with a pass condition. The page is the
+A research campaign is one HTML plan page in the project's `docs/` and
+eleven stages, 0 to 10, each closed by a named check with a pass condition. The page is the
 protocol; there is no separate registry, trial ledger or promotion gate during
 research.
 
@@ -22,7 +22,8 @@ is the trading page. A low-error forecast can lose money; a strong backtest
 can rest on one unstable feature.
 
 Revised 2026-09-23 (fifth revision, from the fourth revision's eval
-misses). Earlier versions: `~/dev/quant-ml-protocol-draft/old/`.
+misses); stage 0, the prior-art round, added 2026-09-25. Earlier versions:
+`~/dev/quant-ml-protocol-draft/old/`.
 
 ## Hard rules, defaults and data availability
 
@@ -301,8 +302,8 @@ declared ladder; recency weighting; z-score, change and lag windows; the
 feature count within the cap; the model family, including a joint-horizon
 or recursive family where declared; the hyperparameters, each set chosen
 by a study on data before the forecasts it serves; the target family
-beyond the point target. A sibling project's result (bd, wb, td3c) is a
-cell to include, not a prior. The selection rule, the tie-break (a declared
+beyond the point target. A sibling project's result (bd, wb, td3c) or a
+published one is a cell to include, not a prior. The selection rule, the tie-break (a declared
 complexity score, or the least-machinery order labelled a stability prior)
 and the primary horizon are written on the page before the grid runs.
 
@@ -328,6 +329,31 @@ beyond the champion); stages 6 and 7 are estimation (how a frozen
 information set is combined). A search that mixes them pays multiplicity for
 both.
 
+0. **Prior art.** A deep research round on the exact asset being forecast,
+   closed before stage 1 part one, by `references/prior-art.md`: what is
+   already known about forecasting this instrument and how good that
+   knowledge is, so the campaign starts from the documented drivers,
+   baselines and failures instead of rediscovering them. Search outward in
+   three rings (the asset under every name the market uses, its market
+   family, the method class on similar series), including the target's own
+   price-reporter methodology and contract specification; chase citations
+   one hop back and one forward from every core paper; stop at saturation,
+   when the last two searches added no new driver, baseline, method result
+   or failure. Every core paper is read in full and graded on its evidence;
+   a published skill is an upper bound. The feed list marks each item with
+   the stage that takes it: baselines and champion candidates (1), sources
+   (2), events and breaks (3), drivers or the domain shortlist (4, and the
+   dated declaration that shrinks an underpowered universe at 5), families
+   (7). A paper whose sample covers the judge years is an earlier read of
+   them and goes on stage 1's list. A paper found after stage 4 closes
+   changes nothing frozen, and stopping the screen or restarting on the
+   same judge years to admit it is that same change: its routes are a
+   labelled challenger on the ledger or a cell for the next campaign,
+   judged on years its sample does not cover, entered in the flexibility
+   register. Pass: the
+   prior-art page, dated before stage 1 part one, with the search log, the
+   saturation note, one graded extraction row per core paper, the feed list
+   by stage, the judge-year overlaps and the searches that found nothing.
 1. **Framing, target and power.** Two dated parts: freeze the candidate
    universe and baseline specifications before running outcome-dependent
    comparisons. Part one, declared and frozen before any nomination outcome
@@ -356,11 +382,13 @@ both.
    (anchors divided by horizon overlap, a rough independent count) and,
    where the primary metric is a paired loss, n_anchor (forecast anchors,
    dependence carried by the long-run variance). Name the nomination and
-   judge years and list every earlier read that touched the judge years.
+   judge years and list every earlier read that touched the judge years,
+   stage 0 papers whose samples cover them included.
    Specify the required baselines in the target's own space on the same
    nomination anchors as the model: no change, always one side, trailing
    base rate, trailing mean, seasonal naive where a season exists (a level
-   target adds AR(1)), and the domain baselines the market suggests. Write
+   target adds AR(1)), and the domain baselines the market and the stage 0
+   feed list suggest. Write
    the champion candidates: a short predeclared list of simple baseline
    specifications with its count; a candidate may be one feature or a
    small frozen domain baseline (seasonal plus carry, curve plus calendar,
@@ -476,7 +504,8 @@ both.
    series per category, pooled to the K largest plus other above a stated
    cardinality; for every multi-row table a grain table (daily grain, key
    columns, permitted aggregates) written and read once before generation;
-   derived series the domain suggests (bucket counts, cross-region spreads
+   derived series the domain and the stage 0 feed list suggest (bucket
+   counts, cross-region spreads
    and ratios, constant-maturity curve points, carry, slope, realised vol,
    a relative-value residual against a related series with its coefficients
    fitted per refit); missingness indicators as cells. Transforms on every
@@ -803,6 +832,9 @@ opens. It never sits inside the research metric.
 
 ## References
 
+- `references/prior-art.md`: the rings, sources, citation chasing and
+  saturation, the extraction row, evidence grades, red flags, the feed list
+  and the judge-year rule. Stage 0.
 - `references/targets-and-metrics.md`: target families, the metric per
   target, calibration and coverage checks. Stages 1, 6 and 9.
 - `references/data-hygiene.md`: quality checks, outliers, missing data,
