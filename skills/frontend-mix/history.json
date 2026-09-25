@@ -1,0 +1,212 @@
+[
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG cover 1080x1350: Day 6 is for starting things. Art-first poster, editorial x neo-Y2K",
+    "seed": 327825,
+    "id": "v1",
+    "mode": "web",
+    "recipe": {
+      "hero": "three-procedural",
+      "material": "tactile-brutalist",
+      "motion": "css-micro-only",
+      "type": "design-md",
+      "layout": "single-column-manifesto",
+      "palette": "design-md",
+      "ui_base": "shadcn-base-ui"
+    },
+    "triple": [
+      "three-procedural",
+      "tactile-brutalist",
+      "css-micro-only"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG cover 1080x1350: Day 6 is for starting things. Art-first poster, editorial x neo-Y2K",
+    "seed": 327825,
+    "id": "v2",
+    "mode": "web",
+    "recipe": {
+      "hero": "canvas-fx-over-dom",
+      "material": "tactile-brutalist",
+      "motion": "anime-v4",
+      "type": "design-md",
+      "layout": "editorial-columns",
+      "palette": "design-md",
+      "ui_base": "astryx"
+    },
+    "triple": [
+      "canvas-fx-over-dom",
+      "tactile-brutalist",
+      "anime-v4"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG cover 1080x1350: Day 6 is for starting things. Art-first poster, editorial x neo-Y2K",
+    "seed": 327825,
+    "id": "v3",
+    "mode": "web",
+    "recipe": {
+      "hero": "paper-shader",
+      "material": "gooey",
+      "motion": "css-micro-only",
+      "type": "design-md",
+      "layout": "single-column-manifesto",
+      "palette": "design-md",
+      "ui_base": "astryx"
+    },
+    "triple": [
+      "paper-shader",
+      "gooey",
+      "css-micro-only"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG cover 1080x1350: Day 6 is for starting things. Art-first poster, editorial x neo-Y2K",
+    "seed": 327825,
+    "id": "v4",
+    "mode": "web",
+    "recipe": {
+      "hero": "instanced-particles",
+      "material": "liquid-metal",
+      "motion": "anime-v4",
+      "type": "design-md",
+      "layout": "anti-grid-brutalist",
+      "palette": "design-md",
+      "ui_base": "handrolled"
+    },
+    "triple": [
+      "instanced-particles",
+      "liquid-metal",
+      "anime-v4"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG cover 1080x1350: Day 6 is for starting things. Art-first poster, editorial x neo-Y2K",
+    "seed": 327825,
+    "id": "v5",
+    "mode": "web",
+    "recipe": {
+      "hero": "ascii-dither-object",
+      "material": "liquid-metal",
+      "motion": "css-micro-only",
+      "type": "design-md",
+      "layout": "editorial-columns",
+      "palette": "design-md",
+      "ui_base": "handrolled"
+    },
+    "triple": [
+      "ascii-dither-object",
+      "liquid-metal",
+      "css-micro-only"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG and TikTok carousel draft: art-first editorial x neo-Y2K, one variant Pop Art, captions and platform mockups",
+    "seed": 330309,
+    "id": "v1",
+    "mode": "web",
+    "recipe": {
+      "hero": "three-procedural",
+      "material": "flat-editorial",
+      "motion": "anime-v4",
+      "type": "design-md",
+      "layout": "horizontal-scroll",
+      "palette": "design-md",
+      "ui_base": "astryx"
+    },
+    "triple": [
+      "three-procedural",
+      "flat-editorial",
+      "anime-v4"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG and TikTok carousel draft: art-first editorial x neo-Y2K, one variant Pop Art, captions and platform mockups",
+    "seed": 330309,
+    "id": "v2",
+    "mode": "web",
+    "recipe": {
+      "hero": "canvas-fx-over-dom",
+      "material": "flat-editorial",
+      "motion": "view-transitions-motion",
+      "type": "design-md",
+      "layout": "editorial-columns",
+      "palette": "design-md",
+      "ui_base": "astryx"
+    },
+    "triple": [
+      "canvas-fx-over-dom",
+      "flat-editorial",
+      "view-transitions-motion"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG and TikTok carousel draft: art-first editorial x neo-Y2K, one variant Pop Art, captions and platform mockups",
+    "seed": 330309,
+    "id": "v3",
+    "mode": "web",
+    "recipe": {
+      "hero": "instanced-particles",
+      "material": "liquid-glass",
+      "motion": "anime-v4",
+      "type": "design-md",
+      "layout": "horizontal-scroll",
+      "palette": "design-md",
+      "ui_base": "shadcn-base-ui"
+    },
+    "triple": [
+      "instanced-particles",
+      "liquid-glass",
+      "anime-v4"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG and TikTok carousel draft: art-first editorial x neo-Y2K, one variant Pop Art, captions and platform mockups",
+    "seed": 330309,
+    "id": "v4",
+    "mode": "web",
+    "recipe": {
+      "hero": "paper-shader",
+      "material": "liquid-metal",
+      "motion": "view-transitions-motion",
+      "type": "design-md",
+      "layout": "bento",
+      "palette": "design-md",
+      "ui_base": "astryx"
+    },
+    "triple": [
+      "paper-shader",
+      "liquid-metal",
+      "view-transitions-motion"
+    ]
+  },
+  {
+    "rolled_at": "2026-09-13",
+    "brief": "phzse C02 IG and TikTok carousel draft: art-first editorial x neo-Y2K, one variant Pop Art, captions and platform mockups",
+    "seed": 330309,
+    "id": "v5",
+    "mode": "web",
+    "recipe": {
+      "hero": "ascii-dither-object",
+      "material": "tactile-brutalist",
+      "motion": "css-micro-only",
+      "type": "design-md",
+      "layout": "single-column-manifesto",
+      "palette": "design-md",
+      "ui_base": "shadcn-base-ui"
+    },
+    "triple": [
+      "ascii-dither-object",
+      "tactile-brutalist",
+      "css-micro-only"
+    ]
+  }
+]
