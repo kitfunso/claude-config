@@ -1,6 +1,6 @@
 ---
 name: jev
-description: Wire TypeSafe Jev into a hook, script or repo the measured way. Our question-writing rules, the lint, the labelled bench against a free baseline, the transcript replay, and the go-live rule. Use with /typesafe-ai whenever a Jev call is being written, changed or reviewed.
+description: Wire TypeSafe Jev into a hook, script or repo the measured way. Our question-writing rules, the lint, the labelled bench against a free baseline, the transcript replay, and the go-live rule. Use with /typesafe-ai whenever a Jev, TypeSafe, noul, choice or score call is being written, changed or reviewed, and whenever code adds an LLM call that classifies, routes, filters, grades or answers yes/no (to test whether Jev should replace it).
 ---
 
 # Jev, the measured way

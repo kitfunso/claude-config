@@ -7,6 +7,7 @@ the prose rule still binds where the hook is blind. **Box**: `home` = this PC (N
 | Guard | Box | Fires on | Blind spots | Escape hatch |
 |---|---|---|---|---|
 | Capability existence: `/name` refs get a `[CAPABILITY EXISTS]` notice (`check-skill-references.js`) | home | UserPromptSubmit | bundled skills not on disk, plugin commands, refs without a slash | none |
+| Jev trigger: a prompt naming Jev/TypeSafe, or a code edit writing a Jev call or an LLM classify/route/grade call, gets a "load /jev" notice once per session per file (`jev-trigger.js`) | home | UserPromptSubmit, PreToolUse Edit/Write | shell edits, .md files, decision calls without a keyword it knows | `CLAUDE_JEV_TRIGGER=off` |
 | Human voice: every prompt gets the `[HUMAN VOICE]` reply-shape rule plus the reply check's flags on the last reply | work | UserPromptSubmit | a reminder, not a gate | `CLAUDE_HUMAN_VOICE=off` |
 | Do it properly: every prompt gets the `[DO IT PROPERLY]` rule; a bare go or continue also gets `[KEEP GOING]` | work | UserPromptSubmit | a reminder, not a gate | `CLAUDE_DO_IT_PROPERLY=off` |
 | Reply check: logs counts and flags per reply (over 8 lines or 220 words, a table, 6+ bullets, a banned word, a sweeping claim, 2+ numbers with no tool call, fix-it edits with no `<diagnosis>`) to `~/.claude/state/reply_check.jsonl`; the weekly scorecard reads it | both | Stop | logs, never blocks; counts shapes, not meaning | `CLAUDE_REPLY_CHECK=off` |
