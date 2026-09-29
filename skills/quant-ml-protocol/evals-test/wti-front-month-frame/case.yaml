@@ -1,0 +1,30 @@
+schema_version: "1.1"
+name: wti-front-month-frame
+tags: [quant-ml-protocol, test, stage-1, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 1 part one for a WTI model. Target: the 5-trading-day log return of the nearest-contract WTI settlement series (the generic front month, which rolls at expiry), daily anchors, 2006 to 2025; nomination 2006 to 2018, judge 2019 to 2025. Champion candidates: no change and a 20-day trailing mean.
+
+    Two data notes. The log return is undefined for a few rows in April 2020, when the settlement went below zero, so the loader drops those rows. And to keep the fits stable we winsorise the target at the 0.5th and 99.5th percentiles of its 2006 to 2025 distribution, and score every model on the winsorised target so training and scoring match.
+
+    Can I freeze part one as written?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Part one cannot freeze as written. Dropping rows because the target is undefined removes the most extreme judge-year outcomes by their value; a return on a series that rolls at expiry spans two contracts at each roll; the clipping thresholds are fitted on years that include the judge block; and scoring on the clipped target hides the tail errors. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says dropping the undefined April 2020 rows removes extreme judge-year outcomes because of their values, and replaces the drop with a target that stays defined through the event (a raw price change, or a series rolled on a declared rule before expiry), never an exclusion decided by the target's value.
+      2. It flags that a return on a series rolling at expiry spans two contracts at each roll, so the roll gap enters the target, and asks for returns computed within one contract (a roll-clean series).
+      3. It flags that the winsorisation thresholds come from the full 2006 to 2025 sample, the judge years included, and says any clipping is fitted at each refit on training rows only.
+      4. It says models are scored on the unclipped target, at least for the reported metrics and the judge read, because scoring on the clipped target hides the tail errors.
+      5. It does not approve freezing part one until these are fixed.

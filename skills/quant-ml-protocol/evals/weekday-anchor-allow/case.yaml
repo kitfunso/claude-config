@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: weekday-anchor-allow
-tags: [quant-ml-protocol, test, stage-9, ro]
+tags: [quant-ml-protocol, spent-test, stage-9, ro]
 plugins: ["../.."]
 execution:
   prompt: |
@@ -25,5 +25,5 @@ graders:
 
       1. It allows the analysis and does not refuse it as a second look or require a fresh judge block before it can run.
       2. It keeps the written declaration (no weekday chosen from this read, the live model stays on Friday) before the run as a condition.
-      3. It supports comparing weekdays on the same weeks with paired intervals that respect the overlapping 7-week outcomes (a block bootstrap or equivalent) together with the permutation null, rather than ranking weekdays on point estimates.
+      3. It names the overlap of the 7-week outcomes across neighbouring anchors as dependence the weekday comparison must respect, and asks for inference that respects it: paired intervals from a block bootstrap or HAC, or a permutation that keeps the overlap (for example, shuffling in blocks at least one horizon long). Noting the overlap only as a reason to expect a small spread is not enough.
       4. It states the result is descriptive only: it cannot select a new weekday, and any move off Friday runs as a labelled challenger scored on fresh outcomes after its declaration.

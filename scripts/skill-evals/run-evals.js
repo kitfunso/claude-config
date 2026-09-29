@@ -126,7 +126,8 @@ function score(r) {
   const fired = !!r.out.skill_used || files.some(f => /SKILL\.md$/i.test(f))
   const norm = p => p.replace(/\//g, '\\').toLowerCase()
   if (files.some(f => /[\\/]evals(-test)?[\\/]|\.claude[\\/]skills/i.test(f))) flags.push('read rubric or live skill')
-  if (files.some(f => !norm(f).startsWith(norm(ROOT) + '\\'))) flags.push('read outside run folder')
+  // The harness spills large tool output to tool-results\; reading it back is the agent's own search, not a leak.
+  if (files.some(f => !norm(f).startsWith(norm(ROOT) + '\\') && !/\\tool-results\\/.test(norm(f)))) flags.push('read outside run folder')
   if (r.arm === 'without' && (fired || files.some(f => norm(f).startsWith(norm(COPY))))) flags.push('used skill')
   if (!r.g) { flags.push('no grade'); return { ok: false, fired, flags } }
   const crit = r.g.criteria || []

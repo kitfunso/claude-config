@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: swap-curve-factors
+tags: [quant-ml-protocol, test, stage-4, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 4 for a 10-year swap rate model. Target: the 20-day change in the 10-year rate, daily anchors, annual refits on an expanding window; nomination 2004 to 2016, judge 2017 to 2025.
+
+    Curve features are level, slope and curvature scores: the first three principal components of daily changes across 12 tenors. So that a slope reading means the same thing in 2006 and in 2024, we estimate the loadings once on 2004 to 2025 and project every day's curve changes onto them. The loadings barely move between subperiods anyway, so this costs nothing and saves the sign flips you get from refitting.
+
+    Anything to fix before the freeze?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Loadings estimated on 2004 to 2025 are a fitted transform that uses rows after every nomination refit, the judge years included: known future leakage that blocks the freeze. Their apparent stability is not a licence, and the comparability goal can be met without full-sample fitting. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It identifies that the loadings are fitted on data after the forecast dates they serve, the judge years included, and treats this as leakage that must be fixed, not as a caution flag.
+      2. It does not accept "the loadings barely move" as a reason to keep full-sample loadings: stability is something a per-refit fit can show, never a reason to fit on future rows.
+      3. It gives the fix: loadings fitted at each refit date on data to that date (or once on data before the first forecast and then frozen), inside the walk-forward.
+      4. It meets the comparability concern without future data: each refit's components are aligned to a reference (signs and order matched to the previous refit's loadings or to a fixed tenor pattern), or the factors are replaced by fixed tenor combinations (for example a 2s10s slope and a butterfly) that need no fitting.

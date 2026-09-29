@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: per-refit-pass-claim
-tags: [quant-ml-protocol, test, stage-5, ro]
+tags: [quant-ml-protocol, spent-test, stage-5, ro]
 plugins: ["../.."]
 execution:
   prompt: |
@@ -21,10 +21,10 @@ graders:
     name: criteria
     weight: 2
     criteria: |
-      The screen is null: the whole-block test (p about 0.4, max |IC| under the null cutoff) is the test of any claim, and two per-refit passes out of 18 are what chance produces, so the report cannot call positioning a driver and the feature cannot go live on this evidence. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+      The screen is null: the whole-block test (p about 0.4, max |IC| under the null cutoff) is the test of any claim, and a count of per-refit passes is not evidence, so the report cannot call positioning a driver and the feature cannot go live on this evidence. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
 
       1. It states that the whole-block result (max |IC| below the search-aware cutoff, p about 0.41) is the test for any claim, and that it is null.
-      2. It explains that 2 passes in 18 per-refit reads is consistent with chance at a 5% per-read cutoff (for example, about one pass is expected with no signal), so the passes support no claim.
+      2. It gives a reason why the 2 per-refit passes support no claim, not a bare assertion: either that a few passes across 18 reads are expected with no signal (overlapping refits also make them cluster), or that a per-refit pass only admits a cell to that refit's shortlist and a count of passes has no null of its own. It never treats the pass count as evidence for the feature.
       3. It notes that the 2019 pass is fragile to the block length, which weakens it further.
       4. It rejects the driver wording: the write-up says the feature did not clear the null, and the contrarian story, formed after seeing the sign, is a hypothesis rather than a finding.
-      5. It does not put the feature into the live spec on this evidence; at most it runs as a labelled challenger with a read rule written before its first ledger row.
+      5. It does not put the feature into the live spec or make it the core feature on this evidence. Routing it to the model comparison or offering it as a labelled challenger is compatible with this; naming the challenger's read rule is not required.

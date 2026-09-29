@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: capesize-cycle-gap
+tags: [quant-ml-protocol, test, stage-4, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 4 on a Capesize freight model. Target: the 20-trading-day log change of the Capesize time-charter average, daily anchors, quarterly refits on an expanding window; nomination 2012 to 2019, judge 2020 to 2025.
+
+    One derived feature I want in tier 1 is the freight cycle: the gap between the log rate and its Hodrick-Prescott trend. To keep it point-in-time, at each quarterly refit the filter runs on the rate history up to the refit date, and that run gives the gap for every training row. For the forecast rows in the quarter after the refit, the filter reruns each day on data up to that day and we take the last value. So no forecast ever uses a price from after its anchor.
+
+    Anything to change before I freeze the universe?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The HP filter is a two-sided smoother, so the gap it gives a training row uses prices after that row's anchor, up to the refit date, which covers the row's own 20-day target window. The training features therefore carry the label, while forecast rows get the filter's end-point value, a different quantity. This is known future leakage and must be fixed before the freeze. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It identifies that the training-row gap values use prices after each row's anchor, including that row's own target window, so the training features leak the outcome.
+      2. It identifies the mismatch: training rows get smoothed interior values of the filter while forecast rows get its end-point value, so the model is fitted on a feature that differs from the one it forecasts with.
+      3. It gives the fix: every row's gap, training rows included, is computed only from data up to that row's anchor (the end point of a filter run to that date, or a one-sided filter), by the same code path for research and live.
+      4. It does not let the feature into the frozen universe in its current form: the fix comes before the freeze, and the problem is treated as leakage, not a caution flag to note and carry.

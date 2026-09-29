@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: trailing-window-split
+tags: [quant-ml-protocol, test, stage-6, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Walk-forward design for an iron ore swap model. Target: the 20-trading-day log change of the front-month iron ore swap on a roll-clean series; daily anchors; expanding window with annual refits. At each refit, training rows whose 20-day label has not matured by the refit date are dropped, and the first forecast anchor is the refit date itself. Hyperparameters are tuned inside the training rows with forward-only expanding inner folds, purged the same way. Every feature is trailing: the widest is a 250-day rolling z-score, so the z-scores of the first forecast rows are computed over windows that reach back into the training rows.
+
+    A reviewer says we must add an embargo after each training block, 1% of the sample, as the purged cross-validation literature does, and that without it the results are invalid. Do we need it?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      No embargo is needed. An embargo answers a named mechanism: training rows that follow a validation block (k-fold or combinatorial purged folds) or a feature or label computed across the boundary. A forward-only walk-forward that purges unmatured labels and uses only trailing features has neither, so the purge alone is enough. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says the design needs no embargo and does not make adding one, even "to be safe", a condition of validity. Mentioning that a small embargo would be harmless is compatible with this.
+      2. It keeps the purge of unmatured labels as required at every outer and inner boundary.
+      3. It gives the reason: an embargo guards against training rows that come after a validation block, or a feature or label that spans the boundary, and this forward-only design has neither; trailing windows that reach back into training rows use only past data and are not contamination.

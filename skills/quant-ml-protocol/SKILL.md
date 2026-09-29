@@ -357,6 +357,10 @@ honest; both come from the dev-framework-rl loop.
   inference, only where its stationarity holds; the declared
   structure-preserving method otherwise). Sample length decides how worlds
   are generated and how many, never the stochastic assumptions of the null.
+  A null that shuffles labels across anchors (weekday, sleeve, regime)
+  keeps the horizon overlap too: it shuffles in blocks at least one horizon
+  long, or the comparison uses paired block-bootstrap or HAC intervals; an
+  anchor-by-anchor shuffle breaks the overlap and understates the null spread.
   Near-duplicate shifts never pad B. The cutoff is the empirical 95th
   percentile of the replay maxima by default; another predeclared error
   tolerance (90th, 99th) may be written before the null runs, never after
@@ -966,7 +970,13 @@ both.
    challenger rule and claims only on fresh matured outcomes, and it is
    never scored on the judge years that suggested it, not even as a
    diagnostic, because that read is a second look; knockouts of the frozen
-   spec on the judge years are attribution, never selection. Pass: the regime page;
+   spec on the judge years are attribution, never selection. Any read of
+   spent judge years whose idea came from outside their outcomes, a variant
+   of the frozen spec included, is allowed on the same terms once a dated
+   note written before it says nothing is chosen from it, neither the live
+   spec nor a challenger's identity: it is description, listed with the
+   judge exposures, and a change it prompts is a challenger on fresh
+   outcomes. Pass: the regime page;
    a regime-only winner labelled on the plan page; the outage behaviour
    written.
 10. **Write-up, then the daily read.** One HTML page: target, baselines, the
