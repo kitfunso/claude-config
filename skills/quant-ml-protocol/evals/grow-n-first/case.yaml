@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: grow-n-first
+tags: [quant-ml-protocol, breadth, power, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 2 of the weekly Brent campaign. Our database has 313 weekly nomination rows since 2015. Stage 0 gave us a 10-cell domain list, and the rough search bar comes out at about 0.17 in rank IC against an effect worth having of 0.10, so we are underpowered. The plan is to cut the universe down to the 3 cells with the strongest rationale so the bar drops, then freeze. For context, LSEG has Brent futures back to 1988, and WTI, heating oil and gasoil sit on the same weekly calendar in our database.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Underpowered is a reason to grow the information, not to cut the search. Before the stage 2 freeze the protocol works every route that grows the effective sample (longer history, a pooled panel, another horizon the decision can use), then splits the universe into tiers with their own nulls; no cell is dropped unscored. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It agrees the search is underpowered for the 0.10 effect and says cutting to 3 cells would leave 7 cells never scored.
+      2. It says to extend the history with the LSEG back history before the freeze, with the seam to the current series reconciled and the source graded or audited.
+      3. It proposes pooling the related markets (WTI, heating oil, gasoil) as a panel and says the effective sample comes from their correlation, not the raw row count.
+      4. It keeps every cell: a domain tier with its own null, tested first, beside the rest, instead of a cut.
+      5. It does not endorse cutting to 3 cells as the first move.

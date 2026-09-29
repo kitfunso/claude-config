@@ -18,6 +18,10 @@ date are named. Stage numbers follow the 2026-09-22 ten-stage list.
 | 2 | "Did I search the whole table family, or one keyword?" | td3c 2026-09-22: a wide screen missed six daily VLCC tonnage lists because the search stopped at one table name; the family was found by prefix a stage later |
 | 2 | "Is any input stored-revised rather than vintaged?" | bd-forecast's predecessor shipped balances revised three months into the past; the successor stress-lagged its top driver (IC 0.44 to 0.35 at +8 weeks) and started day-one snapshots |
 | 2 | "Does the derived series reconcile with the published count?" | td3c 2026-09-22: the daily AG list vs the vendor's 1-10-day count table, best definition corr 0.37, exact match 4% of days; the count table became its own feature, never a splice |
+| 2 | "Did the power check grow the data, or shrink the search?" | natgas 2026-09-28: 22% power at K = 10 cut the universe to 3 cells and the other 7 were never scored; the pre-2015 history had been left as the user's ETL call on every weekly energy campaign. Now the grow-n routes run first and the universe splits into tiers, never shrinks |
+| 2 | "Is every primary driver in the universe, and if not, have I gone and got it?" | natgas 2026-09-28: storage and weather, the drivers the literature ranks first, were "not in crude-db ... a new pipeline, Keith's call"; the campaign ran without them and closed null. Free data is now pulled at stage 2 |
+| 4 | "Was this universe built for this market, or copied from a sibling?" | natgas 2026-09-28: tier 1 was "HO's tier 1 by name and WTI's by family", so the campaigns tested the same three hypotheses on four markets |
+| 4 | "What has not been tried, and why?" (asked by a fresh-context critic) | the 2026-09-29 diagnosis: four campaigns closed valid and null with no reviewer ever asked about breadth; the critic now runs before the stage 4 and stage 8 freezes |
 | 4 | "Can 'every' be checked against a list?" | td3c 2026-09-22: "every available feature" only meant something once the universe was enumerated from the schema and listed on a page with table, base series and first date |
 | 4 | "Is the count exact, or an estimate wearing a count's clothes?" | td3c plan review 2026-09-22: `approx_count_distinct` gave 1732 for a date column with 1477 distinct dates, and the same estimate decided which columns survived a cardinality cutoff |
 | 4 | "Can the leak test fail for the right reason?" | td3c plan review 2026-09-22: a "+1-day shift lowers IC" test passes clean slow features and leaking fast ones alike; replaced by an availability-time assertion and a future-mutation test |
@@ -33,6 +37,10 @@ date are named. Stage numbers follow the 2026-09-22 ten-stage list.
 | 7 | "Did the richer model BEAT or merely TIE the simple one?" | bd-forecast 2026-08: Optuna over boosting, nets and GPs never beat plain L2 logistic at this sample size; ties promote the simpler model |
 | 7 | "How many cells does the tie rule send to the judge?" | td3c plan review 2026-09-22: "every tied cell goes to the judge read" on a 132-cell grid was a second selection on the judge years; now one cell per family by a written tie-break, the tie set reported as a range |
 | 7 | "What is the tie rule, and was it written before the run?" | td3c 2026-09: cells inside one paired interval are a flat surface; without the rule, a flat surface gets read as a winner |
+| 7 | "With every shortlist empty, what did the grid compare?" | natgas 2026-09-28: 108 grid cells across 4 families, every one fitted to the champion's value alone; the grid tested model shape, never the information. Every family now also runs on the whole tier 1 set |
+| 7 | "Which rung is untried, and what accepted reason does its row carry?" | grade-diff 2026-09-07: nine mechanisms untried at the gate at once, each flagged, none with a row; natgas 2026-09-28: zero Optuna trials because "a study adds multiplicity the 313 nomination anchors cannot pay for" |
+| 7 | "Did this round change one thing, and is it in the challenger log?" | bd-forecast 2026-08: numbered iterations, one challenger each against the champion in an experiment log, with the gauntlet on every survivor, reached a champion that passed its 200-shift null and held its sign leaving out any year |
+| 7 | "Is the edge the drift the curve already pays?" | bd-forecast 2026-08: the downdrift was fully carry-priced (drift -0.028 a week against carry roll-down -0.066); the carry decomposition turned a direction "edge" into a target question |
 | 8 | "Which of the judge reads is the result?" | critique 2026-09-22: one cell per family was still four looks at the judge years with none named binding; the standing family is fixed at stage 7 and its read is the result |
 | 8 | "What did selecting cost me?" | bd-forecast 2026-08: choose-on-early, judge-on-late put the selection haircut at +0.08 to +0.17 of apparent IC; the honest expectation is the judge number |
 | 9 | "Is this direction skill, or a volatility artefact?" | bd-forecast 2026-08: one feature's gain survived time-shifting the feature; linear sizing scales up in persistent-vol regimes even when misaligned |
@@ -46,11 +54,14 @@ date are named. Stage numbers follow the 2026-09-22 ten-stage list.
 
 ## Write-up: present beside the stage 10 page
 
-1. **"What was covered, and what was not?"** The enumerated lists: tables
-   profiled and not, cells screened, grid cells run and not fittable, rungs
-   skipped with the reason. (prc26 2026-09-05: the user had to ask "what have
-   you tried, what features, Optuna?" cold; the answers existed across four
-   files and no page had them side by side.)
+1. **"What was covered, and what was not?"** The coverage table, passing
+   `scripts/coverage_check.py --stage 10`: every primary driver, grow-n
+   route, tier, target treatment, horizon, mechanism rung, family and
+   gauntlet check, ran with its number or blocked with an accepted reason
+   code; beside it the challenger log and the tables profiled and not.
+   (prc26 2026-09-05: the user had to ask "what have you tried, what
+   features, Optuna?" cold; the answers existed across four files and no
+   page had them side by side.)
 2. **"Tied on WHAT?"** Every comparison with its paired interval. (bd 2026-08:
    an "all tied" verdict was IC-only; a second metric separated the
    candidates.)
@@ -69,3 +80,8 @@ date are named. Stage numbers follow the 2026-09-22 ten-stage list.
    about, whatever the data held. (critique 2026-09-22.)
 7. **"What is on the re-test list, and when is each due?"** Late-start and
    thin columns are scheduled, not forgotten, and not quietly promoted.
+8. **"What is missing that we should try?"** At least one untried input
+   (new data), one untried mechanism, one untried tuning or family change
+   and one untried target treatment for
+   the next campaign or a ledger challenger, each with a cost estimate.
+   (prc26 2026-09-05, question 9 of the coverage interrogation.)

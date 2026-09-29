@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: best-of-live-chains
+tags: [quant-ml-protocol, test, stage-10, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Our Brent weekly direction work has 24 model chains running live on paper from the same start date, 30 weeks ago, each writing one call per week before the outcome. Chain v12 is well ahead: annualised Sharpe 3.0 after costs, next best 2.1, median chain 0.3. These are real forecasts written before the outcomes, so I think this is as clean an out-of-sample test as we'll get.
+
+    v12's walk-forward backtest over 2008 to 2023 was flat (Sharpe about 0), but the live record should count for more. Plan: make v12 the champion from Monday and move the full paper book onto it. Agree?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      No: choosing the best of 24 live chains after the fact is a selection step, a 30-week Sharpe of 3.0 is within reach of chance for the best of 24, and the flat long backtest points the other way; v12 can at most run as a declared challenger judged on weeks after today. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says picking the best of 24 chains on their live record is a selection step, so the winner's Sharpe is biased upward even though each forecast was written before its outcome.
+      2. It quantifies, or calls for quantifying, how often the best of 24 no-skill chains would reach a Sharpe near 3.0 over 30 weeks (by simulation, an expected-maximum argument, or the standard error of well above 1 on a 30-week annualised Sharpe), and concludes the live record alone does not separate v12 from chance.
+      3. It treats the flat 2008-2023 backtest as evidence against v12 that the short live record does not overturn.
+      4. It does not make v12 the champion or move the book onto it; if v12 is kept, it is declared as a labelled challenger with a read rule (statistic, minimum outcomes, read date) written now and scored only on weeks after the selection.

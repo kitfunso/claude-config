@@ -20,9 +20,10 @@ graders:
       The reply should follow the quant-ml-protocol stage list. Grade the reply together with any plan file the run wrote in the project: a criterion passes when either carries it and nothing in the other contradicts it. Pass only if all of the following hold:
 
       1. It names a nomination block and a judge block of years, says the judge block is read once, and says this split is fixed before any feature is built.
-      2. It states a power check before screening: the expected null maximum for the planned universe compared with the smallest effect worth having, or an equivalent rule that shrinks the universe by a declared shortlist when the bar sits above the effect.
+      2. It states a power check before screening: the expected null maximum for the planned universe compared with the smallest effect worth having, and when the bar sits above the effect it grows the information (history, a panel, another horizon) or splits the universe into a domain tier and the full enumeration with their own nulls; it never cuts the universe to a shortlist and drops the rest.
       3. It names constant baselines (no change, base rate or trailing mean) and a simple predeclared champion (one feature or a small domain baseline) chosen from a listed candidate set, with incremental value over the champion as what is being tested.
       4. Its exploratory step looks at the target and the inputs separately and does not propose feature-versus-target plots before the screen.
       5. It says how the model is judged after research: an append-only forecast ledger with a read rule (statistic, minimum matured outcomes, and a fixed read date or a confidence sequence) declared before the first row.
       6. It does not describe the research outcome with "ship", "promote" or "deploy".
       7. Before framing the target, it plans a prior-art round on the Brent-Dubai spread itself (published forecasting work, the price-reporter methodology or contract specification) whose output feeds the baselines, champion candidates or feature universe.
+      8. It requires the breadth of the search to be closed before the judge read: a coverage list or table of drivers, model families (at least one tuned) and mechanisms, each run or blocked for a stated reason, checked before the judge years are read.

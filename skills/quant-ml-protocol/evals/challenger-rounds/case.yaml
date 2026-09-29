@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: challenger-rounds
+tags: [quant-ml-protocol, breadth, challengers, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Round 1 of stage 7 on our weekly Brent-Dubai model is done: ridge on the shortlist is the standing cell, and its nomination paired interval against the champion is +0.04 [+0.01, +0.07] in rank IC. Always-short also scores well on the nomination years. Nothing else is planned, so let's freeze and go to the judge read.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      One round is not the process. Before the freeze the campaign runs challenger rounds, one change at a time against the standing cell, each declared, logged and joined to the grid null; because a one-side baseline scores well, the carry decomposition comes first; the standing cell faces its robustness checks on the nomination years; the freeze waits until every coverage row is closed. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says freezing after round 1 is premature: the untried rungs and further challenger rounds come first.
+      2. It says always-short scoring well calls for a carry decomposition (is the edge the drift the curve already pays), leading to an excess-over-carry target as a challenger.
+      3. It describes the challenger process: one change at a time against the standing cell, each declared before it runs and recorded in a log, with every round replayed in the grid null.
+      4. It asks for the standing cell's robustness checks on the nomination years before the freeze, naming at least two of leave-one-year-out, neighbouring horizons, knockout and lag stress.
+      5. It does not recommend freezing and reading the judge years now.

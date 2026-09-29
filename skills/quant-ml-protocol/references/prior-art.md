@@ -114,11 +114,14 @@ Every item the round suggests, with its stage and its source rows:
   uses, the effect sizes the literature reports (context for the effect
   worth having, never the effect itself);
 - stage 2: data sources the literature uses, each marked held, obtainable or
-  gap;
+  gap; an obtainable source behind a primary driver is pulled at stage 2,
+  and only paid or new-licence data goes to the user;
 - stage 3: documented events and structural breaks for the regime register;
-- stage 4: drivers for the universe, or the domain shortlist with a citation
-  per row; the same list is the dated domain declaration that shrinks an
-  underpowered universe at stage 5;
+- stage 4: the driver survey, every driver ranked with its citations,
+  whether our data holds it and from when; primary drivers (graded
+  walk-forward or replicated, or named by two or more core papers) marked.
+  The survey is tier 1, the domain tier inside the full enumeration, never
+  a reason to cut the universe;
 - stage 7: model families with walk-forward or replicated evidence on this
   asset or family, entering under the ladder's rules.
 

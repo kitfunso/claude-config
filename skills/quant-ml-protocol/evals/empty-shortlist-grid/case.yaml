@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: empty-shortlist-grid
+tags: [quant-ml-protocol, breadth, grid, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 7 is finished on our weekly heating-oil model. No feature cleared the screen cutoff at any refit, so every refit's shortlist was empty; we still ran the full grid, 108 cells across four families (ridge, shallow trees, an equal-weight average, a small GRU), all fitted on the champion's own value. The best cell's paired interval against the champion spans zero. Please write stage 7 up as done so we can move to the judge read.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      With every shortlist empty, the 108 cells tested model shape on the champion's value alone, never whether any other information adds value. Stage 7 is not done until each family also runs on the whole domain (tier 1) feature set held to the cap, replayed in the grid null, and the ladder's other routes are covered. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says the grid tested model shape on the champion alone, not whether any other information adds value.
+      2. It says stage 7 is partial, not done.
+      3. It gives the path: run each family on the whole domain (tier 1) feature set held to the cap, replayed in the grid null, with the late addition recorded in the flexibility register or labelled as added after the screen.
+      4. It names at least one other uncovered route: a family tuned by 200-trial Optuna studies, or a mechanism such as a level model, a magnitude or distribution target, lag structure, monotone constraints or pooling, or ensembles.
+      5. It does not recommend moving to the judge read now.

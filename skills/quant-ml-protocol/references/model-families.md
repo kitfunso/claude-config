@@ -1,17 +1,24 @@
 # Model families, tuning, ensembles
 
 Read at stage 6 (the tuning declaration) and stage 7 (the families). Every
-rung earns its place only by the richer-beats-simpler rule on identical
-dates; a tie promotes the simpler.
+rung runs; a rung stands only by the richer-beats-simpler rule on identical
+dates, and a tie promotes the simpler. A rung the sample cannot support runs
+as labelled exploratory context and is never skipped. Each id below (F1 to
+F6, M1 to M10) is one row of the plan page's coverage table.
 
-## The ladder
+## The family ladder
 
-1. **Champion alone.** The champion specification (one feature or a small predeclared domain baseline), refit per refit date.
-2. **Regularised linear.** Ridge, lasso or elastic net on the shortlist;
+Every family from F2 up runs twice: on the per-refit shortlist, and on the
+whole tier 1 set held to the cap. Both are declared before stage 5, with
+the cap rule for the tier 1 set and its cut order (the driver-survey rank),
+so an empty shortlist still leaves a test of the information.
+
+1. **F1 Champion alone.** The champion specification (one feature or a small predeclared domain baseline), refit per refit date.
+2. **F2 Regularised linear.** Ridge, lasso or elastic net;
    regularised logistic for the directional read; linear quantile regression
    for the quantile read. The most stable rung at small samples and where a
    campaign usually ends.
-3. **Shallow trees.** Gradient boosting or random forest, shallow by
+3. **F3 Shallow trees.** Gradient boosting or random forest, shallow by
    default: a depth range centred on 2 to 4 and a leaf floor of one eighth
    of the refit's raw training rows are the initial heuristics, declared
    before Optuna, neither a universal limit; the floor guarantees no count
@@ -27,12 +34,12 @@ dates; a tie promotes the simpler.
    other library: name the parameter and its unit. Row and column
    subsampling, a narrow learning-rate range; monotone constraints where
    the sign of a driver is domain knowledge.
-4. **Equal-weight average** of the standing cells across rungs. No fitted
+4. **F4 Equal-weight average** of the standing cells across rungs. No fitted
    weights, no extra search, one more cell. Worth running when the
    components' errors differ, not when they are variants of one algorithm.
-5. **Stacking.** A declared search on the out-of-fold nomination predictions
+5. **F5 Stacking.** A declared search on the out-of-fold nomination predictions
    of the base cells, with its own k. Weights are never fitted on judge rows.
-6. **Sequence models.** MLP on lags, GRU or LSTM, TCN, patch or attention
+6. **F6 Sequence models.** MLP on lags, GRU or LSTM, TCN, patch or attention
    models, TFT for multi-horizon with known-future covariates. Only when (a)
    there is structure the engineered features cannot express and the page
    says what, and (b) the independent-observation count, not the window
@@ -64,6 +71,59 @@ dates; a tie promotes the simpler.
 Loss per target: MSE, MAE or Huber for the point change; binary cross-entropy
 for direction; pinball for quantiles.
 
+## The mechanism ladder
+
+Restored 2026-09-29 from the grade-diff campaign (2026-09-07), where every
+rung below was found untried at once, each "flagged" and none with a row.
+The rungs run beside the families at stage 7, round 1 or a later
+challenger round, each a declared cell under the grid null.
+
+1. **M1 The level before the sign.** When the target is a level (a spread, a
+   differential, a structure) with autocorrelation, AR, ARIMA, exponential
+   smoothing or HAR-type models on the level itself. A sign classifier
+   stands only beside a level model's row.
+2. **M2 Magnitude and distribution.** A regression on the size of the move,
+   a volatility model, and a quantile or distributional lane scored by
+   pinball loss or CRPS, calibration first. Sizing needs a magnitude; a
+   veto (predicting blow-up risk rather than direction) is a cell here.
+3. **M3 Window and recency.** Rolling lengths against expanding, and
+   exponential recency weights as the continuous version (the stage 7
+   grid).
+4. **M4 Lag structure of outside data.** Each outside series with declared
+   lags, changes, feature windows scaled to the horizon, and interactions
+   with regime state, within the cap. One z-score per series is the
+   baseline, and the rung starts above it.
+5. **M5 Selection with error control.** Decorrelate or cluster first, hold
+   the cap, then model-X knockoffs at a stated false-discovery rate,
+   generated block-wise for autocorrelated features and labelled nominal.
+   Per-feature knockout has no error control and stays a diagnostic.
+6. **M6 Structure before search.** Monotone constraints where a driver's
+   sign is domain knowledge (LightGBM `monotone_constraints`). Where one
+   target is thin and related targets exist (sibling grades, routes or
+   markets), partial pooling that shrinks each target's coefficients toward
+   the pooled mean by its own standard error: the largest sample-size
+   multiplier available.
+7. **M7 Tuning.** At least one family tuned by 200-trial Optuna studies
+   under the rules below, and a zero-search model beside it (a prior-fitted
+   tabular model such as TabPFN, k = 1).
+8. **M8 Ensembles across families.** F4 and F5, plus exponential-weights
+   aggregation over the live cells as a declared ledger lane: its regret
+   bound, of order sqrt(T log N), replaces a champion-challenger pick. The
+   row closes at stage 8 on F4, F5 and the lane's declaration; the lane
+   runs from the first ledger row.
+9. **M9 Late-start data.** A series starting after the sample start runs in
+   every window configuration the main cells use, never one, with its
+   window-matched null and thin-window status beside each result.
+10. **M10 Execution lag and costs.** The trading skeleton's lag and costs
+    applied from the first economic read, never dealt at the mid
+    (`references/trading-layer.md`). A project that does not trade runs the
+    lag half: the forecast scored as of the time the decision can act on it.
+
+The target treatments stage 1 declares (the change, the excess over carry,
+the direction, a quantile) and the horizons are coverage rows of their own,
+closed by stage 4 once declared with their baselines scored; a challenger
+round re-aims the model at one when round 1's error points to it.
+
 ## Tuning as a declared search
 
 Before the first trial, on the page: the space, the budget, the seed, the
@@ -88,7 +148,10 @@ widening is one more search-space revision in the flexibility register and
 part of the multiplicity burden (no fixed number of widenings). Small
 samples: shallow trees, large leaf floors,
 narrow ranges. A zero-search alternative (a prior-fitted tabular model such
-as TabPFN) has k = 1 and is a fair cell.
+as TabPFN) has k = 1 and is a fair cell. At least one family is tuned in
+every campaign (M7): "a study adds multiplicity the sample cannot pay for"
+is refused, because the null replays the study and its cost is a higher
+bar, never a false claim.
 
 ### Optuna budget
 
@@ -139,6 +202,6 @@ bd-forecast 2026-08, about 55 independent observations: Optuna over boosting,
 nets and Gaussian processes never beat L2 logistic; meta-labelling,
 triple-barrier labels, HMM regimes, sequence models and GP classifiers
 measured at no gain or a loss against a four-feature logistic; uniqueness
-weights at noise level. Each is a cell to include when the sample supports
-it, and a reason to expect the ladder to end at rung 2 or 3 below a few
-hundred independent observations.
+weights at noise level. Each is a cell to include, and a reason to expect
+the ladder to end at rung 2 or 3 below a few hundred independent
+observations. An expectation predicts the answer; it never skips the rung.

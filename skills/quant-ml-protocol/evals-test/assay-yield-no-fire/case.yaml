@@ -1,0 +1,30 @@
+schema_version: "1.1"
+name: assay-yield-no-fire
+tags: [quant-ml-protocol, test, no-fire, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    I've got assay data for about 120 crude grades (API gravity, sulphur, TAN, pour point and the TBP distillation cuts) and refinery-model yields for gasoline, jet/kero, diesel and fuel oil on a standard cracking configuration for each of them. About 40 grades we trade now and then have assays but no yields.
+
+    I want a model that fills in the yields for those 40 so we can put them into our netback calculator. What approach would you take? A quick practical answer please.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-not-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      This is a small cross-sectional regression from assay properties to yields: a low-complexity model validated across grades, with an extrapolation check and per-grade uncertainty, and no time-series research machinery. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It recommends a cross-sectional supervised model from assay properties (the distillation cuts above all) to yields, sized for about 120 training grades (regularised linear, PLS, a small tree ensemble or similar, not a deep network).
+      2. It validates by cross-validation across grades, holding related grades out together (same field, blend or family) or otherwise guarding against near-duplicate assays inflating the accuracy.
+      3. It flags extrapolation: it checks whether each of the 40 grades lies inside the property range of the training grades and treats outliers (very heavy, high-TAN or unusual grades) with caution or wider uncertainty.
+      4. It gives, or asks for, a per-grade uncertainty (a prediction interval or cross-validated error) to carry into the netback calculation.
+      5. It does not impose time-series machinery on this non-temporal problem (walk-forward splits, held-back judge years, a forecast ledger or a staged research plan page).

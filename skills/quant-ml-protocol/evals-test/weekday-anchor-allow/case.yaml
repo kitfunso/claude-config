@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: weekday-anchor-allow
+tags: [quant-ml-protocol, test, stage-9, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    The live Brent-Dubai swap model (weekly calls, 7-week horizon) rebalances on the last trading day of each week. The trading desk asked whether Friday is special, since a midweek rebalance would suit them better. No other weekday has ever been tested.
+
+    I want to run the frozen spec, unchanged, on Monday to Thursday anchor grids plus a staggered book (one fifth rebalanced each day) over 2019 to 2026. All of that history has been read already, the judge years included. Before running I'll write in the protocol log that no weekday is chosen from this read, the live model stays on Friday, and any switch would go to the ledger as a labelled challenger. The design has parity gates (the Friday grid must reproduce the live calls exactly) and a within-week permutation null on the spread across weekdays.
+
+    Is this allowed, or is it a second look at the judge years?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Allowed: running the unchanged frozen spec on other anchor weekdays is a descriptive sensitivity read of spent history, not a second look, provided the no-switch declaration is written first and any change goes to the ledger as a labelled challenger. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It allows the analysis and does not refuse it as a second look or require a fresh judge block before it can run.
+      2. It keeps the written declaration (no weekday chosen from this read, the live model stays on Friday) before the run as a condition.
+      3. It supports comparing weekdays on the same weeks with paired intervals that respect the overlapping 7-week outcomes (a block bootstrap or equivalent) together with the permutation null, rather than ranking weekdays on point estimates.
+      4. It states the result is descriptive only: it cannot select a new weekday, and any move off Friday runs as a labelled challenger scored on fresh outcomes after its declaration.

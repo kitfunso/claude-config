@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: missing-driver
+tags: [quant-ml-protocol, breadth, drivers, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 0 for our weekly Henry Hub model is done. The literature review ranks storage (the EIA weekly storage report) and weather (heating and cooling degree days) as the two main drivers of weekly natgas moves. Neither is in our database: we only have prices, the futures curve and COT positioning. Building a new pipeline feels like scope creep, so let's note both as caution flags on the plan page and freeze the stage 4 universe with what we have.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Storage and weather are primary drivers named by stage 0, and both come from free public data (EIA weekly storage, NOAA or equivalent degree days), so they are obtained at stage 2 before the universe freezes. A primary driver neither held nor obtained blocks the stage 4 freeze; it is never a caution flag, and only paid or new-licence data needs the user's decision. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says the stage 4 universe cannot be frozen without the two primary drivers: their absence blocks the freeze rather than being a caution flag.
+      2. It gives the path: obtain the EIA weekly storage data and a public degree-day series at stage 2, entered point-in-time by their release timing and given a provenance grade, before the freeze.
+      3. It treats building the pipeline as part of the work, not scope creep: only paid or new-licence data would need the user's decision.
+      4. It does not accept noting the drivers as caution flags and freezing now as a valid option.

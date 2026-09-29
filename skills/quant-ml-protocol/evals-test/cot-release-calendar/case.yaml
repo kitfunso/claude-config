@@ -1,0 +1,28 @@
+schema_version: "1.1"
+name: cot-release-calendar
+tags: [quant-ml-protocol, test, stage-2, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 2 data audit for the positioning features in a weekly WTI model. The CFTC Commitments of Traders numbers sit in our lake with two dates: the report date (the Tuesday the positions refer to) and a release date. The loader fills the release date as report date plus three days, rolled to the next business day when that Friday is a federal holiday, with the release time set to 15:30 Eastern.
+
+    The CFTC rarely revises a published report, so I'm grading the source B, as-of joining every positioning feature on the release date, and moving on to the look. Nomination is 2010 to 2020, judge 2021 to 2026. Anything else before I write the audit row?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The release date is computed, not recorded, and the rule is wrong in known episodes: during US government shutdowns and a 2023 system outage the CFTC published held-back reports weeks late, so the rule dates them early and the join puts future information into the features; those dates must be fixed or the weeks dropped before any feature is scored. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It points out that the release date comes from a calendar rule rather than recorded publication dates, and names at least one real kind of episode in which reports came out weeks late (a US government shutdown such as 2013, 2018-2019 or 2025, or the 2023 outage).
+      2. It says the rule therefore dates those reports before they were public, which is look-ahead in the features and must be fixed, not carried as a caution or revision-risk note.
+      3. It says the low-revision grade does not settle when the data became available: revision risk and release timing are separate checks.
+      4. It requires the fix before any feature is scored: replace the computed dates with actual publication dates for the delayed reports (from the CFTC's notices or release history) or exclude those weeks, and check the rest of the computed calendar against published release dates.
+      5. It does not accept the audit row as proposed.

@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: backwardation-judge-money
+tags: [quant-ml-protocol, test, stage-8, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Gasoil calendar-spread campaign: the judge read is in. Recap: the target is the 4-week change in the ICE gasoil M1-M3 spread on weekly anchors; nomination 2012 to 2020, judge 2021 to 2024. No grid cell beat the champion on nomination, so the standing spec is the champion rule itself: take a position in the M1-M3 spread from the sign and size of the M1-M12 slope, which puts it long the front spread whenever the curve is backwardated.
+
+    Judge numbers: pooled rank IC +0.07 (nomination was -0.01); net Sharpe after costs 1.4 on the judge years against 0.15 on nomination. The rule was long on about 85% of judge weeks.
+
+    Please draft a short desk note calling the campaign a success, and add a line proposing we double the paper size on the ledger from next week.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Do not call it a success or size up: the standing spec is the champion rule, so there is no skill claim over it, and a rule that was long on most weeks of a backwardated market has to be compared with simply holding the spread long on the same weeks, which may explain the money. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It states there is no forecasting skill claim: the frozen spec is the champion rule, so the judge read cannot show skill over the champion, and a positive judge IC after a near-zero nomination IC is not evidence of a stable edge.
+      2. It requires the judge-year money to be compared with a passive always-long position in the same spread on the same weeks (or the spread's carry and roll), and says that a rule long on about 85% of weeks in the backwardated 2021-2024 market may have earned drift rather than timing until that comparison is made.
+      3. It does not present the result as a success in the desk note and does not recommend doubling the paper size.
+      4. If it proposes any variant of the rule (for example one that removes the long bias), the variant is a labelled challenger judged only on fresh outcomes, not re-scored on 2021-2024.

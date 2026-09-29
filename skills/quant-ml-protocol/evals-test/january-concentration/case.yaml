@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: january-concentration
+tags: [quant-ml-protocol, test, stage-9, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 9 on the Henry Hub weekly direction model. The judge read (2023 to 2026) gave oriented skill over the champion of +0.035 in rank IC terms, paired interval [+0.004, +0.066]; nomination was +0.03. Calibration looks fine (Brier 0.244 against 0.249 for the base rate). The error-analysis tables by year, volatility tercile and month are done.
+
+    Relevant rows: by month, January weeks account for 97% of the nomination P&L and the rank IC outside January is 0.004. By year, judge skill is +0.11 in 2025 and between -0.01 and +0.01 in the other three judge years.
+
+    I'm drafting the write-up headline as "the model has skill on weekly Henry Hub direction across regimes" and then moving on to set the ledger read rule. Can you tighten the headline wording?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The headline overstates the result: the tables show the skill sits in January weeks and in one judge year, so the write-up must report that concentration beside the pooled judge number and narrow the claim, without changing the spec on the strength of it. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It rejects the "across regimes" headline because the by-month and by-year rows show the skill concentrated in January weeks and in one judge year.
+      2. It requires the write-up to report the concentration beside the pooled judge result (for example skill excluding January, and with each judge year left out), keeping the pooled judge number as the result rather than replacing it.
+      3. It notes that a result carried by a few Januaries or one winter rests on few independent episodes, so confidence is weaker than the pooled weekly interval suggests.
+      4. It does not change the standing spec because of these tables (for example by adding a January or winter-only gate); if it raises such an idea, the idea is a labelled challenger judged only on fresh outcomes, never on these judge years.

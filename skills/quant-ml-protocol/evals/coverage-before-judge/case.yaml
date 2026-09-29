@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: coverage-before-judge
+tags: [quant-ml-protocol, breadth, coverage, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Ready for the stage 8 freeze on the WTI weekly model. The coverage table's open items: "F3 shallow trees, Optuna-tuned" is blocked with reason "underpowered: 313 rows"; "F6 sequence models" is blocked with "small sample"; "F4 equal-weight average" is still pending; and the Kpler flows driver is blocked with "declined: paid licence, the desk head said no on 2026-09-26". Everything else ran. Can we freeze and run the judge read?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The stage 8 freeze needs every coverage row closed, ran or blocked with an accepted reason code. Underpowered and small sample are refused reasons, a pending row is open, and a paid licence declined by the user with the answer's date is accepted. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It says the judge read cannot run yet: the freeze is blocked.
+      2. It refuses "underpowered" and "small sample" as reasons to leave the tuned trees and the sequence models untried.
+      3. It says the pending equal-weight row also blocks the freeze.
+      4. It accepts the Kpler row: a paid licence declined by the user, with its date, is a valid reason.
+      5. It gives the path: run the tuned trees with 200-trial Optuna studies replayed in the grid null, run the sequence models (as labelled exploratory context if the sample cannot support them as a confirmatory cell), run the equal-weight cell, then re-check the coverage table before the freeze.
+      6. It does not present freezing now, with those rows carried as caution flags, as acceptable.

@@ -22,7 +22,9 @@ is the trading page. A low-error forecast can lose money; a strong backtest
 can rest on one unstable feature.
 
 Revised 2026-09-23 (fifth revision, from the fourth revision's eval
-misses); stage 0, the prior-art round, added 2026-09-25. Earlier versions:
+misses); stage 0, the prior-art round, added 2026-09-25; breadth rules and
+the bd-forecast challenger process restored 2026-09-29, with the
+two-reviewer plan review and full-power execution. Earlier versions:
 `~/dev/quant-ml-protocol-draft/old/`.
 
 ## Hard rules, defaults and data availability
@@ -68,7 +70,10 @@ construction, invalid split chronology, a null calibration that does not
 replay the searched procedure. A caution flag is carried on the page and
 the campaign continues: no historical vintages, unknown revision risk, a
 small sample, a late-start feature, a coarse null, high seed variance,
-unstable regime behaviour, vendor-reconstructed history.
+unstable regime behaviour, vendor-reconstructed history. A coverage failure
+stops the freeze it guards and nothing else: a primary driver neither held,
+obtained nor blocked with an accepted code, or a coverage row open or blocked for a refused reason, at the
+stage 4 or stage 8 freeze (Breadth, below).
 
 Validity failures found after a result. A verified validity failure
 invalidates the affected evaluation regardless of its sign. Preserve the
@@ -83,6 +88,188 @@ Never cheat time, never select on the judge, never hide search
 multiplicity, and never pretend the data is more point-in-time than the
 vendor provides. Everything else is a modelling choice, declared, tested
 and recorded.
+
+## Breadth: every route runs before the judge read
+
+The validity rules stop a campaign fooling itself; nothing in them says try
+less. The null replays whatever was searched, so a wider search raises the
+bar honestly and never manufactures a claim, while a narrow one misses what
+it never looked at, for certain. A route skipped because the sample is
+small, the search is wide or the answer is expected to be null has not been
+tested, and the page says so. The process below is the one that worked on
+bd-forecast (August 2026: a literature review and a ranked driver survey
+first, then numbered iterations, each one logged challenger against the
+champion, with a carry decomposition and a gauntlet on every survivor). Its
+rules answer the weekly energy campaigns of September 2026, which ran valid,
+narrow and null: natgas cut its universe to three cells for power (as HO and
+WTI had), ran without the storage and weather drivers its stage 0 had
+named, and fitted every family to the champion alone.
+
+1. **Information before search.** A weak screen is fixed with more
+   information, never with fewer cells. At stage 2, before the universe
+   freezes, work every route that grows the effective sample and record each
+   as a coverage row: longer history (vendor back history, an older series
+   joined by a reconciled seam), a pooled panel of related targets (its
+   effective count from their correlation, never the row count), and any
+   other horizon or cadence the decision can use (entered in the
+   flexibility register). Each new source is graded and audited at stage 2
+   like any other; a pooled panel's nulls resample every member on one
+   shared index (the same shifts or blocks), so the members' correlation
+   survives in the null.
+2. **Primary drivers are mandatory.** A primary driver is one stage 0 grades
+   walk-forward or replicated, or one named by two or more core papers. Each
+   is in the universe or is obtained at stage 2: free and already-licensed
+   data are pulled as part of the work, a new pipeline included; only paid
+   or new-licence data goes to the user, and the answer is recorded with its
+   date. A primary driver neither held, obtained nor blocked with an
+   accepted code (`declined:` with the user's dated answer, or `no-data:`
+   with the search log, outside sources included) blocks the stage 4
+   freeze.
+3. **Two tiers, never a shrink.** Tier 1 is the domain tier: the stage 0
+   drivers, one rationale and citation per cell. Tier 2 is the full
+   enumeration, tier 1 marked inside it. Each tier has its own null and
+   cutoff, so tier 2 costs tier 1 no power at the screen; at stage 7 the
+   cells on the whole tier 1 set carry their own grid null too, read first.
+   Whole-block claims are tested in
+   a fixed sequence, tier 1 first and tier 2 only when tier 1 holds, or
+   under an error-rate split declared before the screen (4% and 1%, say). A
+   tier 2 pass that cannot claim is a labelled lead: a ledger challenger or
+   a cell for the next campaign; it is still modelled, since the per-refit
+   shortlist takes both tiers' passes against their own rolled cutoffs, and
+   the grid null replays both.
+   No cell is dropped unscored; power is reported per tier and never cuts
+   the universe.
+4. **The mechanism ladder: every rung runs.** The ten rungs M1 to M10 and the
+   family ladder F1 to F6 in `references/model-families.md` are coverage
+   rows: the level before the sign; magnitude and distribution; window and
+   recency; the lag structure of outside data; selection with error control;
+   structure (monotone constraints, pooling); tuning (at least one family
+   tuned by 200-trial studies, a zero-search model beside it); ensembles;
+   late-start data in every window configuration; execution lag and costs.
+   Every family runs on the shortlist and on the whole tier 1 set held to
+   the cap, both declared before stage 5 with the cap rule for the tier 1
+   set and its cut order (the driver-survey rank), so an empty shortlist
+   still tests the information. A rung the sample cannot support runs as labelled
+   exploratory context; it is never skipped.
+5. **Challenger rounds, one change at a time.** Stage 7 runs in rounds
+   drawn from a menu declared before round 1: the open coverage rows plus
+   any declared extras. Round 1 is the declared ladder and grid. Each later
+   round makes one change to the standing cell (a rung, a feature group, a
+   data route, a target treatment such as the excess over carry, a
+   horizon), declared on the page before it runs and written in the
+   challenger log: id, the date declared, the one change, why, the paired
+   interval against the standing cell, the verdict, what it taught. A
+   round's winner faces the gauntlet (7) before it becomes the standing
+   cell, its flags in the log. A round that adds data or features reruns
+   the screen and its null on the enlarged universe first. The grid null
+   replays the whole menu, run or not, and every round's cells as one
+   maximum, so iterating raises the bar instead of hiding from it; the log
+   is the flexibility register's entry. A round off the menu, suggested by
+   a nomination result, still runs: labelled post-hoc in the flexibility
+   register and joined to the null, with the page saying the grid null does
+   not replay that choice. A round that changes the target treatment or the
+   horizon opens its own claim, with its own null adapter and grid null and
+   the ladder rerun on it, never one maximum across targets. The judge
+   candidate is the primary claim's standing cell after the last round, by
+   the stage 7 selection rule. Rounds stop when every coverage row is
+   closed and the last two rounds changed nothing. The judge years stay
+   untouched throughout.
+6. **Direction.** The next round goes where the nomination error sits (a
+   regime, a horizon, a target treatment, a missing input), never where the
+   work is cheapest. Information comes first (data, drivers, history), then
+   the target treatment, then the mechanism, then tuning. When a one-side
+   baseline scores well, the carry decomposition runs before any model
+   round: is the edge the drift the curve already pays?
+7. **A gauntlet for the standing cell.** Before the stage 8 freeze, on
+   nomination years, the standing cell (the champion alone included) faces
+   G1 leave-one-year-out (does the sign hold dropping any year), G2
+   neighbouring horizons (do adjacent horizons agree), G3 knockout per
+   feature and per group, and G4 the lag stress on its B to D inputs. The
+   results sit beside the cell. A gauntlet veto binds only when written into
+   the selection rule before the grid runs, with its fallback: every
+   family's chosen cell then faces the gauntlet and the candidate is the
+   best that passes, the champion alone when none does. Otherwise a failure
+   is a flag.
+8. **The coverage table, checked by a script.** The plan page carries
+   `<table id="coverage">` with columns Item, Kind, By, State, Evidence,
+   Reason. Rows by stage 4: every primary driver (kind driver), grow-n route
+   (data-route), tier, target treatment (target) and horizon. Rows by stage
+   8: M1 to M10 (mechanism), F1 to F6 (family), G1 to G4 (gauntlet). State
+   is ran, with evidence (a page or file and the metric value; a date in a
+   file name is not a value), or blocked, with a reason code: `no-data:`
+   with the searches that found nothing and the search log as evidence,
+   `declined:` with the user's answer and its date, `validity:` a true
+   blocker with its evidence, `compute:` with the benchmark number,
+   `row-floor:` with the arithmetic, never on a rung (a rung the sample
+   cannot support runs as exploratory context). Underpowered, small sample,
+   multiplicity, expected null, empty shortlist and no time are refused. A
+   row added after the stage that should have declared it, a critic's item
+   included, still runs: labelled late, entered in the flexibility register
+   with its date, its cells joined to the null they belong to.
+   `scripts/coverage_check.py <plan> --stage N` runs at the stage 4 and
+   stage 8 freezes and at stage 10, and at 8 and 10 also reads the
+   challenger log (each round's declared date, change, interval and
+   verdict); a failing check stops the freeze.
+9. **A critic before each freeze.** Before the stage 4 and stage 8 freezes, a
+   fresh-context reviewer sub-agent (Opus) and `/codex` in consult mode
+   (Review and execution, below) each read the plan page, the stage 0 page
+   and the coverage table; a critic that made no tool call read nothing and
+   runs again. Each answers two questions: what has not been tried,
+   and why; and what would make a win here false (a null that does not
+   replay the search, a leak, a choice made on the judge years)? Each
+   untried item becomes a coverage row, ran or blocked with an accepted
+   code, before the freeze; each way a win could be false is fixed or
+   written on the page as a blocker or a flag. The user grades the effort from the
+   table at stage 10; the author never grades it.
+10. **One design per market.** Each campaign builds its universe from its own
+    stage 0. A sibling campaign's tier 1 is cells to include, never the
+    universe: four markets run through one copied design are one experiment
+    run four times.
+
+## Review and execution
+
+The session model leads the campaign: it writes the plan page, briefs the
+work, reads every result and chooses the next step. Two rules keep the lead
+honest; both come from the dev-framework-rl loop.
+
+1. **Two reviewers on the plan.** Before stage 1 part one freezes, the
+   filled plan page goes to `/plan-eng-review` and to `/codex` in consult
+   mode. Codex reads nothing under `~/.claude`, so its prompt carries the
+   plan page, the stage 0 page and this skill's hard validity rules in
+   full, at reasoning effort high. plan-eng-review's question gates take the
+   recommended option, said in one line, unless the item is on the user's
+   ask-first list, and its report goes on the review page, never at the foot
+   of the plan page. The findings are consolidated on
+   `docs/plan-review-<date>.html` as section, issue, fix, raised by and
+   severity; the lead applies them, writes each rejection with its reason,
+   then freezes part one. At the stage 4 and stage 8 freezes codex sits
+   beside the critic (Breadth 9) as the cross-model check. A change to
+   anything the review saw frozen (the target treatment, a horizon, the
+   judge years) goes back to both reviewers on the change alone. A pass is
+   checked by the lead on the question the reviewer was sent for before it
+   counts. Probe `codex login status` when the campaign opens; when codex
+   cannot run (a usage limit, an outage), its row reads `not run:` with the
+   reason and the page carries a caution flag. Each review is a row of
+   `<table id="reviews">` (gate, reviewer, date, page, findings, rejected),
+   and `scripts/coverage_check.py` fails the stage 4 freeze without the plan
+   and stage 4 rows and the stage 8 freeze without its own.
+2. **Execution under `/full-power`.** Stages 2 to 10 run under
+   `/full-power`. The lead writes the plan, the briefs and every verdict;
+   the builds (audit and profiling scripts, the universe, the nulls, the
+   screen, the grid, the rounds, the gauntlet) go to sub-agents. Each brief
+   carries full-power's seven items: the goal and why, the exact scope and
+   what not to touch, the files and commands, what is already known, the
+   non-negotiables (this skill's hard validity rules and the project
+   CLAUDE.md, quoted), the deliverable and its length, the stop condition.
+   Opus takes any build whose correctness is a validity rule (the purge,
+   the walk-forward, availability, a null replay) and every review; Sonnet
+   takes mechanical work (profiling, extraction, runs of a finished
+   script). Independent builds run in parallel; a build whose output briefs
+   another waits for it. Before a stage closes, the lead reads what came
+   back (the diff, the files, the check's output) against the brief and the
+   hard rules; a sub-agent's summary never closes a stage. Drift goes back
+   to the same sub-agent with the violation named; a fix the lead can state
+   exactly, a line or two, it makes itself.
 
 ## Three kinds of rule
 
@@ -183,13 +370,13 @@ and recorded.
   cutoffs from the two interleaved halves of the set as its sensitivity, with
   no coverage claimed; bootstrap worlds whenever an interval is needed. The
   grid null at stage 7 reruns the whole grid per world at B of at least 100
-  by the same default;
-  when the compute benchmark forbids that, the grid is reduced (fewer
-  cells, or a narrower Optuna space, with every study still at 200
-  trials) and frozen before the null runs, the real run uses the same reduced grid, and the
-  reduced search is replayed at 100 or more; a grid null below 100 worlds,
-  never below 20 (a protocol engineering floor), is labelled coarse
-  wherever its cutoff or p-value is quoted. Every null is itself a model of
+  by the same default. When the compute benchmark forbids that, B drops
+  first, never below 20 (a protocol engineering floor), and a grid null
+  below 100 worlds is labelled coarse wherever its cutoff or p-value is
+  quoted. Only when 20 worlds are still unaffordable is the grid reduced, a
+  narrower Optuna space before fewer cells (every study still at 200
+  trials), each cut a coverage row with its `compute:` number, frozen
+  before the null runs, and the real run uses the same reduced grid. Every null is itself a model of
   what the search would find without the incremental information, and its
   validity rests on its resampling assumptions: the null page reports the
   method and the structure it preserves, and where materially different
@@ -204,8 +391,9 @@ and recorded.
   measures the power: plant the effect worth having in a real cell, replay
   the whole search, and count the share of worlds where the planted cell
   clears the cutoff actually used. The target is 80%, the declared power.
-  Short of it, the universe is shrunk by a dated domain declaration before
-  the real screen runs.
+  Power is reported per tier, never a reason to search less: short of it,
+  the grow-n routes and the tier split (Breadth 1 and 3) apply, and the page
+  says underpowered beside the tier. No cell is dropped unscored.
 - Selection inside the walk-forward: screening, clustering, any fitted
   preprocessing and the champion's identity run at each refit date of the
   coarsest cadence on data to that date, so no nomination prediction uses a
@@ -303,7 +491,8 @@ feature count within the cap; the model family, including a joint-horizon
 or recursive family where declared; the hyperparameters, each set chosen
 by a study on data before the forecasts it serves; the target family
 beyond the point target. A sibling project's result (bd, wb, td3c) or a
-published one is a cell to include, not a prior. The selection rule, the tie-break (a declared
+published one is a cell to include, not a prior, and a sibling campaign's
+universe is cells to include, never the universe (Breadth 10). The selection rule, the tie-break (a declared
 complexity score, or the least-machinery order labelled a stability prior)
 and the primary horizon are written on the page before the grid runs.
 
@@ -312,7 +501,8 @@ and the primary horizon are written on the page before the grid runs.
 Copy `templates/pipeline-plan.html` to `docs/pipeline-plan-<date>.html` and
 fill every box before stage 1 starts, the daily-read box with its
 append-only ledger and read rule included; a box not yet answerable stays
-on the page marked open, never dropped. Each stage row holds the check that
+on the page marked open, never dropped. The filled page goes to the two
+reviewers (Review and execution, 1) before stage 1 part one freezes. Each stage row holds the check that
 closes it, its state (done, partial or skipped, with the number the check
 produced) and where the evidence lives. A true blocker (known leakage,
 preprocessing fitted on future rows, unmatured labels in training, the judge
@@ -342,9 +532,10 @@ both.
    or failure. Every core paper is read in full and graded on its evidence;
    a published skill is an upper bound. The feed list marks each item with
    the stage that takes it: baselines and champion candidates (1), sources
-   (2), events and breaks (3), drivers or the domain shortlist (4, and the
-   dated declaration that shrinks an underpowered universe at 5), families
-   (7). A paper whose sample covers the judge years is an earlier read of
+   (2), events and breaks (3), drivers ranked in a driver survey with
+   whether our data holds each and from when, the primary ones marked (4:
+   they form tier 1 and are held or obtained at stage 2), families (7). A
+   paper whose sample covers the judge years is an earlier read of
    them and goes on stage 1's list. A paper found after stage 4 closes
    changes nothing frozen, and stopping the screen or restarting on the
    same judge years to admit it is that same change: its routes are a
@@ -353,7 +544,8 @@ both.
    register. Pass: the
    prior-art page, dated before stage 1 part one, with the search log, the
    saturation note, one graded extraction row per core paper, the feed list
-   by stage, the judge-year overlaps and the searches that found nothing.
+   by stage with the driver survey and its primary drivers marked, the
+   judge-year overlaps and the searches that found nothing.
 1. **Framing, target and power.** Two dated parts: freeze the candidate
    universe and baseline specifications before running outcome-dependent
    comparisons. Part one, declared and frozen before any nomination outcome
@@ -383,7 +575,8 @@ both.
    where the primary metric is a paired loss, n_anchor (forecast anchors,
    dependence carried by the long-run variance). Name the nomination and
    judge years and list every earlier read that touched the judge years,
-   stage 0 papers whose samples cover them included.
+   stage 0 papers whose samples cover them and sibling campaigns' judge
+   reads on the same calendar years included.
    Specify the required baselines in the target's own space on the same
    nomination anchors as the model: no change, always one side, trailing
    base rate, trailing mean, seasonal naive where a season exists (a level
@@ -425,7 +618,9 @@ both.
    search bar from the planned universe size K in the schema,
    sqrt(2 ln K) / sqrt(n) + z_power / sqrt(n) in standardised units, the
    expected null maximum plus the power margin, labelled rough, beside the
-   standardised effect worth having. Pass: the target page carries part
+   standardised effect worth having. Pass: the plan-review page, dated
+   before part one freezes, each finding applied or rejected with its
+   reason; the target page carries part
    one, dated (targets, metrics, the raw effect, the span it is worth
    having over, the level and power, the
    counts, the baseline specifications, the candidate list, the null fit
@@ -473,17 +668,21 @@ both.
    left the universe, and whether today's pull still shows them; a universe
    reconstructed from today's list is labelled so.
    Freeze: anchor cutoff, immutable dated raw pulls, a SHA256 manifest that
-   later pulls append to, the code commit and the environment lock. Finalise
-   K from the exact column counts and the transform ladder, and write the
-   universe decision: full enumeration, or a domain shortlist with a one-line
-   rationale per row, declared here before any feature is scored against
-   the target, with the outcome reads made so far (stage 1, part two)
-   listed beside it. Pass: a
+   later pulls append to, the code commit and the environment lock. Before
+   the freeze, work the grow-n routes and obtain every primary driver not
+   held (Breadth 1 and 2); a pulled source gets this stage's audit like any
+   other. Finalise K per tier from the exact column counts and the
+   transform ladder, and write the universe decision: tier 2, the full
+   enumeration, with tier 1, the domain tier, marked inside it, one
+   rationale and citation per tier 1 cell, declared here before any
+   feature is scored against the target, with the outcome reads made so far
+   (stage 1, part two) listed beside it. Pass: a
    provenance grade and revision-risk label per source, hygiene and
    calendar alignment documented, known future leakage removed, the
-   manifest path, K and the universe decision on the plan page, and every
-   non-PIT source listed as a caution flag with its sensitivity plan where
-   one applies.
+   manifest path, K per tier and the universe decision on the plan page,
+   the driver, data-route, tier, target and horizon rows of the coverage
+   table written, and every non-PIT source listed as a caution flag with
+   its sensitivity plan where one applies.
 3. **Look.** Nomination years only. The target alone: level and changes,
    rolling mean and volatility, autocorrelation, seasonality year by year,
    candidate regimes (volatility terciles, structure sign, known events;
@@ -497,8 +696,9 @@ both.
    walk-forward at each refit. Pass: the look page, with no
    feature-versus-target plot on it; any change to the stage 1 target
    written with its reason.
-4. **Feature universe.** Enumerated from the schema with exact counts, or the
-   declared shortlist; nothing hand-picked after an outcome was read. Every
+4. **Feature universe.** Tier 2 enumerated from the schema with exact
+   counts, tier 1 marked inside it; nothing hand-picked after an outcome was
+   read. Every
    numeric column of every admitted table, its provenance grade carried in
    the cell metadata; categorical columns pivoted to one
    series per category, pooled to the K largest plus other above a stated
@@ -535,17 +735,21 @@ both.
    and never that a vendor's values were unrevised at the original date
    where no vintage archive exists; the per-refit champion identity per
    refit date, and the full-nomination winner's nomination statistic as
-   context.
+   context; the critic's and codex's lists (Breadth 9) closed into coverage
+   rows and `scripts/coverage_check.py <plan> --stage 4` passing.
 5. **Screen.** First the screen null alone: B replays of the whole screen on
    the null target, offsets spaced as the rule says; the cutoff at the
    declared percentile of their maxima is the empirical search bar and
    replaces the rough analytic one on the plan page. Then, where feasible,
    the signal-injection check: the effect worth having planted in a real
    cell, the whole search replayed, and the share of worlds where the
-   planted cell clears that cutoff. Short of the declared power (80% by
-   default), or, where injection is infeasible, when the effect does not
-   clear the empirical bar by the power margin, the universe decision at
-   stage 2 is reopened and rewritten before the real screen runs. Then, at
+   planted cell clears that cutoff. Both run per tier, each tier against
+   its own null. Short of the declared power (80% by default), or, where
+   injection is infeasible, when the effect does not clear the empirical
+   bar by the power margin, the page says the tier is underpowered for the
+   minimum effect we care about and the screen runs as declared; a grow-n
+   route not yet worked may reopen stage 2 before the real screen runs, and
+   the universe is never cut. Then, at
    each refit date of the coarsest cadence, on data to that date: the
    incremental statistic of every cell against each horizon. Every target
    family has one predeclared one-feature screening estimator, identical
@@ -594,8 +798,11 @@ both.
    offset spacing, the residual scale by year, the cutoff with its
    uncertainty, the replay maximum per search and campaign-wide, the
    signal-injection power or the reason injection was infeasible, and the
-   pass count; a ranked shortlist per refit date with the incremental
-   statistic, the per-refit rolled cutoff, group, cluster and first date.
+   pass count, each per tier; the fixed-sequence or split verdict on the
+   whole-block claims; tier 2 passes in the shortlist, labelled leads where
+   tier 2 cannot claim; a
+   ranked shortlist per refit date with the incremental
+   statistic, the per-refit rolled cutoff, tier, group, cluster and first date.
 6. **Selection, cap and tuning rules.** Default capacity guard: Cap per
    window rung = n_cap divided by 8, on clusters, the champion
    specification counted as one (n_cap: effective training rows after
@@ -645,11 +852,16 @@ both.
    design dropped unseen), with Optuna trials = 200 for every
    study that runs; the calibration choice for every probability output.
 7. **Model comparison and the window grid.** Families in a ladder
-   (`references/model-families.md`): champion alone; a regularised linear
-   model on the shortlist (logistic for the directional read, quantile
+   (`references/model-families.md`), every rung run: champion alone; a
+   regularised linear model (logistic for the directional read, quantile
    regression for the quantile read); shallow trees; the equal-weight
    average of the standing cells, which has no fitted weights and no extra
-   search; stacking and sequence models only under that file's rules. Each
+   search; stacking and sequence models under that file's rules, as
+   labelled exploratory context where the sample cannot support them. Each
+   family runs on the shortlist and on the whole tier 1 set held to the
+   cap, both declared before stage 5; at least one family is tuned by
+   200-trial studies. The mechanism rungs M1 to M10 run beside the families,
+   and the challenger rounds follow round 1 (Breadth 4 to 6). Each
    family over the declared grid: window {expanding; rolling ladder} x refit
    cadence {the ladder declared before this stage; annual, quarterly,
    monthly, weekly is the default for daily market data} x recency weight
@@ -658,10 +870,9 @@ both.
    only, naive and champion baselines in every cell. Cells are ranked on a frozen common set of
    forecast dates per horizon; cells that cannot cover it are reported in
    their own table. Compute is benchmarked on one full replay before the
-   run; when it forbids a grid null of 100 worlds, the grid is reduced
-   (fewer cells or a narrower space, never fewer trials) and frozen before
-   the null runs and the real run uses the same reduced grid;
-   the null replays rerun the whole grid. An Optuna-tuned family enters the
+   run; when it forbids a grid null of 100 worlds, B drops toward the
+   floor of 20 first and the grid is reduced only after that (Null worlds,
+   above), never by fewer trials; the null replays rerun the whole grid. An Optuna-tuned family enters the
    grid with the hyperparameters from its declared 200-trial inner studies;
    whether a study runs once per family and window configuration or once
    per grid cell is written on the plan before the run, never decided after
@@ -696,8 +907,16 @@ both.
    first. The family that stands here is
    the standing family; its cell is the judge candidate. Pass: a surface
    page with every cell's paired interval against the champion, the null
-   grid, the chosen cells, the tie set and the standing family.
-8. **Judge read.** Freeze first, on the page: feature definitions, the
+   grid replaying every round, the chosen cells, the tie set and the
+   standing family; the challenger log; the gauntlet beside the standing
+   cell (Breadth 7); when every shortlist was empty, a sentence saying the
+   shortlist cells tested model shape on the champion alone and the tier 1
+   cells carried the information test.
+8. **Judge read.** The critic's and codex's second lists (Breadth 9) are
+   closed into coverage rows and `scripts/coverage_check.py <plan> --stage 8` passes;
+   the judge years are not read until both hold. Then freeze, on the page:
+   the primary claim's target treatment and horizon (a switch from stage
+   1's written in the flexibility register with its date), feature definitions, the
    shortlist rule, the cap, the tuning procedure and its retuning schedule,
    any calibrator, the standing family and its cell, the refit cadence,
    and the economic rule, when the project trades. The standing family's
@@ -751,7 +970,8 @@ both.
    a regime-only winner labelled on the plan page; the outage behaviour
    written.
 10. **Write-up, then the daily read.** One HTML page: target, baselines, the
-    enumerated list of what was covered and what was not, the grid, the judge
+    coverage table passing `scripts/coverage_check.py <plan> --stage 10`,
+    the challenger log, the grid, the judge
     read, the calibration, the regimes, the caution flags in force, the
     researcher-flexibility register (targets tried, universes tried, grids
     run, search spaces tried and revised with every boundary widening
@@ -796,6 +1016,9 @@ opens. It never sits inside the research metric.
 - "Done" is a claim about the stage list: every stage reported as done,
   partial or skipped, with the check that passed. Never "tried everything",
   "every table" or "all features" without the enumerated list on a page.
+  Covered means the coverage table passes its check; "not covered" is
+  written only with an accepted reason code, never for a small sample, a
+  wide search or an expected null.
 - Call data absent only after searching the whole family (table prefix,
   directory). Read every reference artefact in full before summarising it.
 - Null, flat or worse than the champion is said first, with no softening
@@ -828,7 +1051,10 @@ opens. It never sits inside the research metric.
 - bd-forecast `src/bdf3/deepsearch.py` (atlas, nominate, wf_delta: series x
   transform x z-window x lag cells with IC and partial IC, lag-neighbour sign
   consistency, paired block-bootstrap delta), `src/bdf/search/transforms.py`,
-  `src/bdf/dataset.py` (purge in one place).
+  `src/bdf/dataset.py` (purge in one place); the challenger process:
+  `evidence/iter3_experiments.jsonl` (one row per challenger) and
+  `scripts/run_iter3_robustness.py` (shift null, leave-one-year-out,
+  knockout on the standing cell).
 
 ## References
 
@@ -851,3 +1077,6 @@ opens. It never sits inside the research metric.
   to present with the write-up, with the failures that earned each one.
 - `references/physical-diff-addendum.md`: read when the target is a physical
   differential to a PRA benchmark.
+- `scripts/coverage_check.py`: reads the plan page's coverage table and
+  fails the stage 4, 8 or 10 check on an open row, a refused reason or a
+  missing rung. Run it; never read it as a substitute for running it.

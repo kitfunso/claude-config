@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: worldscale-year-seam
+tags: [quant-ml-protocol, test, stage-1, ro]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We're framing a forecast of the TD3C spot rate (VLCC, Middle East Gulf to China) from the daily Baltic assessment. Proposal for part one: the target is the 10-trading-day log change of the spot assessment in Worldscale points, anchored every trading day; nomination 2015 to 2022, judge 2023 to 2025. Champion is no change. Features come later from the FFA curve, tonne-mile demand and fleet data.
+
+    The assessment series is clean back to 2010 with no gaps, and published prints are never revised. If the framing looks right I'd like to freeze part one today and start the data audit tomorrow.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Do not freeze yet: Worldscale points are quoted against flat rates that are reset every 1 January, so a WS-point change across the year boundary contains a mechanical rescaling that is not a market move, and the target must be re-expressed or the seam-crossing pairs removed before the freeze. A correct recommendation or refusal in words is sufficient; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It identifies that the Worldscale flat rate is reset each 1 January, so the same WS level means a different dollar-per-tonne rate in consecutive years.
+      2. It says anchor-outcome pairs whose 10-day window crosses 1 January therefore contain a jump unrelated to freight market moves, which would contaminate the target and any score computed on it.
+      3. It proposes a fix that becomes part of the frozen target definition: convert to dollars per tonne (WS times that year's flat rate) or a time-charter-equivalent basis, or exclude or adjust the seam-crossing pairs.
+      4. It does not approve freezing part one as proposed, and it says the fix is decided before any outcome is scored.
