@@ -24,7 +24,8 @@ can rest on one unstable feature.
 Revised 2026-09-23 (fifth revision, from the fourth revision's eval
 misses); stage 0, the prior-art round, added 2026-09-25; breadth rules and
 the bd-forecast challenger process restored 2026-09-29, with the
-two-reviewer plan review and full-power execution. Earlier versions:
+two-reviewer plan review and full-power execution; the framing grill,
+driver hypotheses and glossary added 2026-09-29. Earlier versions:
 `~/dev/quant-ml-protocol-draft/old/`.
 
 ## Hard rules, defaults and data availability
@@ -126,7 +127,8 @@ named, and fitted every family to the champion alone.
    with the search log, outside sources included) blocks the stage 4
    freeze.
 3. **Two tiers, never a shrink.** Tier 1 is the domain tier: the stage 0
-   drivers, one rationale and citation per cell. Tier 2 is the full
+   drivers, one rationale and citation per cell, with its expected sign,
+   mechanism and falsifier (Review and execution, 1). Tier 2 is the full
    enumeration, tier 1 marked inside it. Each tier has its own null and
    cutoff, so tier 2 costs tier 1 no power at the screen; at stage 7 the
    cells on the whole tier 1 set carry their own grid null too, read first.
@@ -229,10 +231,26 @@ named, and fitted every family to the champion alone.
 ## Review and execution
 
 The session model leads the campaign: it writes the plan page, briefs the
-work, reads every result and chooses the next step. Two rules keep the lead
-honest; both come from the dev-framework-rl loop.
+work, reads every result and chooses the next step. Three rules keep the lead
+honest; all come from the dev-framework-rl loop.
 
-1. **Two reviewers on the plan.** Before stage 1 part one freezes, the
+1. **Grill the framing first.** With stage 0 closed and the plan page
+   filled, the lead runs `/grilling` on the framing as a design tree (the
+   decision, target and treatment, horizons, judge years, baselines, tier
+   1) and answers its own rounds, taking each recommended answer unless the
+   item is on the user's ask-first list; a fact comes from a sub-agent,
+   never a guess. Then `/grill-me` on its own answers: the weakest premise,
+   what must be true for the campaign to find anything, what would falsify
+   it. Each tier 1 driver gets its expected sign, mechanism and falsifier
+   (the result that would say the mechanism is wrong) from the stage 0
+   papers; stage 9 reads each against them. A premise the grill breaks is
+   revised before the reviewers see the page; the grill's strongest
+   objection and the answer go on the review page. Each term the grill
+   settles goes into the project's `CONTEXT.md` by `/domain-modeling`
+   (glossary only, created at the first term), and the page, the briefs
+   and the reviewers use its words, so a term means the same thing across
+   sessions and compactions.
+2. **Two reviewers on the plan.** Before stage 1 part one freezes, the
    filled plan page goes to `/plan-eng-review` and to `/codex` in consult
    mode. Codex reads nothing under `~/.claude`, so its prompt carries the
    plan page, the stage 0 page and this skill's hard validity rules in
@@ -251,9 +269,10 @@ honest; both come from the dev-framework-rl loop.
    cannot run (a usage limit, an outage), its row reads `not run:` with the
    reason and the page carries a caution flag. Each review is a row of
    `<table id="reviews">` (gate, reviewer, date, page, findings, rejected),
-   and `scripts/coverage_check.py` fails the stage 4 freeze without the plan
-   and stage 4 rows and the stage 8 freeze without its own.
-2. **Execution under `/full-power`.** Stages 2 to 10 run under
+   the grill included, and `scripts/coverage_check.py` fails the stage 4
+   freeze without the plan and stage 4 rows and the stage 8 freeze without
+   its own.
+3. **Execution under `/full-power`.** Stages 2 to 10 run under
    `/full-power`. The lead writes the plan, the briefs and every verdict;
    the builds (audit and profiling scripts, the universe, the nulls, the
    screen, the grid, the rounds, the gauntlet) go to sub-agents. Each brief
@@ -506,7 +525,7 @@ Copy `templates/pipeline-plan.html` to `docs/pipeline-plan-<date>.html` and
 fill every box before stage 1 starts, the daily-read box with its
 append-only ledger and read rule included; a box not yet answerable stays
 on the page marked open, never dropped. The filled page goes to the two
-reviewers (Review and execution, 1) before stage 1 part one freezes. Each stage row holds the check that
+reviewers (Review and execution, 1 and 2) before stage 1 part one freezes. Each stage row holds the check that
 closes it, its state (done, partial or skipped, with the number the check
 produced) and where the evidence lives. A true blocker (known leakage,
 preprocessing fitted on future rows, unmatured labels in training, the judge
@@ -623,8 +642,9 @@ both.
    sqrt(2 ln K) / sqrt(n) + z_power / sqrt(n) in standardised units, the
    expected null maximum plus the power margin, labelled rough, beside the
    standardised effect worth having. Pass: the plan-review page, dated
-   before part one freezes, each finding applied or rejected with its
-   reason; the target page carries part
+   before part one freezes, with the grill's strongest objection and its
+   answer, each tier 1 driver's sign, mechanism and falsifier, and each
+   reviewer finding applied or rejected with its reason; the target page carries part
    one, dated (targets, metrics, the raw effect, the span it is worth
    having over, the level and power, the
    counts, the baseline specifications, the candidate list, the null fit
@@ -678,7 +698,8 @@ both.
    other. Finalise K per tier from the exact column counts and the
    transform ladder, and write the universe decision: tier 2, the full
    enumeration, with tier 1, the domain tier, marked inside it, one
-   rationale and citation per tier 1 cell, declared here before any
+   rationale, citation, expected sign, mechanism and falsifier per tier 1
+   cell, declared here before any
    feature is scored against the target, with the outcome reads made so far
    (stage 1, part two) listed beside it. Pass: a
    provenance grade and revision-risk label per source, hygiene and
@@ -955,7 +976,9 @@ both.
    and is part of the frozen spec.
    Stability, the inference question: knockout per surviving feature and per
    feature group; sign stability of coefficients or importances across
-   refits; permutation importance and SHAP are diagnostics on nomination
+   refits; each tier 1 driver read against its declared sign and falsifier
+   (held, flipped or silent), a flip written as a finding, never a reason
+   to refit; permutation importance and SHAP are diagnostics on nomination
    folds, never selectors. Stress: revision or lag sensitivity on every
    admitted B to D source by its declared lag rule, reported as non-PIT
    historical evidence; outage masking per feature group (the spec runs with a

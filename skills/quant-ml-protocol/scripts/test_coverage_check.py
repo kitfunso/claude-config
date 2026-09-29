@@ -40,6 +40,7 @@ REVIEWS = [
     ("stage 4", "/codex consult", "2026-10-01", "docs/critic-2026-10-01.html", "3", "0"),
     ("stage 8", "critic", "2026-10-02", "docs/critic-2026-10-02.html", "2", "0"),
     ("stage 8", "/codex consult", "2026-10-02", "docs/critic-2026-10-02.html", "2", "0"),
+    ("plan", "/grilling + /grill-me", "2026-09-29", "docs/plan-review-2026-09-30.html", "7", "1: pooled panel kept, see page"),
 ]
 
 
@@ -186,6 +187,14 @@ def test_only_codex_may_be_not_run() -> None:
     critic_out = ("stage 4", "critic", "2026-10-01", "", "not run: busy", "")
     problems, _ = cc.check(page(STAGE4, reviews=REVIEWS[:2] + [critic_out] + REVIEWS[3:]), 4)
     assert any("only codex may be not run" in p for p in problems)
+
+
+def test_grill_is_due_and_always_runs() -> None:
+    no_grill = [r for r in REVIEWS if "grill" not in r[1]]
+    assert cc.check(page(STAGE4, reviews=no_grill), 4)[0] == ["no grill review at the plan gate"]
+    skipped = ("plan", "/grilling + /grill-me", "2026-09-29", "", "not run: no time", "")
+    problems, _ = cc.check(page(STAGE4, reviews=no_grill + [skipped]), 4)
+    assert any(p.startswith("grill at the plan gate: only codex may be not run") for p in problems)
 
 
 def test_review_needs_date_page_and_counts() -> None:

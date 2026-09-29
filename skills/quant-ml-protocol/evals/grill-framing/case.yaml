@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: grill-framing
+tags: [quant-ml-protocol, review, plan, grill, notice]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 0 closed this morning on our weekly RBOB crack model: 14 core papers graded, and the driver survey marks five primary drivers (inventories, refinery utilisation, the summer-grade switch, implied demand and the Brent leg). The plan page is filled, with tier 1 listed as those five with a citation each. Send it straight to /plan-eng-review and /codex so we can freeze part one today.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Before the two reviewers see the plan, the lead grills its own framing, and each tier 1 driver carries a testable hypothesis, not just a citation. A correct plan of action in words is sufficient; running the skills is not required. Pass only if all of the following hold:
+
+      1. It says the framing is grilled before the page goes to /plan-eng-review and /codex: /grilling works the framing as a design tree with the lead answering its own rounds, then /grill-me attacks the lead's own answers (weakest premise, what would falsify the campaign).
+      2. It says each of the five tier 1 drivers needs an expected sign, a mechanism and a falsifier on the page, not only a citation, and that stage 9 later reads each driver against them.
+      3. It says the terms the grill settles go into the project's CONTEXT.md glossary (by /domain-modeling), and that the page, the briefs and the reviewers use those terms.
+      4. It keeps the order: grill and revise, then the two reviewers, then the part one freeze; it proceeds through that order itself rather than stopping to ask whether to grill.

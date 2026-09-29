@@ -52,7 +52,7 @@ REVIEW_COLUMNS = {
     "rejected": "rejected",
 }
 REQUIRED_REVIEWS = {
-    4: (("plan", "plan-eng-review"), ("plan", "codex"), ("stage 4", "critic"), ("stage 4", "codex")),
+    4: (("plan", "grill"), ("plan", "plan-eng-review"), ("plan", "codex"), ("stage 4", "critic"), ("stage 4", "codex")),
     8: (("stage 8", "critic"), ("stage 8", "codex")),
 }
 NOT_RUN = "not run:"
@@ -215,7 +215,7 @@ def _review_problems(row: dict[str, str], reviewer: str) -> list[str]:
     problems = [] if DATE.search(row["date"]) else ["needs its date (YYYY-MM-DD)"]
     if row["findings"].lower().startswith(NOT_RUN):
         if reviewer != "codex":
-            return problems + ["only codex may be not run: plan-eng-review and the critic always run"]
+            return problems + ["only codex may be not run: the grill, plan-eng-review and the critic always run"]
         return problems + ([] if row["findings"][len(NOT_RUN):].strip() else ["not run: needs its reason"])
     if not row["page"]:
         problems.append("needs the page its findings are on")
