@@ -1,7 +1,14 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { ask, lint } = require('../lib/jev');
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
+
+// Pin the paid-Jev path and a temp counter so tests never touch the live Clef budget.
+process.env.JEV_PROVIDER = 'jev';
+process.env.CLEF_STATE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'clef-test-'));
+const { ask, lint, provider, neuronsUsed } = require('../lib/jev');
 
 const GOOD = {
   risky: {
@@ -66,4 +73,44 @@ test('ask surfaces a 422 body so a bad question shape is debuggable', async () =
   const fetcher = async () => ({ ok: false, status: 422, text: async () => 'criteria: expected map' });
   const out = await ask('s', GOOD, { apiKey: 'test', fetcher });
   assert.match(out.error, /^http 422: criteria/);
+});
+
+test('provider defaults to clef-flash once a Cloudflare account is set, jev otherwise', () => {
+  const clef = provider({ CLOUDFLARE_ACCOUNT_ID: 'acct', CLOUDFLARE_API_TOKEN: 'cf' });
+  assert.strictEqual(clef.model, 'clef-flash');
+  assert.match(clef.endpoint, /accounts\/acct\/ai\/run\/@cf\/cloudflare\/clef-flash$/);
+  assert.strictEqual(clef.key, 'cf');
+  assert.strictEqual(provider({ TYPESAFE_API_KEY: 'ts' }).key, 'ts');
+  assert.strictEqual(provider({ CLOUDFLARE_ACCOUNT_ID: 'acct', JEV_PROVIDER: 'jev', TYPESAFE_API_KEY: 'ts' }).model, 'jev-1.13.0');
+  assert.strictEqual(provider({ CLOUDFLARE_ACCOUNT_ID: 'acct', JEV_PROVIDER: 'clef', CLOUDFLARE_API_TOKEN: 'cf' }).model, 'clef');
+});
+
+test('clef-local posts to the local server with no key and never touches the neuron budget', async () => {
+  const local = provider({ JEV_PROVIDER: 'clef-local' });
+  assert.strictEqual(local.endpoint, 'http://127.0.0.1:8787/ai/run/clef-flash');
+  assert.strictEqual(provider({ JEV_PROVIDER: 'clef-local', CLEF_LOCAL_URL: 'http://127.0.0.1:9/x' }).endpoint, 'http://127.0.0.1:9/x');
+  Object.assign(process.env, { JEV_PROVIDER: 'clef-local', CLEF_DAILY_NEURONS: '0' });
+  let url;
+  const fetcher = async (u) => { url = u; return { ok: true, status: 200, json: async () => ({ result: { answers: { risky: { noul: 0.7 } }, usage: { input_tokens: 1000000 } } }) }; };
+  const before = neuronsUsed();
+  const out = await ask('s', GOOD, { fetcher });
+  Object.assign(process.env, { JEV_PROVIDER: 'jev' });
+  delete process.env.CLEF_DAILY_NEURONS;
+  assert.strictEqual(url, local.endpoint);
+  assert.strictEqual(out.answers.risky.noul, 0.7);
+  assert.strictEqual(neuronsUsed(), before);
+});
+
+test('clef calls unwrap the result envelope and count neurons; a spent allocation blocks the call', async () => {
+  Object.assign(process.env, { JEV_PROVIDER: 'clef-flash', CLOUDFLARE_ACCOUNT_ID: 'acct', CLEF_DAILY_NEURONS: '10' });
+  const fetcher = async () => ({ ok: true, status: 200, json: async () => ({ result: { answers: { risky: { noul: 0.2 } }, usage: { input_tokens: 1000000 } } }) });
+  const first = await ask('s', GOOD, { apiKey: 'test', fetcher });
+  assert.strictEqual(first.answers.risky.noul, 0.2);
+  assert.ok(Math.abs(neuronsUsed() - 8182) < 1);
+  let called = false;
+  const second = await ask('s', GOOD, { apiKey: 'test', fetcher: async () => { called = true; } });
+  Object.assign(process.env, { JEV_PROVIDER: 'jev' });
+  delete process.env.CLEF_DAILY_NEURONS;
+  assert.deepStrictEqual(second, { error: 'free allocation used' });
+  assert.strictEqual(called, false);
 });
