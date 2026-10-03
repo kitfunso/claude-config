@@ -280,7 +280,8 @@ section when it fires or the plan matches its shape).
 16. **Already-shipped / already-fixed check** — TRIGGER: every episode, before
     brainstorm (direct invocations included). `git fetch origin`; resolve the
     DEFAULT branch (never hardcoded); diff `HEAD..origin/<default>` + grep the
-    feature's key terms across the origin tree; `gh pr list --search "<terms>"`.
+    feature's key terms across the origin tree; `gh pr list --search "<terms>"`; and
+    local work: running/stalled episodes, worktrees and branches naming the item.
     Hit → STOP and reframe to the user. Network/auth failure → warn and proceed.
     → AUDIT-RULES.md #16
 17. **Per-site fix-plan greps** — TRIGGER: the plan maps fixes to specific sites.
