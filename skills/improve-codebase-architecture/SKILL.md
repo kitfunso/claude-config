@@ -60,6 +60,8 @@ For each issue: **what** is wrong, **where** it lives (file:line), **why** it ma
 
 ## Phase 3: Recommendations
 
+Write the full report to one self-contained local HTML file (docs folder, else the session scratchpad), open it, and in chat give the verdict and the top items in a few plain sentences.
+
 Propose changes in order of impact-to-effort ratio. For each:
 
 - **Change:** concrete description (not "improve modularity", but "extract `PricingService` from `OrderController`")

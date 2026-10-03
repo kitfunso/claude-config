@@ -50,4 +50,4 @@ If the user asked a question rather than for the change (should I build this, is
 | CLI | click/typer (Python), commander (Node) |
 
 ## Anti-Pattern
-Writing 200 lines of custom code for something that `pip install X` solves in 3 lines. Always check first.
+Writing 200 lines of custom code for something that `pip install X` solves in 3 lines. Check first.

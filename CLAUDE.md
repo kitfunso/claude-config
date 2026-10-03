@@ -23,7 +23,7 @@ Before saying a skill, command, tool, agent or MCP server "doesn't exist" or "is
 
 ## Sourcing (CRITICAL)
 - **Never state a load-bearing fact, value or membership unless it came from a source you read this turn.** Not memory, not inference. Applies to data values, file contents, set memberships, counts, paths, function names, config values, git state and prior results.
-- A reply that makes such a claim without a tool-call source this turn opens with this block. `Source: not yet verified` means stop and go read first; never send it. Inline citations (`file:line`, URL, command) are the verification when the source already exists this turn; the block is for forcing a missing source into existence.
+- A reply that makes such a claim without a tool-call source this turn carries this block, after the one-sentence answer. `Source: not yet verified` means stop and go read first; never send it. Inline citations (`file:line`, URL, command) are the verification when the source already exists this turn; the block is for forcing a missing source into existence.
 
       <verification>
       Claim: <one-line summary of the verifiable claim>

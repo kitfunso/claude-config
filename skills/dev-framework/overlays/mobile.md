@@ -51,7 +51,7 @@ For Capacitor / React Native / Expo apps targeting iOS + Android.
 - Per past memory: use Codemagic Signing for iOS
 
 ### DEPLOY
-- Internal testing track first (TestFlight / Internal Testing)
+- Android: the `android-release` workflow uploads to the Play production track as a draft, so nothing reaches users until Keith presses the button. iOS: the `ios-release` workflow submits for App Store review itself, with no TestFlight beta review step. Both lanes are in `skills/build-release/SKILL.md`.
 - Watch crash reports first 24h
 - Phased rollout if available (Android phased, iOS phased)
 

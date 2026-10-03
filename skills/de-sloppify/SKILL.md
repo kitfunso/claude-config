@@ -8,7 +8,6 @@ description: "Two-pass pattern: implement, then clean up separately. Use after a
 Two focused passes beat one constrained pass. First implement, then clean up in a separate pass with fresh eyes.
 
 ## The Problem
-When you ask for implementation + quality in one pass, you get neither done well. The model tries to satisfy conflicting constraints: "write fast" vs "write clean."
 
 ## The Pattern
 

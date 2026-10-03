@@ -4,7 +4,7 @@ The framework is only as strong as its weakest moment. These rules close the gap
 
 ## Anti-erosion (CRITICAL)
 
-Speed directives — `/fast`, `/full-power`, `/ship`, "just do it", "do this now", "no need to review" — accelerate execution *within* a gate. They NEVER skip a gate.
+Speed directives (`/fast`, `/full-power`, `/ship`, "just do it", "do this now", "no need to review") buy less ceremony, never less rigour. Per CLAUDE.md they may skip the plan review and the stage reports; they NEVER skip the tests, the source reads, the root-cause fix, or a ship gate (`/review`, `/ship-check`).
 
 **The v1.7.7 incident**: hippo release shipped without `/review` and `/ship-check` under speed pressure. Keith caught it twice in the same release window. Memory entry locked the rule: "No speed directive overrides the chain."
 
@@ -143,7 +143,7 @@ Skill enforces: scan reports `branch`. Phase progression past PLAN requires bran
 
 ## Documentation rewrites
 
-Per global CLAUDE.md: before fully rewriting `~/.claude/*` or any `CLAUDE.md`, show the proposed content and wait for explicit "apply". Save a `.old` backup before overwriting. Targeted Edits proceed normally.
+Per global CLAUDE.md: before fully rewriting `~/.claude/*` or any `CLAUDE.md`, show the proposed content and wait for explicit "apply". Git history is the backup. Targeted Edits proceed normally.
 
 ## Telemetry (advisory — track over time)
 

@@ -53,8 +53,8 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 - Type check clean (`tsc --noEmit`)
 
 ### DEPLOY
-- **Lighthouse REQUIRED post-deploy** (per project memory: "run lighthouse after deploys")
-- Lighthouse score >= 90 mobile per project memory
+- **Lighthouse REQUIRED post-deploy**
+- Lighthouse score >= 90 mobile
 - `/canary` for console errors, perf regressions, page failures
 - `/webapp-testing` against production URL
 

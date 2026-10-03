@@ -44,7 +44,7 @@ Never settle a claim by reasoning about it. If no command settles it, it is unve
 
 A memory file where every claim comes back VERIFIED is a good result and takes one line to report. Do not manufacture findings to justify the run.
 
-## 4. Propose, do not apply
+## 4. Correct and report
 
 Memory files are hand-maintained. Output one block per stale claim:
 
@@ -55,9 +55,9 @@ Memory files are hand-maintained. Output one block per stale claim:
   why:  <command and its output>
 ```
 
-Then wait. Keith says apply, or edits it himself. Do not write to the memory file, `MEMORY.md`, or hippo before he does, and do not delete a claim you could not verify: unverified is not the same as wrong.
+Then apply each verified correction as a targeted edit and report what changed. Never rewrite the whole file, and do not delete a claim you could not verify: unverified is not the same as wrong.
 
-When he applies, update the memory file and `hippo remember` the correction in the same session, per the writeback rule.
+Update the memory file and `hippo remember` the correction in the same session, per the writeback rule.
 
 ## Scope
 

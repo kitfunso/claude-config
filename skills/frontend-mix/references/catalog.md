@@ -1,6 +1,6 @@
 # Catalog: the rolled options, how to use each in a single-file HTML
 
-Read only the entries you rolled. Every CDN URL below returned 200 on 2026-09-04 and sits on the Artifact CSP allowlist (cdnjs, cdn.jsdelivr.net/npm, fonts.googleapis.com). Versions are pinned in `catalog.json`; the roller pastes the importmap and script tags into `manifest.json` for you. All free / open source.
+Read only the entries you rolled. Every CDN URL below returned 200 on 2026-09-04 and is a pinned CDN URL (cdnjs, cdn.jsdelivr.net/npm, fonts.googleapis.com), so the board renders as one self-contained file. Versions are pinned in `catalog.json`; the roller pastes the importmap and script tags into `manifest.json` for you. All free / open source.
 
 ## hero
 

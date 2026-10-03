@@ -123,8 +123,7 @@ Surfaces, per skill, agent, hook and gate:
 little evidence, never a bad component, and a missing row means unmeasured, not
 dead. Neither is a reason to retire anything.
 
-The pre-2026-09-04 gate history was imported once from the old `telemetry.jsonl`
-and carries an `[imported from telemetry.jsonl]` marker in `notes`.
+Rows marked `[imported from telemetry.jsonl]` in `notes` are older gate history.
 
 ### Settings.json hook setup (optional, manual, see below)
 

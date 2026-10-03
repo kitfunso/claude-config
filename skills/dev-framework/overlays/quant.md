@@ -36,10 +36,8 @@ For commodity signal models, futures backtesting, financial modeling. Mostly Qua
 - Check `data_loader.py::PUBLICATION_LAGS` for the real universe
 - 2026-04-24 incident: suppressed BIS/ETF flows/NOAA/China macro on aluminium V10-V12 by copying skill shortlist into briefs
 
-### 6. Power models — DO NOT TOUCH
-- Per `MEMORY.md`: do not work on, fix, improve, or debug any power models until Keith explicitly says so
-- 17 power models listed in MEMORY.md
-- Remove from pipeline if blocking commits
+### 6. Quantamental is paused: DO NOT TOUCH
+- Per memory `project_quantamental_paused.md`: no work on any Quantamental model, power models included, and no restarting its jobs, until Keith explicitly says so
 
 ### 7. CPCV PBO interpretation
 - Per `quant-cpcv-pbo` memory: PBO > 0.30 = serious overfitting

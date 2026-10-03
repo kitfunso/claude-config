@@ -7,7 +7,7 @@ description: Adapt content tone, length, and format per platform (Twitter, Linke
 
 Before drafting, read the matching sample in `~/.claude/voice/` (`voice-linkedin.md`, `voice-x-posts.md`) and match it; the Human Voice rules in `~/.claude/CLAUDE.md` override every tone tip below.
 
-Automatically transform content to match the unique voice, style, and constraints of different social media platforms. Each platform has distinct audience expectations, technical limits, and engagement patterns—this skill ensures your content fits perfectly everywhere.
+Automatically transform content to match the unique voice, style, and constraints of different social media platforms. Each platform has distinct audience expectations, technical limits, and engagement patterns. This skill makes your content fit each one.
 
 ## Overview
 
@@ -252,7 +252,7 @@ Here's what I learned about structuring AI agents for creative workflows:
 • Progressive disclosure manages token budgets
 • Event-driven architecture enables autonomy
 
-The breakthrough wasn't the code—it was realizing that content frameworks are just structured prompts. Feed Claude the right pattern library, and it becomes a content strategist.
+The breakthrough came from realizing that content frameworks are just structured prompts. Feed Claude the right pattern library, and it becomes a content strategist.
 
 Building in public with #ClaudeCode. What content workflows are you automating?
 
@@ -267,7 +267,7 @@ I discovered an interesting pattern while implementing context management for Cl
 
 By structuring documentation as hierarchical prompt libraries rather than static README files, we achieved 10x better context retention across sessions.
 
-The key insight: Documentation isn't for humans anymore—it's for AI.
+The key insight: documentation now serves AI readers first.
 ```
 
 **Threads (Casual):**

@@ -5,16 +5,15 @@ description: "Maximize agent capability: spawn well-briefed sub-agents, use ever
 
 # Full Power Mode
 
-You are now operating in full-power mode. Follow these directives strictly.
-
 **What this mode is NOT:** a license to skip rigor. The mandatory gates in global
 CLAUDE.md still run first: the Root Cause `<diagnosis>` pass (it carries the
-patch-vs-root cost lines) and Outside Voice review for multi-step plans. Full power
-accelerates execution AFTER those gates, never around them.
+patch-vs-root cost lines) and Outside Voice review for plans in its scope (locked
+contracts, migrations, new architecture, or a review ask). Full power accelerates
+execution AFTER those gates, never around them.
 
-## Sub-Agents: Brief Well, Verify Always
+## Sub-Agents: Brief Well, Check What Gates
 
-**Spawn liberally**, but every sub-agent must be briefed AND reviewed. No exceptions.
+**Spawn liberally**, brief every sub-agent well, and check its output where that output gates your next step.
 
 Model routing still binds: set `model` on every spawn, `opus` for judgement work (reviews, planning, debugging, synthesis) and `sonnet` for mechanical work, per `~/.claude/CLAUDE.md`. "Spawn liberally" widens scope, never tier.
 
@@ -38,14 +37,13 @@ task, it's probably under-briefed.
 
 ### Review (catches drift)
 
-After every sub-agent returns, BEFORE acting on its output or reporting success:
+Take a sub-agent's findings as done (CLAUDE.md, Sub-agents) and check only what gates your next step:
 
-1. **Read the actual artifacts it produced**: diffs, files, command output. Don't trust the summary alone.
-2. **Check against the brief**: did it stay in scope? Did it touch files it shouldn't have? Did it introduce new abstractions, refactors, or helpers not requested?
-3. **Verify claims**: if the agent says "tests pass" or "validation succeeded," run the command yourself or read the log.
-4. **Check for slop** (full checklist: de-sloppify Pass 2).
-5. **Check project non-negotiables**: did it violate the project CLAUDE.md? (e.g. in Quantamental: an added vol cap or raw sync; anywhere: mocked data it shouldn't have).
-6. **If drift is detected**: send a corrective `SendMessage` to the same agent with the specific violations and what to fix. Do NOT silently clean up its mess yourself, that trains the behavior to continue.
+1. **Scope**: did it stay in the brief? `git status` and the diff show files it shouldn't have touched, or abstractions, refactors and helpers nobody asked for.
+2. **Gating claims**: when its "tests pass" or a number decides what you do next, read the log or the output of the one command it cites.
+3. **Slop** (checklist: de-sloppify Pass 2).
+4. **Project non-negotiables**: did it violate the project CLAUDE.md? (e.g. in Quantamental: an added vol cap or raw sync; anywhere: mocked data it shouldn't have).
+5. **If drift is detected**: send a corrective `SendMessage` to the same agent with the specific violations and what to fix. Do NOT silently clean up its mess yourself, that trains the behavior to continue.
 
 If the agent's output is trustworthy and in-scope, proceed. If not, reject and re-run
 with tighter constraints.
@@ -68,8 +66,7 @@ with tighter constraints.
 ## Rigor
 
 - Check edge cases, failure modes, and second-order effects before acting.
-- **Verify everything.** Test after changing. Cross-check numbers against multiple
-  sources.
+- **Test after changing**, and source every number (Sourcing in CLAUDE.md).
 - Double-check critical operations: SQL, production scripts, data syncs, destructive
   commands, anything touching prod or master.
 - If uncertain, investigate first. Do not guess.

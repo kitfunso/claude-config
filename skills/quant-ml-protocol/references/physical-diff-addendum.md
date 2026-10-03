@@ -3,9 +3,7 @@
 Applies when the target is a physical crude (or product) differential to a
 PRA benchmark: grade diffs to Dated Brent, Dubai, WTI Cushing, OSP diffs,
 regional spreads. Read with SKILL.md; every rule there still holds. This file
-adds what the benchmark mechanics change. Written 2026-09-03 from the
-grade-differentials kickoff (crude-db-app docs/research/2026-09-03 brief),
-reworded 2026-09-22 to the ten-stage vocabulary; the trading rules moved to
+adds what the benchmark mechanics change. The trading rules live in
 `trading-layer.md`.
 
 ## A. Regime register (at stage 2, before any feature is built)

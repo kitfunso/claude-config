@@ -72,7 +72,7 @@ Every builder brief opens with four answers, written by you, not left to the bui
 
 - **Purpose.** What problem the page solves, for whom.
 - **Tone.** One extreme, named in a phrase the builder can hold in their head: "tactile brutalist trading terminal", "cinematic dark product film", "warm editorial field guide". Bold maximalism and refined minimalism both work; intentionality beats intensity.
-- **Constraints.** Stack, performance, accessibility, the Artifact CSP allowlist.
+- **Constraints.** Stack, performance, accessibility, pinned CDN URLs, so the board renders as one self-contained file.
 - **Differentiation.** The one thing someone will remember. This is the memorable thing from `DESIGN.md`, restated for this variant's hero.
 
 Three dials, stated as numbers in every brief (taste-skill): DESIGN_VARIANCE (centred, safe layout at 1; asymmetric, overlapping at 10) from the rolled `layout`; MOTION_INTENSITY (hover only at 1; scroll choreography at 10) from the rolled `motion`; VISUAL_DENSITY (airy at 1; data-dense at 10) from the subject (a trading desk page is dense, a manifesto is airy).

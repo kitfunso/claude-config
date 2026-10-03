@@ -32,13 +32,13 @@ The mining pass gives a word list. The value is in the disagreements, so look fo
 - **One word, two things.** `session` as the agent conversation and `session` as the DB row. Both keep a name; neither keeps the bare word.
 - **Code disagrees with prose.** The memory file says the store decays entries; the code has no decay path. That is not a glossary entry, it is a question. Ask it.
 
-## 3. Draft, cap, confirm
+## 3. Draft, cap, show
 
 Cap the first pass at **15 terms**. A repo does not have 60 domain words, and a long glossary is not read. Take the terms that appear in the most places and carry the most collision.
 
 Use the format in `~/.claude/skills/domain-modeling/CONTEXT-FORMAT.md`. Glossary only: no implementation detail, no architecture, no roadmap, no spec. If a line explains how something works rather than what it is called, it belongs in `ARCHITECTURE.md`.
 
-Show Keith the draft as a table (term, definition, where it came from, what it replaces) before writing the file. He owns the words; you found the candidates. Terms he rejects are dropped, not renamed.
+Show Keith the draft as a table (term, definition, where it came from, what it replaces), then write the file in the same turn. He owns the words; you found the candidates. Terms he rejects afterwards are dropped, not renamed.
 
 ## 4. Write and hand off
 

@@ -69,7 +69,7 @@ Against the newest checkpoint in the memory file: totals, top click pages, the t
 3. Gates, all must pass before commit:
    ```bash
    npm run build     # includes postbuild: trailing-slash, link edges, orphan guard
-   npx vitest run    # ~1106 tests
+   npx vitest run
    ```
 4. Commit: message via Write tool to a file + `git commit -F <file>` (PowerShell pipes prepend a BOM). No em dashes in the message. Grep the file to confirm. Stage specific files, never `git add -A`. Commit the new `docs/gsc-*.md` reports too.
 5. `git push -u origin <branch>`, `gh pr create`, `gh pr merge <N> --squash --delete-branch`.

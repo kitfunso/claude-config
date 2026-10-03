@@ -6,7 +6,7 @@ argument-hint: [what to build, e.g. "landing page for hippo"]
 
 You are running the house frontend build pipeline. The user wants: $ARGUMENTS
 
-Follow these stages in order. Skip stages only if the trigger condition fails. Confirm direction with the user once at the end of Stage 1, then commit and execute.
+Follow these stages in order. Skip stages only if the trigger condition fails. At the end of Stage 1, name the direction you picked in one line, then commit and execute.
 
 ## Stage 0: Scope check (silent)
 
@@ -32,7 +32,7 @@ Skip the paid AIDesigner option unless the user already has it configured or exp
 
 Output of this stage: a committed `DESIGN.md` at project root using the spec from https://github.com/google-labs-code/design.md (YAML front matter for tokens + markdown rationale). This is the single source of truth for the rest of the build.
 
-Pause here. Show the user the locked DESIGN.md and confirm the direction before implementing.
+Show the locked DESIGN.md path, name the direction you picked in one line, then implement.
 
 ## Stage 2: Plan-review (only if build is >3 steps)
 

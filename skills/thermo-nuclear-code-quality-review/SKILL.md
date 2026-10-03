@@ -106,6 +106,8 @@ Good phrases:
 
 ## Output Expectations
 
+Write the full report to one self-contained local HTML file (docs folder, else the session scratchpad), open it, and in chat give the verdict and the top items in a few plain sentences.
+
 Prioritize findings in this order:
 
 1. Structural code-quality regressions

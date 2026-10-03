@@ -163,9 +163,11 @@ If neither command produces output, the repo has no GitHub remote, skip this ste
 Extract the new version's CHANGELOG section (everything between `## X.Y.Z` and the next `## ` heading):
 
 ```bash
-awk '/^## X\.Y\.Z/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md > /tmp/vX.Y.Z-notes.md
-wc -l /tmp/vX.Y.Z-notes.md
+awk '/^## X\.Y\.Z/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md > <scratchpad>/vX.Y.Z-notes.md
+wc -l <scratchpad>/vX.Y.Z-notes.md
 ```
+
+(`<scratchpad>` is the session scratchpad; /tmp outside Claude Code.)
 
 If the file is empty or only a few lines, the CHANGELOG section is missing, go fix Step 3 first.
 
@@ -174,7 +176,7 @@ Create the release with a one-line headline title that captures the user-visible
 ```bash
 gh release create vX.Y.Z \
   --title "vX.Y.Z: <one-line headline>" \
-  --notes-file /tmp/vX.Y.Z-notes.md \
+  --notes-file <scratchpad>/vX.Y.Z-notes.md \
   --latest
 ```
 

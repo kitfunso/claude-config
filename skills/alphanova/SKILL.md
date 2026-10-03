@@ -1,6 +1,6 @@
 ---
 name: alphanova
-description: Playbook for the AlphaNova quant competition (cycles 3-5). Use for AlphaNova repo work, Predictor submissions, or the overfitting gate.
+description: Playbook for the AlphaNova quant competition. Use for AlphaNova repo work, Predictor submissions, or the overfitting gate.
 ---
 
 # AlphaNova playbook

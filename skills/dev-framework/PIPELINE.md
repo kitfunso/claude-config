@@ -50,7 +50,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 - (optional, high-stakes) `/grill-me` — adversarial interrogation of assumptions
 - (optional) `/autoplan` — auto-run all reviews sequentially with surfaced decisions
 
-**Outside-voice rule**: minimum one outside voice (codex OR senior-code-reviewer sub-agent) before code.
+**Outside-voice rule**: an outside voice (codex OR senior-code-reviewer sub-agent) before code when the plan touches locked contracts, migrations or new architecture, or Keith asked for a review.
 
 **Entry**: SCAFFOLD complete.
 **Exit**: PLAN.md has explicit success criteria per step (Karpathy Goal-Driven Execution), outside voice reviewed, revisions consolidated and applied.
@@ -89,8 +89,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 - `/run` — launch and exercise the app (CLI, server, TUI, Electron, library, browser-driven)
 - `/browse` — headless browser commands (~100ms each) for targeted checks
 - `/benchmark` — performance regression detection (perf-sensitive features)
-- Lighthouse — for any deployed frontend (per project memory `run lighthouse after deploys`)
-
+- Lighthouse: for any deployed frontend
 **Touched-module tests (MANDATORY — in addition to a runtime gate).** Run `git diff --name-only <base>..HEAD`; for every changed source module, run its unit-test file (`production/X.py` → `production/tests/test_X.py`, `src/foo.ts` → `foo.test.ts`). A runtime smoke exercises one path; a module's own tests catch the regression the smoke misses — a change to `weekly_pipeline.py` that passes a 24-model run can still break `test_weekly_pipeline.py`.
 
 **Entry**: EXECUTE complete.

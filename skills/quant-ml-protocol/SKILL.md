@@ -21,12 +21,7 @@ interpretable) is stage 9. Decision (does it pay after costs and constraints)
 is the trading page. A low-error forecast can lose money; a strong backtest
 can rest on one unstable feature.
 
-Revised 2026-09-23 (fifth revision, from the fourth revision's eval
-misses); stage 0, the prior-art round, added 2026-09-25; breadth rules and
-the bd-forecast challenger process restored 2026-09-29, with the
-two-reviewer plan review and full-power execution; the framing grill,
-driver hypotheses and glossary added 2026-09-29. Earlier versions:
-`~/dev/quant-ml-protocol-draft/old/`.
+Earlier versions: `~/dev/quant-ml-protocol-draft/old/`.
 
 ## Hard rules, defaults and data availability
 

@@ -131,7 +131,7 @@ chore: bump to {VERSION_NAME} (Android build {NEW_BUILD})
 Write the message with the Write tool and pass `git commit -F <file>`. Never use a
 heredoc: the commit-msg hook denies the WHOLE compound command if any part of it
 holds an em dash, so the heredoc never runs and `git commit -F` picks up a stale
-file from an earlier session. That shipped a wrong message on 6e4a3f6 (2026-09-04).
+file from an earlier session and ships a wrong message.
 
 Then push:
 
@@ -147,7 +147,7 @@ git push
   https://codemagic.io/app/69ab40d4cb7ed3e0ae357c3e/settings. That page renders
   the dialog; the Applications list and the Builds row menu both offer the same
   button and silently do nothing, and `/app/<id>` renders blank and can freeze
-  the renderer (seen 2026-09-04). The settings page also prints the
+  the renderer. The settings page also prints the
   codemagic.yaml Codemagic actually read, so it doubles as the check that your
   push landed. Since 46c90a9 the workflow submits
   for App Store review on its own and Apple releases on approval, so no manual
@@ -160,8 +160,7 @@ git push
   without them (8b7ff74). There is no Codemagic API token on this box, but the
   Chrome profile IS signed in to Codemagic, so press the button yourself. A tab
   resting on a `/login` URL proves nothing: navigate to the settings page and
-  look before you call it logged out. That mistake handed a finished release
-  back to Keith on 2026-09-04.
+  look before you call it logged out.
 - **Android**: start the `android-release` workflow the same way, from the same
   settings page. It builds the bundle, signs it, and uploads it to the Play
   production track as a draft (`submit_as_draft: true`), so nothing reaches users
@@ -175,10 +174,9 @@ git push
   seen, so step 3's bump is not optional and re-running the workflow on an
   already-published build number can never succeed. Read the number in
   `android/app/build.gradle` before pressing the button.
-  **`instance_type` must stay `mac_mini_m2`.** The Android workflow shipped with
-  `linux_x2` and so never started a machine once in its life: that instance is not
-  on this billing plan, and the failure reads `The selected instance type is not
-  available with the current billing plan`. Fixed in `e7e94ca`. Gradle, node 22 and
+  **`instance_type` must stay `mac_mini_m2`.** `linux_x2` is not on this billing
+  plan, and the failure reads `The selected instance type is not
+  available with the current billing plan`. Gradle, node 22 and
   java 21 all run on the macOS image the iOS lane already uses.
   **Verifying the Play credential when you cannot read it back:** a Codemagic
   Secret is write-only, so the only evidence is *where the build dies*, and each

@@ -446,7 +446,7 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 `/full-power` is deliberately NOT wired — the orchestrator already fans out sub-agents per critic, so layering it on inflates token cost without changing behaviour. The four grill-family wires each earn their slot at a different point: `/grilling` opens the design tree at brainstorm (what did we fail to ask?), `/grill-me` attacks the answers at brainstorm, plan and optionally each verdict (what did we get wrong?), `/domain-modeling` fixes the words at plan (are we all saying the same thing?), and `/codebase-design` fixes the words the critics use (can the learn step count these?). None of them is a general "try harder" mode; drop one and a specific failure comes back.
 
-### 4b. Execution delegation — the orchestrator does not code (Keith directive, 2026-07-04)
+### 4b. Execution delegation: the orchestrator does not code
 
 The session model is the ORCHESTRATOR:
 framing, triage, plan authorship, sub-agent briefs, gate parsing, verdicts,
@@ -514,7 +514,7 @@ Roughly 7 days after a shipped episode's deploy, record whether it held up: `pyt
 
 At the start of any orchestrator session, run `devrl.py status` — it surfaces pending satisfaction prompts; record them then (`satisfaction-pending` prints ready-to-run commands, `satisfaction-record-batch ID=SCORE ...` records several at once).
 
-### 5b. Episode close-out (MANDATORY after finalize, ship AND abort — added 2026-08-03)
+### 5b. Episode close-out (MANDATORY after finalize, ship AND abort)
 
 "Ship it" ends when the environment is clean, not when the merge lands.
 Nothing may be reported to the operator as "left over" unless it is
@@ -591,7 +591,7 @@ Pick the tier by how settled and how cross-cutting the lesson is:
 2. **Skill prompt** — when a workflow or critic actually behaved wrong. Medium weight. Recorded with `--skill-changed <path>`.
 3. **CLAUDE.md (project or global)** — the top tier, deliberately rare. Only a lesson that recurred across many episodes, is a genuine cross-cutting rule, and would keep happening otherwise — a "law", not a tip. Tips go to tier 1.
 
-Tier 3's bar is high because a CLAUDE.md loads into every session: it costs tokens every run and is the highest-blast-radius place to be wrong. A cluster qualifies only when its `regression_rate` is non-trivial — it recurred *and* caused real post-deploy regressions — not merely high `occurrences`. Record it like a skill: `--skill-changed <path-to-that-CLAUDE.md>` (the audit trail hashes any path). Two guards apply automatically: the learn loop never auto-applies, and the global Hand-Maintained-Files rule forces show-content + explicit-apply + a `.old` backup before any CLAUDE.md edit. Episodes record `project_type`, not a project path — the human names the exact file at approval time.
+Tier 3's bar is high because a CLAUDE.md loads into every session: it costs tokens every run and is the highest-blast-radius place to be wrong. A cluster qualifies only when its `regression_rate` is non-trivial (it recurred *and* caused real post-deploy regressions), not merely high `occurrences`. Record it like a skill: `--skill-changed <path-to-that-CLAUDE.md>` (the audit trail hashes any path). Two guards apply: the learn loop never auto-applies, so Keith approves every promotion, and a full rewrite of a CLAUDE.md still needs show-content and an explicit apply (global Hand-Maintained-Files rule). A targeted Edit goes straight in, with git history as the backup. Episodes record `project_type`, not a project path; the human names the exact file at approval time.
 
 ### 0. Score what you already applied
 

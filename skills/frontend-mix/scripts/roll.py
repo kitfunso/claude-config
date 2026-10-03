@@ -215,7 +215,7 @@ def write_board(out: Path) -> Path:
     cards = []
     for v in manifest["variants"]:
         chips = "".join(f"<span>{s}: {o}</span>" for s, o in v["recipe"].items())
-        # srcdoc, not src: a published Artifact uploads only board.html, so relative iframe paths load blank.
+        # srcdoc, not src: board.html stays one self-contained file, so it opens or moves without its siblings.
         doc = (out / v["file"]).read_text(encoding="utf-8").replace("&", "&amp;").replace('"', "&quot;")
         cards.append(
             f'<section class="card"><header><b>{v["id"]}</b> {chips}</header>'

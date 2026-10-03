@@ -114,8 +114,8 @@ total, duplicate-fact count). Then one card per candidate:
 | **Worth exploring** | Plausible; payoff depends on where the corpus is heading |
 | **Speculative** | Surfaced for completeness; safe to ignore |
 
-End with one top recommendation. Then **halt and ask which candidate to
-explore**. One candidate per session; a full-corpus rewrite in one pass is
+End with one top recommendation. Then **pick the top candidate, say why in
+one line, and continue**. One candidate per session; a full-corpus rewrite in one pass is
 how load-bearing lines get lost.
 
 ## Grilling session

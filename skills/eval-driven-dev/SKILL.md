@@ -36,7 +36,7 @@ Existing Behavior:
 
 ## Metrics
 
-- **pass@k** — "At least one success in k attempts." Target: pass@3 > 90%
+- **pass@k**: "At least one success in k attempts." Target: a pass@3 bar fixed before the run (for example > 90%)
 - **pass^k** — "All k trials succeed." Higher bar for critical paths.
 
 ## Workflow

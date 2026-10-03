@@ -7,8 +7,6 @@ description: Generate PRD, Architecture, CLAUDE.md, and Plan docs when starting 
 
 Generate four foundation documents that turn AI-assisted development into structured engineering. Each document has a specific job. Together they prevent scope creep, spaghetti code, quality drift, and getting lost in complexity.
 
-**Announce at start:** "I'm using the project-scaffold skill to generate the four foundation documents."
-
 ## The Four Documents
 
 ### 1. PRD (Product Requirements Document)
@@ -104,14 +102,14 @@ When the user invokes `/project-scaffold`:
    - The "IS NOT" list (ask: "Does this capture what's out of scope?")
    - Success metrics (ask: "Are these realistic?")
    - Pricing model (ask: "Does this pricing make sense?")
-5. **Wait for user approval or feedback.** Revise the PRD if needed.
+5. **Continue unless Keith objects.** Revise the PRD if he does.
 
 ### Phase 3: Architecture + CLAUDE.md (after PRD approved)
 
 6. **Generate Architecture doc** (`docs/ARCHITECTURE.md`) based on the approved PRD.
 7. **Generate CLAUDE.md** (project root) with non-negotiables derived from PRD constraints.
 8. **Present both.** Highlight key decisions: tech stack, data model, service boundaries.
-9. **Wait for user approval.** This is the last chance to change architecture before planning.
+9. **Continue unless Keith objects.** Architecture is cheapest to change before planning.
 
 ### Phase 4: Plan (after Architecture approved)
 
@@ -143,6 +141,6 @@ These are living documents. When scope changes:
 ## Integration with Other Skills
 
 - After scaffold: use `/writing-plans` for detailed task breakdown within each plan step
-- During execution: use `/executing-plans` or subagent-driven-development
+- During execution: use `/executing-plans` or dispatch one sub-agent per plan task
 - Before claiming done: use `/verification-before-completion`
 - After shipping: use `/document-release` to keep docs current
