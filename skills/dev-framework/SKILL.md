@@ -128,10 +128,8 @@ and carries an `[imported from telemetry.jsonl]` marker in `notes`.
 
 ### Settings.json hook setup (optional, manual, see below)
 
-To auto-fire `phase-capture` on every Stop event, add the hook config shown by:
-```powershell
-Get-Content $HOME/.claude/skills/dev-framework/HOOK-SETUP.md
-```
+To auto-fire `phase-capture` on every Stop event, add the hook config in this
+skill's `HOOK-SETUP.md` (read it with the Read tool).
 
 ## Files in this skill
 

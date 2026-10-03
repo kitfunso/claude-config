@@ -18,7 +18,7 @@ Start from this baseline:
 > Rethink how to structure / implement the changes to meaningfully improve code quality without impacting behavior.
 > Work to improve abstractions, modularity, reduce Spaghetti code, improve succinctness and legibility.
 > Be ambitious, if there is a clear path to improving the implementation that involves restructuring some of the codebase, go for it.
-> Be extremely thorough and rigorous. Measure twice, cut once.
+> Measure twice, cut once.
 
 ## Non-Negotiable Additional Standards
 
@@ -63,11 +63,11 @@ Apply the baseline prompt above, plus these explicit review rules:
    - If a branch relies on silent fallback to paper over an unclear invariant, ask whether the boundary should be made explicit instead.
    - Fix: replace condition chains with a typed model or explicit dispatcher, and make the type boundary explicit.
 
-6. **Keep logic in the canonical layer and reuse existing helpers.**
+6. **Keep logic in the owning layer and reuse existing helpers.**
    - Call out feature logic leaking into shared paths or implementation details leaking through APIs.
-   - Prefer existing canonical utilities/helpers over bespoke one-offs.
+   - Prefer existing shared utilities/helpers over bespoke one-offs.
    - Push code toward the right package, service, or module instead of normalizing architectural drift.
-   - Fix: move the logic behind a dedicated abstraction in the package or module that already owns the concept, and reuse the existing canonical helper instead of a near-duplicate.
+   - Fix: move the logic behind a dedicated abstraction in the package or module that already owns the concept, and reuse the existing shared helper instead of a near-duplicate.
 
 7. **Treat unnecessary sequential orchestration and non-atomic updates as design smells when the cleaner structure is obvious.**
    - If independent work is serialized for no good reason, ask whether the flow should run in parallel instead.
@@ -100,7 +100,7 @@ Good phrases:
 - `this feels like feature logic leaking into a shared path. can we isolate it?`
 - `this abstraction seems unnecessary. can we just keep the direct flow?`
 - `why does this need a cast / optional here? can we make the boundary more explicit instead?`
-- `this looks like a bespoke helper for something we already have elsewhere. can we reuse the canonical one?`
+- `this looks like a bespoke helper for something we already have elsewhere. can we reuse the existing one?`
 - `i think there's a code-judo move here that makes this much simpler. can we reframe this so these branches disappear?`
 - `this refactor moves complexity around, but doesn't really delete it. is there a way to make the model itself simpler?`
 

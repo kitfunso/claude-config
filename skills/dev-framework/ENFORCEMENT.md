@@ -23,7 +23,7 @@ ACTION: speed directive does not bypass these gates. Run them.
 These gates BLOCK phase progression if missing.
 
 ### VERIFY
-**Runtime evidence required.** Tests passing alone is NOT sufficient. A `/verify`, `/qa`, `/webapp-testing`, or `/run` invocation must have produced visible output (screenshot, log, test run, server response).
+**Runtime evidence required.** Tests passing alone is NOT sufficient. A `/qa`, `/qa-only`, `/webapp-testing`, or `/run` invocation, or the real CLI commands run against the built artifact, must have produced visible output (screenshot, log, test run, server response).
 
 ### REVIEW
 - `/self-review` BEFORE `/review` (order matters per v1.7.7)
@@ -53,22 +53,6 @@ These must exist before leaving SCAFFOLD phase:
 
 Run `scripts/artifact-check.ps1` to verify.
 
-## Cost-calculus block (REQUIRED for non-trivial tasks)
-
-Per global CLAUDE.md Lazy-Smart rule, any non-trivial task at EXECUTE phase requires a `<cost-calculus>` block before writing code:
-
-```
-<cost-calculus>
-Patch path A: <one line>
-Structural path B: <one line>
-Total cost A across N rounds: <estimate>
-Total cost B in 1 round: <estimate>
-Pick: <A | B with reason>
-</cost-calculus>
-```
-
-Skipping = automatic Lazy-Smart violation. The block is the proof.
-
 ## Framing pass (REQUIRED for fix-it tasks)
 
 Per global CLAUDE.md Root Cause Over Patches rule, any "fix it / make it work / wire it up" sub-task requires a `<diagnosis>` block as the FIRST content of the response:
@@ -78,7 +62,8 @@ Per global CLAUDE.md Root Cause Over Patches rule, any "fix it / make it work / 
 Problem: <one sentence, no mention of the fix>
 Root cause: <upstream component, contract, or producer>
 Proposed fix: <what you intend to change>
-At root or downstream? <root | downstream — if downstream, name what's being bypassed>
+At root or downstream? <root | downstream: name the upstream thing bypassed>
+Cost if patched, across rounds: <estimate>  |  Cost if fixed at root, in one round: <estimate>
 </diagnosis>
 ```
 
@@ -177,6 +162,6 @@ Genuine exceptions where critical gates relax:
 - **Active outage hotfix** — skip REVIEW but flag root-cause follow-up; full chain on next non-hotfix commit
 - **Single bad prod row from already-fixed bug** — manual data fix is fine; one-off, not pattern
 - **Toy / learning project** — only DISCOVER + SCAFFOLD + EXECUTE apply (stakes router)
-- **Trivial typo / formatting / comment edit** — framing pass and cost-calculus don't fire
+- **Trivial typo / formatting / comment edit**: the framing pass doesn't fire
 
 Document the exception in the commit message. Don't let it become a pattern.

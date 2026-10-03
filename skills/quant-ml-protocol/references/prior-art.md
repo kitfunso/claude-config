@@ -51,7 +51,7 @@ or the pdf skill, for a PDF over 10 pages). A paywalled paper is read
 through its preprint, SSRN or author copy; one reached only as an abstract
 is logged abstract-only and graded claimed.
 
-Search is mechanical and fans out: one search agent per ring, each returning
+Search is mechanical and fans out: one Sonnet search agent per ring, each returning
 its search-log rows and a candidate list. Reading the core set, grading and
 writing the feed list are judgement and stay with the session model.
 

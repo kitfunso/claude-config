@@ -43,8 +43,9 @@ and repeated cycle 1 (section 11).
 4. **The stop rule.** A construct family gets the anchor plus two
    single-variable probes. No third slot unless one scores above +0.0135 on the
    server (the cycle-1 Q3 cutoff, the protocol's tripwire). Ten local runs of
-   one construct with no new input or mechanism = stop and write the Stage 5.6
-   self-audit before run eleven. Cycle 2 ran 47 runner shell calls (10 loops, 134 run logs) and 30 of 32
+   one construct with no new input or mechanism = stop and write the self-audit
+   (quant-ml-protocol steering bank, stage 10: "What else is wrong with what you
+   did?") before run eleven. Cycle 2 ran 47 runner shell calls (10 loops, 134 run logs) and 30 of 32
    uploads on one ridge.
 5. **Hunt constructs and inputs, not parameters.** The unexplored space is the
    hunt map in section 8 (inventory of `research/families/`, Sep-2). Each
@@ -56,7 +57,7 @@ and repeated cycle 1 (section 11).
    The main thread judges against the bar and writes the GATE line. Never two
    agents on one file. The main thread does not hand-sweep. Zero skills loaded
    after 40 tool calls is a defect, not a style.
-7. **Stage 6 before any slot.** Surface to Keith: the bar restated, every metric
+7. **Sign-off before any slot.** Surface to Keith: the bar restated, every metric
    with its yardstick, the trial count, the NOT-DONE table, the caution flags.
    Wait for the sign-off. Then the GATE line in `research/SCOREBOARD.md`, then
    the upload, then verify the counter moved.
@@ -639,7 +640,7 @@ locally or on the server. Full detail: `research/SCOREBOARD.md` lines 1990-2300.
 - No new features in cycle 2. Zero. The xsec context set (cycle 1) is the only
   creative input set built, and it was never uploaded.
 
-**Self-audit (quant-ml-protocol Stage 5.6), written Sep-2.**
+**Self-audit, written Sep-2.**
 - Data: clean. Contemporaneous features, warm-up dropped, 120-row embargo.
 - Statistics: the sample-size math was never written. n_indep ~207 gives
   SE(IC) ~0.015, so no achievable IC is locally detectable; the Sharpe bar

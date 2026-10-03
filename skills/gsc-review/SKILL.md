@@ -17,10 +17,10 @@ Running checkpoint log: memory file `project_boring_maths_gsc_workflow.md`. READ
 ## 1. Pull fresh data
 
 ```bash
-cd ~/boring-maths && npm run seo:gsc-pull
+npm --prefix ~/boring-maths run seo:gsc-pull
 ```
 
-- OAuth token (`scripts/seo/.gsc-token.json`) expires ~7 days. On auth failure: `npm run seo:gsc-pull -- --reauth` + browser consent (sign in as the Google account that owns the property, `sc-domain:boring-math.com`; consent is clickable via Chrome automation when already signed in).
+- OAuth token (`scripts/seo/.gsc-token.json`) expires ~7 days. On auth failure: `npm --prefix ~/boring-maths run seo:gsc-pull -- --reauth` + browser consent (sign in as the Google account that owns the property, `sc-domain:boring-math.com`; consent is clickable via Chrome automation when already signed in).
 - The pull prints the REAL totals ("Totals: N clicks / N impressions across N pages"). Use these, not the report summary.
 - Step complete when the printed Totals line is captured for the step-3 comparison.
 

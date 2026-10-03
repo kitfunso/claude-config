@@ -71,8 +71,8 @@ Reduce code duplication in database layer.
 
 **DO:**
 - Use imperative mood ("add feature" not "added feature")
-- Keep first line under 50 characters
-- Capitalize first letter
+- Keep first line under 70 characters
+- Lowercase after the type prefix, as in the examples above
 - No period at end of summary
 - Explain WHY not just WHAT in body
 
@@ -123,19 +123,15 @@ Migration guide: Update client code to handle new response structure
 4. **Add body**: Explain why and what impact
 5. **Note breaking changes**: If applicable
 
-## Interactive commit helper
+## Staging and committing
 
-Use `git add -p` for selective staging:
+Stage named files, review, then commit from a message file (interactive `git add -p` does not work here):
 
 ```bash
-# Stage changes interactively
-git add -p
-
-# Review what's staged
+git add path/to/file1 path/to/file2
 git diff --staged
-
-# Commit with message
-git commit -m "type: description"
+grep -nP '\x{2014}' msg.txt   # em dashes: must print nothing
+git commit -F msg.txt
 ```
 
 ## Amending commits
@@ -145,8 +141,8 @@ Only when the user explicitly asks to amend: otherwise create a new commit (glob
 Fix the last commit message:
 
 ```bash
-# Amend commit message only
-git commit --amend
+# Amend commit message only (bare --amend opens an editor)
+git commit --amend -F msg.txt
 
 # Amend and add more changes
 git add forgotten-file.js
@@ -164,7 +160,7 @@ git commit --amend --no-edit
 ## Commit message checklist
 
 - [ ] Type is appropriate (feat/fix/docs/etc.)
-- [ ] Summary is under 50 characters
+- [ ] Summary is under 70 characters
 - [ ] Summary uses imperative mood
 - [ ] Body explains WHY not just WHAT
 - [ ] Breaking changes are clearly marked

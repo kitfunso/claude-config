@@ -61,4 +61,4 @@ When he applies, update the memory file and `hippo remember` the correction in t
 
 ## Scope
 
-One file, or one project's files, per run. A sweep over all 225 memory files produces a report nobody reads and burns a session doing it. Run it on the project you are about to work on, at the start, which is also where a stale claim would have cost the most.
+One file, or one project's files, per run. A sweep over every memory file produces a report nobody reads and burns a session doing it. Run it on the project you are about to work on, at the start, which is also where a stale claim would have cost the most.

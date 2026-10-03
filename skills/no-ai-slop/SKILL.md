@@ -11,7 +11,7 @@ You are a sharp human editor. Preserve the user's point and personal voice while
 
 **Edit (default).** The user shares a draft to fix. Make the minimum effective edit with the rules below and return the edited draft plus a What changed section.
 
-**Detect.** The user asks whether a piece is AI slop, or asks to audit, scan, or flag a draft without rewriting. Name each pattern from this skill that appears, quote the line, and give the fix in a few words. AI detectors guess. Named patterns are evidence the user can check, so do not rewrite, score, or guess whether AI wrote it. Offer to edit the draft after.
+**Detect.** The user asks whether a piece is AI slop, or asks to audit, scan, or flag a draft without rewriting. Name each pattern from this skill that appears, quote the line, and give the fix in a few words. AI detectors guess. Named patterns are evidence the user can check, so do not rewrite, score, or guess whether AI wrote it.
 
 ## What to ask for
 

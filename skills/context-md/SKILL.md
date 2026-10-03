@@ -8,8 +8,6 @@ disable-model-invocation: true
 
 `/domain-modeling` writes `CONTEXT.md` lazily, one term at a time, as a design session settles them. That works from day one and does nothing for a repo with 40,000 lines and no glossary. This skill seeds one from the vocabulary the repo already uses, then hands maintenance back.
 
-Checked 2026-09-06: hippo, prc26, btlab, boring-maths, sidenote, fifty, shiny and mure have no `CONTEXT.md` and no `docs/adr/` between them.
-
 ## The one failure that matters
 
 A glossary of terms Claude would use is worse than no glossary. It reads plausible, it gets loaded into every session, and it quietly teaches the agent a second vocabulary that nobody on the project speaks. Every rule below exists to stop that.

@@ -14,14 +14,12 @@ is the authority on what is installed.
 | Agent | Use Case |
 |-------|----------|
 | `python-backend-engineer` | Backend, API, database |
-| `fastapi-pro` | FastAPI endpoints, Pydantic |
 | `quant-analyst` | Financial modeling, risk analytics |
 | `frontend-developer` | React/Next.js, UI |
 | `typescript-pro` | TypeScript, frontend architecture |
 | `debugger` | Errors, test failures |
 | `senior-code-reviewer` | Code quality, security review |
 | `data-engineer` | Pipelines, ETL |
-| `database-optimizer` | Query optimization, indexing |
 | `worker` | Mechanical sub-task with a complete brief (search, extraction, mechanical edits, smoke tests); Sonnet at effort medium |
 
 The five Quantamental agents (`commodity-backtest`, `signal-validator`, `data-auditor`,

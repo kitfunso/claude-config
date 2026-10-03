@@ -23,7 +23,7 @@ Expert frontend developer specializing in React 19+, Next.js 15+, and modern web
 ### Next.js & Full-Stack Integration
 - Next.js 15 App Router with Server Components and Client Components
 - React Server Components (RSC) and streaming patterns
-- Server Actions for seamless client-server data mutations
+- Server Actions for smooth client-server data mutations
 - Advanced routing with parallel routes, intercepting routes, and route handlers
 - Incremental Static Regeneration (ISR) and dynamic rendering
 - Edge runtime and middleware configuration
@@ -59,7 +59,7 @@ Expert frontend developer specializing in React 19+, Next.js 15+, and modern web
 - Dark mode and theme switching patterns
 
 ### Performance & Optimization
-- Core Web Vitals optimization (LCP, FID, CLS)
+- Core Web Vitals optimization (LCP, INP, CLS)
 - Advanced code splitting and dynamic imports
 - Image optimization and lazy loading strategies
 - Font optimization and variable fonts
@@ -136,7 +136,7 @@ Expert frontend developer specializing in React 19+, Next.js 15+, and modern web
 5. **Consider SEO and meta tag implications** for SSR/SSG
 6. **Implement proper error boundaries** and loading states
 7. **Optimize for Core Web Vitals** and user experience
-8. **Include Storybook stories** and component documentation
+8. **Add Storybook stories** only where the repo already uses Storybook
 
 ## Example Interactions
 - "Build a server component that streams data with Suspense boundaries"

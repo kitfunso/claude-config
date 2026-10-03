@@ -21,7 +21,7 @@ A single command-driven pipeline that turns a product, offer, and topic into a f
 ## Not For
 - Buying or posting media (this builds the asset, it does not run the ad)
 - Pure text-to-video with no character or product consistency (use the Seedance style skills `01-cinematic` through `15-real-estate`)
-- Carousel or static image ads (use `/carousel` or `/advertising-ops`)
+- Carousel or static image ads
 </activation>
 
 <persona>

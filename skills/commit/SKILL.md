@@ -4,6 +4,6 @@ description: Stage, commit, and push changes with a plain message, no diff revie
 ---
 
 1. Stage only the files the user specifies (default: all changed files); commit and push without reviewing diffs or touching anything else.
-2. Write a concise commit message.
+2. Write a `<type>: <description>` message (title under 70 chars) to a file, grep it for em dashes, and commit with `git commit -F <file>`.
 3. Push to the current branch.
-4. If pre-commit hooks fail, ask user if they want --no-verify.
+4. If a pre-commit hook fails, fix what it caught and commit again; use `--no-verify` only on the user's explicit ask.

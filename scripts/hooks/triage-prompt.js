@@ -3,8 +3,7 @@
  * UserPromptSubmit hook.
  * Scans the user prompt for verifiable-entity tokens. If detected, injects a
  * [VERIFICATION ARTIFACT REQUIRED] reminder into the prompt context so the
- * model sees it as part of the user's message and is biased toward producing
- * a <verification> block before answering.
+ * model sees it as part of the user's message and sources its claims this turn.
  */
 const fs = require('fs');
 
@@ -48,9 +47,9 @@ function main() {
           '[VERIFICATION ARTIFACT REQUIRED]',
           `This prompt contains verifiable entities (${triggers.join(', ')}).`,
           'Before responding:',
-          '  1. Output a <verification> block as the FIRST content of your reply.',
-          '  2. The Source field must cite a tool call from THIS turn (WebSearch/WebFetch/Read/Grep).',
-          '  3. If you cannot verify, run the tool now. Do not send "not yet verified" to the user.',
+          '  1. Each load-bearing claim cites a tool call from THIS turn inline (file:line, URL, command).',
+          '  2. A claim with no source this turn: run the tool now, before replying.',
+          '  3. The <verification> block only forces a missing source; never send "not yet verified".',
           '  4. Quick-mode preference applies to output length, never investigation depth.',
           ''
         ].join('\n');

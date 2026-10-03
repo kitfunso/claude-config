@@ -2,9 +2,8 @@
 /**
  * Stop hook.
  * After the assistant finishes a turn, scan the last assistant message in the
- * transcript. If it contains markers that should have triggered a
- * <verification>, <diagnosis>, or <cost-calculus> artifact and the artifact
- * is missing, append to a session violation log and emit a system message
+ * transcript. If it contains markers that should have triggered a source
+ * citation or a <diagnosis> artifact and it is missing, append to a session violation log and emit a system message
  * that the next turn will see.
  */
 const fs = require('fs');
@@ -43,20 +42,16 @@ function main() {
       // Verification artifact required
       const namedEntityRe = /\b(Marshall Wace|Tudor Investment|Millennium|Valent Asset Management|Blenheim Capital|Brevan Howard|Soros Fund|Graham Capital|Citadel|DE Shaw|Bridgewater|Two Sigma|Renaissance|Point72|Balyasny)\b/i;
       const firmStructureRe = /\b[A-Z][a-z]+ (Asset Management|Capital|Fund|Holdings|Partners|Advisors)\b/;
-      if ((namedEntityRe.test(assistantText) || firmStructureRe.test(assistantText)) && !assistantText.includes('<verification>')) {
-        violations.push('Named financial entity referenced without <verification> block');
+      // CLAUDE.md Sourcing: an inline file:line or URL citation counts as much as a <verification> block.
+      const citedRe = /<verification>|https?:\/\/|\b[\w\-./]+\.\w+:\d+/;
+      if ((namedEntityRe.test(assistantText) || firmStructureRe.test(assistantText)) && !citedRe.test(assistantText)) {
+        violations.push('Named financial entity referenced with no inline citation or <verification> block');
       }
 
       // Diagnosis artifact required for fix-it tasks
       const fixItRe = /\b(I'll fix|let me fix|wiring up|hooking up|making it work)\b/i;
       if (fixItRe.test(assistantText) && /\.(py|ts|js|tsx|jsx)\b/.test(assistantText) && !assistantText.includes('<diagnosis>')) {
         violations.push('Fix-it language with code refs but no <diagnosis> block');
-      }
-
-      // Cost-calculus required for non-trivial tasks
-      const nonTrivialRe = /\b(I'll (build|implement|refactor|redesign|migrate|rebuild)|let me (build|implement|refactor|redesign|migrate|rebuild))\b/i;
-      if (nonTrivialRe.test(assistantText) && !assistantText.includes('<cost-calculus>')) {
-        violations.push('Non-trivial task starting without <cost-calculus> block');
       }
 
       if (violations.length > 0) {
@@ -70,7 +65,7 @@ function main() {
 
         process.stdout.write(JSON.stringify({
           decision: 'continue',
-          systemMessage: `[RULE VIOLATIONS DETECTED IN PRIOR TURN]\n${violations.map(v => '- ' + v).join('\n')}\nNext reply: include the missing artifact OR re-draft to remove the unsourced claim.`
+          systemMessage: `[RULE VIOLATIONS DETECTED IN PRIOR TURN]\n${violations.map(v => '- ' + v).join('\n')}\nNext reply: cite the source inline (or add the missing block), OR re-draft to remove the unsourced claim.`
         }));
       }
       process.exit(0);

@@ -16,11 +16,11 @@ Write one when the work:
 - accepted a real trade-off (perf vs simplicity, cost vs coverage, ...)
 - reversed or superseded an earlier recorded decision
 
-Skip it for: routine maintenance, straightforward bug fixes, implementation detail with one obvious shape, or choices already dictated by an existing record. When skipping at a ship gate, say "no decision record needed" explicitly — silence is not a verdict.
+Skip it for: routine maintenance, straightforward bug fixes, implementation detail with one obvious shape, or choices already dictated by an existing record. When skipping at a ship gate, say "no decision record needed" explicitly: silence is not a verdict.
 
 ## Where
 
-- `docs/decisions/YYYY-MM-DD-<short-slug>.md` in the current repo. If the repo already uses `docs/adr/`, use that instead — do not create a second directory.
+- `docs/decisions/YYYY-MM-DD-<short-slug>.md` in the current repo. If the repo already uses `docs/adr/`, use that instead; do not create a second directory.
 - Land the record in the SAME commit/PR as the change it documents.
 - Never rewrite an old record. A changed decision gets a NEW record that names the one it supersedes; add a one-line `Superseded by <file>` note at the top of the old one.
 - Hippo repos (a repo with `.hippo/` or the hippo project itself): additionally mirror via `hippo decide "<one-line decision>" --supersedes <id-if-any>` so the decision enters memory lifecycle. The file remains the source of truth.
@@ -38,13 +38,13 @@ Links: <PR / issue / eval doc / plan file>
 <What prompted this. One short paragraph max.>
 
 ## Constraints and evidence
-- <what was true at the time: measurements, limits, failed attempts — cite files/commands>
+- <what was true at the time: measurements, limits, failed attempts; cite files/commands>
 
 ## Decision
 <The choice made, stated plainly.>
 
 ## Alternatives considered
-- <option> — <why rejected, one line each>
+- <option>: <why rejected, one line each>
 
 ## Consequences
 - <what gets better, what gets harder, known risks>

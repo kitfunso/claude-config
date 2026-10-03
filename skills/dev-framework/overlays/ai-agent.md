@@ -64,7 +64,6 @@ For projects building on Claude API, OpenAI, LangChain, agent frameworks, MCP se
 **hippo**: 
 - v1.7.7 chain MANDATORY: `/self-review` → `/review` → `/ship-check` → `/publish-repo` (per `feedback_hippo_release_workflow`)
 - Salience gate testing requires LongMemEval + LoCoMo (per `feedback_hippo_salience_regression`)
-- Next major feature: 3-layer bio + Lossless-Claw DAG + SQLite backend (per memory hippo-roadmap)
 
 **synth**:
 - Sub-agents for extraction MANDATORY (per `feedback_synth_use_subagents_for_extraction`)
@@ -91,4 +90,4 @@ For projects building on Claude API, OpenAI, LangChain, agent frameworks, MCP se
 - Ignoring prompt caching (Anthropic SDK projects: caching is mandatory)
 - Single-model lock-in without fallback
 - Sequential extraction when sub-agents would parallelize
-- Stale model IDs in code (claude-3-* references after 4.x release)
+- Stale model IDs in code (an older Claude family after a newer release)

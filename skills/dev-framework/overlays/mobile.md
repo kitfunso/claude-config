@@ -32,7 +32,7 @@ For Capacitor / React Native / Expo apps targeting iOS + Android.
 
 ### VERIFY
 - iOS build succeeds (`xcodebuild` or via Codemagic)
-- Android build succeeds (`./gradlew assembleRelease`)
+- Android build succeeds (`gradlew bundleRelease` as the pre-flight; CI builds the shipped bundle)
 - Test on PHYSICAL device, not just simulator (simulators miss real-device bugs)
 - Test cold start launch time
 - Test backgrounding + resume
@@ -45,7 +45,7 @@ For Capacitor / React Native / Expo apps targeting iOS + Android.
 - Memory leak check on long sessions
 
 ### SHIP
-- **`/build-release` REQUIRED** — bumps iOS/Android build numbers, builds .aab, commits, pushes
+- **`/build-release` REQUIRED** (Phzse): bumps build numbers, compile-checks Android, commits, pushes, starts both Codemagic workflows
 - Codemagic / Fastlane / EAS pipeline runs clean
 - Build number monotonically increasing (store rejects duplicates)
 - Per past memory: use Codemagic Signing for iOS
@@ -62,7 +62,7 @@ For Capacitor / React Native / Expo apps targeting iOS + Android.
 
 ## Tools
 
-- `/build-release` skill — bump numbers, build .aab, commit, push
+- `/build-release` skill: Phzse builds; bump numbers, compile-check, commit, push, start Codemagic
 - `/setup-deploy` skill — CI/CD configuration
 
 ## Anti-patterns

@@ -20,7 +20,7 @@ If a feature shows no Tier 1 signal, do not proceed to Tier 2. If Tier 2 shows a
 
 ### 0. Pick the feature
 
-If `$ARGUMENTS` names a feature (e.g. `acc-evc`, `vmpfc-value`, `dlpfc-goals`, `vlpfc-gate`, `pineal-salience-v2`), use it. Otherwise read the PFC priority table in `RESEARCH.md` (lines ~459-466) and propose the top three by effort × benchmark delta. Wait for user confirmation.
+If `$ARGUMENTS` names a feature (e.g. `acc-evc`, `vmpfc-value`, `dlpfc-goals`, `vlpfc-gate`, `pineal-salience-v2`), use it. Otherwise read the PFC priority table in `RESEARCH.md`, pick the top feature by effort × benchmark delta, and say in one line which you picked and which two you passed over.
 
 ### 1. RED: Write the failing micro fixture FIRST
 
@@ -82,8 +82,8 @@ Full LoCoMo only on explicit user request (release gate). Even with a green Tier
 ## Hard rules
 
 - **One feature at a time.** Don't bundle ACC + vmPFC into one branch even if RESEARCH.md groups them.
-- **Real DB for tests** (project memory rule). No mocks where the real SQLite store is feasible.
-- **Power models: DO NOT TOUCH** (project memory rule, applies across every repo).
+- **Real DB for tests.** No mocks where the real SQLite store is feasible.
+- **Power models: DO NOT TOUCH**, in every repo.
 - **Salience gate.** The v1 60% lexical-overlap gate destroyed LoCoMo from 0.28 to 0.02. Any salience work must be default-off and prove a positive delta on Tier 2 before being enabled.
 
 ## Pre-flight checks (run before step 1)
@@ -108,4 +108,4 @@ The user has authorised proactive execution. Ask only at real forks in the road.
 
 Task / feature: $ARGUMENTS
 
-If `$ARGUMENTS` is empty, list the top three features from `RESEARCH.md` PFC priority table and ask which to build.
+If `$ARGUMENTS` is empty, pick the feature per step 0.

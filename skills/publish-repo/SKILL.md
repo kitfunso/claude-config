@@ -129,7 +129,7 @@ Stage only the changed files (not `git add -A`). Write a commit message:
 ```
 chore: bump to vX.Y.Z, update changelog and readme
 
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+<the attribution lines the session's system reminder supplies>
 ```
 
 ### 9. Publish to npm
@@ -188,7 +188,7 @@ Use `--latest` only if this version is the newest stable. If shipping a backport
 gh release view vX.Y.Z 2>&1 | head -10
 ```
 
-If the previous N releases also have missing notes (common when a project skips this step for several patches), backfill all of them in the same session by running this step once per missing tag. Future-you will thank you.
+If the previous N releases also have missing notes (common when a project skips this step for several patches), backfill all of them in the same session by running this step once per missing tag.
 
 ### 12. Install globally (if applicable)
 

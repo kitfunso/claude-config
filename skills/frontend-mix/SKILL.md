@@ -59,9 +59,9 @@ python ~/.claude/skills/frontend-mix/scripts/screenshot.py <out>/variants --shee
 python ~/.claude/skills/frontend-mix/scripts/roll.py --board <out>
 ```
 
-Read the contact sheet PNG. Blank, console error, or flat fallback where the GPU layer should run: fix or re-dispatch. The board (`<out>/board.html`) is five iframes with recipe chips and a notes box each; publish it as an Artifact for remote review. A splat variant fetches its `.spz` at runtime, which the Artifact CSP blocks, so review it locally or inline the file as a `data:` URI.
+Read the contact sheet PNG. Blank, console error, or flat fallback where the GPU layer should run: fix or re-dispatch. The board (`<out>/board.html`) is five iframes with recipe chips and a notes box each; open it locally in the browser and hand it over by path, never through the Artifact tool.
 
-Then STOP: one line per variant naming its tech mix in words, the board path or link, and the question: which wins, or which slots to keep and re-roll. Porting and polish wait for the answer.
+Then STOP: one line per variant naming its tech mix in words, the board path, and the question: which wins, or which slots to keep and re-roll. Porting and polish wait for the answer.
 
 Done when: every variant has a review.md verdict with zero open hard rejections, the sheet has been read, and the user has been asked.
 

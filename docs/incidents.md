@@ -3,6 +3,29 @@
 Stories evicted from the always-loaded rules. This file is never injected; rules
 point here with one-liners. Append new entries at the top; do not rewrite history.
 
+## 2026-10-03: prompt audit against Opus 5.5
+
+`/claude-api prompt-audit` over CLAUDE.md, rules, the prompt-injecting hooks, Keith's own
+skills and agents; Keith said "fix all". Report: the session scratchpad
+`prompt-audit-2026-10-03.html`. Changed: `human_voice.py` now injects only after a reply
+that reply_check flagged, and `do_it_properly.py` only on a bare go (both had re-injected
+the full rule on every prompt; the monthly audit was due to judge them anyway);
+`triage-prompt.js` and `detect-missing-artifacts.js` now accept inline citations, in line
+with Sourcing; the Stop hook's `<cost-calculus>` check went with the rule it enforced; the
+Human Voice line and number caps became an outcome, with reply_check's counter kept as the
+measure; the effort default moved off `xhigh`; incident stories came off the probation tags.
+Stories moved here from the rules they sat in:
+- Human Voice (2026-09-22): set after two numbers-heavy reports in one session.
+- human-blockers sweep (2026-09-07): the keyword list alone saw 6 of 23 open BLOCKERS.md
+  rows, because it never encoded the checkbox and the words "closed" and "live" in row prose
+  vetoed three more; a reconcile on it would have dropped 17 live gates. Fix: a `- [ ]` box
+  makes a line a candidate on its own.
+- build-release Play rollout (2026-09-08): an earlier skill note said a `status: completed`
+  upload could un-publish the live release by omission; it cannot, and the note cost Keith
+  a hand step he never needed.
+Verifier: the reply_check.jsonl flag rate and `time_ledger.py --stops` two weeks on; a rise
+means a per-prompt hook was doing work, so revert that one.
+
 ## 2026-09-24: 77 approval-only stops in a week
 
 Keith asked why tasks take so long. `scripts/time_ledger.py` over 17 to 24 September:

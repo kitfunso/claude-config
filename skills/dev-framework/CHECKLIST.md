@@ -31,7 +31,6 @@ One-page reference. Read top to bottom on every non-trivial project. Stage defin
 
 ## 4. EXECUTE
 - [ ] TDD/EDD applied
-- [ ] `<cost-calculus>` block for non-trivial tasks
 - [ ] `<diagnosis>` block for any fix-it sub-task
 - [ ] Three-strike rule honored
 - [ ] `hippo capture` per >50-line commit
@@ -39,7 +38,7 @@ One-page reference. Read top to bottom on every non-trivial project. Stage defin
 
 ## 5. VERIFY (BLOCKING)
 - [ ] Runtime evidence captured (screenshot/log/test output)
-- [ ] `/verify` or `/qa` or `/webapp-testing` or `/run` ran
+- [ ] `/qa`, `/qa-only`, `/webapp-testing`, `/run` or the real CLI commands ran
 - [ ] Lighthouse ran (frontend)
 - [ ] `/benchmark` ran (perf-sensitive)
 

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 Run the **SINKING SHIP checklist** against the current codebase/project. This is a pre-production audit. Verify each item yourself by reading code, config, and infra; don't take anyone's word for it.
 
-For each item: mark `[x] PASS`, `[ ] FAIL`, or `[?] UNKNOWN` and cite the file:line or config proving it. Mark PASS only when you can cite the file:line or config proving it.
+For each item: mark `[x] PASS`, `[ ] FAIL`, or `[?] UNKNOWN` and cite the file:line or config proving it.
 
 ## SECURITY
 

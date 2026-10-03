@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: backstop for the Human Voice rule in ~/.claude/CLAUDE.md.
 
-Injects the reply-shape rule into context on every prompt, so it sits in the freshest
-context instead of a 4k-token rules file where it lost every conflict. When reply_check.py
-flagged this session's last reply, one sentence naming the flags follows the rule. Escape
-hatch: CLAUDE_HUMAN_VOICE=off. Always exits 0; a broken guard must not break the session.
+When reply_check.py flagged this session's last reply, injects the reply-shape rule and one
+sentence naming the flags; a clean reply injects nothing. Escape hatch: CLAUDE_HUMAN_VOICE=off. Always exits 0; a broken guard must not break the session.
 """
 
 from __future__ import annotations
@@ -22,9 +20,9 @@ except Exception:  # noqa: BLE001 - the flag sentence is optional, the rule is n
 
 RULE = (
     "[HUMAN VOICE] Keith's standing rule, outranks the pull to cite everything: reply like a "
-    "person talking across a desk. First sentence is the answer. Default under 8 lines; go "
-    "long only when asked or when the task truly needs it. Two or three numbers at most, the "
-    "ones that carry the point; the rest live on the page or in the file. No tables and no "
+    "person talking across a desk. First sentence is the answer. Say what Keith needs in order "
+    "to act, then stop; go long only when asked or when the task truly needs it. Only the "
+    "numbers that carry the point; the rest live on the page or in the file. No tables and no "
     "bullet walls in chat. Plain words; explain a term of art right after using it. Sourcing "
     "says where a number comes from, never how many to list."
 )
@@ -41,10 +39,12 @@ def main() -> int:
     if os.environ.get("CLAUDE_HUMAN_VOICE", "").lower() == "off":
         return 0
     note = feedback(session_of(sys.stdin.buffer.read()))
+    if not note:
+        return 0
     json.dump(
         {
             "hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
-                                   "additionalContext": f"{RULE}\n{note}" if note else RULE},
+                                   "additionalContext": f"{RULE}\n{note}"},
             "suppressOutput": True,
         },
         sys.stdout,

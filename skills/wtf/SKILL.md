@@ -10,10 +10,11 @@ conversation. `/wtf <thing>` → explain that thing (a repo, commit, feature, pl
 term, or error). `/wtf status` → state of the world (section below).
 
 Ground every claim in something citable (file, commit, conversation, memory). If
-you can't ground it, say "I don't know" and offer to find out. Never fill gaps
-with plausible-sounding guesses.
+you can't ground it, go and check; if you can't check from here, say "I don't
+know" and name what would settle it. Never fill gaps with plausible-sounding
+guesses.
 
-## Answer shape (max ~150 words total; no headers unless covering >1 topic)
+## Answer shape (short; no headers unless covering >1 topic)
 
 1. **What it is**: one sentence. No codenames without a 3-word gloss.
 2. **Who asked for it / why it exists**: trace it to the user's directive, a
@@ -33,15 +34,15 @@ with plausible-sounding guesses.
   golden files (saved expected outputs for tests).
 - One analogy max, and only if it genuinely helps.
 - No hedging chains. Give the most likely answer; flag uncertainty in one clause.
-- No option menus unless the user must choose; then max 3 options with a
-  recommendation first.
+- No option menus unless the user must choose; then 2 options max, your pick
+  first.
 - Banned: AI vocabulary (per global CLAUDE.md list). Spell out cause-and-effect in
   words instead of arrow chains (A leads to B leads to C). Gloss any internal
   shorthand (MV, CD, ff-pull) on first use.
 
 ## /wtf status: state of the world
 
-One short report (max ~120 words), only what matters right now, in this order:
+One short report, only what matters right now, in this order:
 
 1. **Broken / degraded**: anything currently failing. Always first. If nothing:
    skip the line entirely (don't write "nothing broken" padding).

@@ -12,7 +12,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 ### DISCOVER
 - Reference 2-4 UI comps or visual references before sketching (per `workflow_design_md_pipeline` memory: lock taste first)
 - `/design-shotgun` if no taste anchor exists: generates multiple variants for comparison
-- Read `MEMORY.md` voice samples if any prose copy will be involved
+- Read the matching sample in `~/.claude/voice/` if any prose copy will be involved
 
 ### SCAFFOLD
 - **`/design-consultation` REQUIRED**: produces `DESIGN.md` covering aesthetic, typography, color, layout, spacing, motion
@@ -28,7 +28,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 ### EXECUTE
 - `/frontend-design` for distinctive, production-grade UI generation
 - `/design-html` for finalization (Pretext-native HTML/CSS)
-- **`/frontend-build` REQUIRED for production builds and bundling**
+- **`/frontend-build` REQUIRED**: the DESIGN.md taste, implement and QA pipeline
 - Build section-by-section or component-by-component against the locked DESIGN.md reference
 - Component sources: shadcn + tweakcn (primitives), magicui + aceternity + 21st.dev (effects)
 - Pattern research: mobbin, pageflows
@@ -48,7 +48,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 - Component diff vs DESIGN.md tokens (colors, spacing, typography)
 
 ### SHIP
-- `/frontend-build` clean (no warnings beyond known)
+- Production build clean (no warnings beyond known)
 - Bundle size check (no regression beyond threshold)
 - Type check clean (`tsc --noEmit`)
 
@@ -64,7 +64,7 @@ Project-type specific gates for UI projects (React, Next, Vue, Svelte, Solid, As
 
 ## Tools: UI build pipeline
 
-- `/frontend-build`: production builds, bundle analysis
+- `/frontend-build`: DESIGN.md taste lock, `/frontend-design` implement, `/design-review` QA
 - `/frontend-design`: generative component design
 - `/design-html`: Pretext-native HTML/CSS finalization
 - `/design-consultation`: DESIGN.md authoring

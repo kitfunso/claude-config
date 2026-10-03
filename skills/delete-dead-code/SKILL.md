@@ -12,7 +12,7 @@ Run in this order:
 
 1. **Ruff: unused imports, variables, and simple dead code**
    ```bash
-   ruff check --select F401,F841,F601,F602,F811,F821,F823,F841 --fix .
+   ruff check --select F401,F841,F601,F602,F811,F821,F823 --fix .
    ```
    - `F401`: unused imports
    - `F841`: unused local variables
@@ -75,6 +75,9 @@ Run in this order:
 - [ ] Report: X imports, Y functions, Z files, N lines removed
 
 ## Output format
+
+Put this block in the PR description or the last commit body. In chat, give the
+total lines removed, the test result and anything whitelisted, in prose.
 
 ```
 ## Dead code removed

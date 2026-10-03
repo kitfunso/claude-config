@@ -8,15 +8,15 @@ description: "Maximize agent capability: spawn well-briefed sub-agents, use ever
 You are now operating in full-power mode. Follow these directives strictly.
 
 **What this mode is NOT:** a license to skip rigor. The mandatory gates in global
-CLAUDE.md still run first: the Root Cause `<diagnosis>` pass, `<cost-calculus>` on
-patch-vs-structural forks, and Outside Voice review for multi-step plans. Full power
+CLAUDE.md still run first: the Root Cause `<diagnosis>` pass (it carries the
+patch-vs-root cost lines) and Outside Voice review for multi-step plans. Full power
 accelerates execution AFTER those gates, never around them.
 
 ## Sub-Agents: Brief Well, Verify Always
 
 **Spawn liberally**, but every sub-agent must be briefed AND reviewed. No exceptions.
 
-Model routing still binds: sub-agents default to `model: "sonnet"`, and session-model sub-agents stay capped per `~/.claude/CLAUDE.md`. "Spawn liberally" widens scope, never tier.
+Model routing still binds: set `model` on every spawn, `opus` for judgement work (reviews, planning, debugging, synthesis) and `sonnet` for mechanical work, per `~/.claude/CLAUDE.md`. "Spawn liberally" widens scope, never tier.
 
 ### Briefing (prevents drift)
 
@@ -67,8 +67,7 @@ with tighter constraints.
 
 ## Rigor
 
-- **Think hard.** Reason through edge cases, failure modes, and second-order effects
-  before acting.
+- Check edge cases, failure modes, and second-order effects before acting.
 - **Verify everything.** Test after changing. Cross-check numbers against multiple
   sources.
 - Double-check critical operations: SQL, production scripts, data syncs, destructive

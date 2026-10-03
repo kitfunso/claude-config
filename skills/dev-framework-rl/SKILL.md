@@ -41,7 +41,8 @@ orchestrator friction, and memory-recalled discipline demonstrably fails under l
 Mechanics: `python ~/.claude/dev-framework/scripts/devrl.py <cmd>` run FROM the
 feature repo (the `python scripts/devrl.py` snippets below are shorthand for that
 absolute form), OR a non-persisting subshell `( cd ~/.claude/dev-framework && ... )`;
-give EVERY feature-repo command its own explicit `cd <repo> &&` in the SAME call.
+give EVERY feature-repo command an explicit repo path in the SAME call: `git -C
+<repo>` or `npm --prefix <repo>` first, `cd <repo> &&` only for a tool with no such flag.
 While this session holds the episode lock, `pre-bash-guard.js` enforces this: it
 denies a git/npm/npx/vitest/codex command with no absolute `cd`, `-C` or `--prefix`
 in the same call, and git that throws away uncommitted work (checkout --, restore,
@@ -184,7 +185,7 @@ Run `/office-hours` (builder mode) or `/brainstorming` to generate 3-5 candidate
 
 **Then work your own pick, twice: build it out, then break it.**
 
-**Build it out with `/grilling`.** Map the framing as a design tree and work the frontier: every decision whose prerequisites are already settled. Ask the whole frontier in one round, numbered, each question carrying your recommended answer. Then answer your own round — the orchestrator is the respondent here, and the recommendations exist so it can decide without a human. Escalate only a question whose answer is on the ASK-FIRST list (cost, destructive, live-schema, a genuine two-readings fork); everything else takes the recommendation and records it. Finding facts is the orchestrator's job: dispatch a sub-agent for anything the repo, the DB or a tool can answer, and ask the rest of the frontier while it runs. The pre-stage is done when the frontier is empty, so nothing reaches `plan` silently assumed.
+**Build it out with `/grilling`.** Map the framing as a design tree and work the frontier: every decision whose prerequisites are already settled. Ask the whole frontier in one round, numbered, each question carrying your recommended answer. Then answer your own round: the orchestrator is the respondent here, and the recommendations exist so it can decide without a human. Escalate only a question whose answer is on the ASK-FIRST list in `~/.claude/CLAUDE.md` (a fork between two readings is not on it: pick one and record it); everything else takes the recommendation and records it. Finding facts is the orchestrator's job: dispatch a sub-agent for anything the repo, the DB or a tool can answer, and ask the rest of the frontier while it runs. The pre-stage is done when the frontier is empty, so nothing reaches `plan` silently assumed.
 
 **Then break it with `/grill-me`.** "Me" is the orchestrator (you). The grill is adversarial: interrogate the assumptions in your own selection, name the weakest premise, surface what would have to be true for this framing to win, and what would falsify it. If the grill breaks the framing, return to the candidate list and pick a different one (or refine).
 
@@ -231,9 +232,9 @@ section when it fires or the plan matches its shape).
 3. **Version-bump target count** — TRIGGER: the plan ships a version bump. Enumerate
    every manifest via git grep; for version CONSTANTS in code, also grep the TEST
    assertions that hard-code the old number. → AUDIT-RULES.md #3
-4. **Roadmap-sync sweep** — TRIGGER: the episode cites a canonical-roadmap claim
+4. **Roadmap-sync sweep**. TRIGGER: the episode cites a roadmap claim
    ("never measured", "Track X blocked"). Grep `docs/evals/` for results docs newer
-   than the canonical doc's mtime. → AUDIT-RULES.md #4
+   than the roadmap doc's mtime. → AUDIT-RULES.md #4
 5. **Public-API caller audit** — TRIGGER: the plan changes a function signature.
    Grep callers at EVERY import surface (`from X import`, `sys.path` inserts,
    `spec_from_file_location`, dynamic `require()`), not just internal helpers.
@@ -412,7 +413,7 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 - **`execute` stage — run `/self-review` as the tail step before manifest emit.** Same-session pass over the diff just produced. Catches missed requirements, regressions, and forgotten edge cases that `code-review-critic` would otherwise spend a sub-agent finding. Record the summary in the manifest's `self_review_summary` field — the schema enforces this at `stage: execute, status: completed`, so the validator will reject the manifest without it. If `/self-review` surfaces a must-fix, address it in-stage before emitting the manifest — do not advance. The self-review adds two checks of its own. **Before a second patch to the same function in one episode**, write the one line naming what the two attempts had in common; if that line names the approach, replace the mechanism instead of widening it (hippo `01M312K37C0262B66J70SM6PCQ`: line-based reasoning about block structure failed twice). **When a change widens what a guard, validator or check watches**, re-read every message it can emit and ask whether each is still true of the new set: a diagnostic that names a cause is an assertion (hippo `01M31DR9BAD95WQ5DJTX03Z1FC`: once the store guard watched every ancestor `.hippo`, "A test wrote a store without isolating it" could blame a test for a write made by ordinary session activity).
 
-- **`verify` stage — drive the affected flow end-to-end as the tail step before manifest emit (reworded 2026-08-02; the 2026-07-18 text named a `/verify` skill that was never installed).**
+- **`verify` stage: drive the affected flow end-to-end as the tail step before manifest emit.**
   Re-running the test suite is necessary but not sufficient: exercise the AFFECTED
   FLOW in the real app/CLI and observe behavior — the class of runtime
   regression that green tests and `gh pr checks` both miss (the CI-red-merge incident's
@@ -429,7 +430,7 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 - **`ship` stage — run `/ship-check` as the first step.** Pre-PR sanity pass: what shipped, is it worth shipping, did we do enough QA? Save the output to the manifest's `ship_check_summary` field — the schema enforces this at `stage: ship, status: completed`, so the validator will reject the manifest without it. Pass the summary to `ship-readiness-critic` as input. A blocker from `/ship-check` short-circuits the stage — escalate to the human rather than asking the critic to rubber-stamp it.
 
-- **`ship` stage — Opus final-review pass for the hardest changes (Keith directive, 2026-08-23; moved from Fable to Opus 2026-09-26 per the 2026-09-23 routing rule, Fable only on explicit ask).** TRIGGER (any): a schema migration; security- or tenant-isolation-touched code; a change to a core write-path / invariant primitive (the `upsertEntryRow` class); or a diff over ~500 changed lines. When it fires, after `/ship-check` but BEFORE `ship-readiness-critic`: spawn exactly ONE Agent sub-agent with `model: "opus"`, briefed with the full diff, the plan artifact, and all prior critic + codex verdicts. Its job is a fresh adversarial "would you ship this?" pass — surface what every earlier gate missed, not re-run their checklists. Real defects it finds are must-fix in-stage before `ship-readiness-critic` runs; append its one-line verdict to the ship step's `--summary`. Re-read the cited lines before applying a suggested fix, and record per finding whether the fix was taken, changed or passed over, with the reason. One pass per episode, at this point only, never a fan-out. Non-triggering episodes skip it silently — Sonnet critics + codex already cover routine diffs (A/B verdict, §4b).
+- **`ship` stage: Opus final-review pass for the hardest changes (Keith directive, 2026-08-23; moved from Fable to Opus 2026-09-26 per the 2026-09-23 routing rule, Fable only on explicit ask).** TRIGGER (any): a schema migration; security- or tenant-isolation-touched code; a change to a core write-path / invariant primitive (the `upsertEntryRow` class); or a diff over ~500 changed lines. When it fires, after `/ship-check` but BEFORE `ship-readiness-critic`: spawn exactly ONE Agent sub-agent with `model: "opus"`, briefed with the full diff, the plan artifact, and all prior critic + codex verdicts. Its job is a fresh adversarial "would you ship this?" pass: surface what every earlier gate missed, not re-run their checklists. Real defects it finds are must-fix in-stage before `ship-readiness-critic` runs; append its one-line verdict to the ship step's `--summary`. Re-read the cited lines before applying a suggested fix, and record per finding whether the fix was taken, changed or passed over, with the reason. One pass per episode, at this point only, never a fan-out. Non-triggering episodes skip it silently: the stage critics and codex already cover routine diffs.
 
 - **`ship` stage — record deploy metadata right after the ship step is recorded.** `python ~/.claude/dev-framework/scripts/devrl.py episode-deploy-record $EID --pr-url <PR-URL>` (the ship manifest schema now REQUIRES a `pr_url` artifact at `status: completed`; a sanctioned no-PR ship — direct-commit / quant pipelines — records the literal `none`). It attaches to the latest `ship`/`deploy` step and never creates one, so it exits 2 until `step-record $EID ship ...` has run. The draft PR opens back at `review`, but its URL is recorded here, on its own line after the ship `step-record` (failure cluster `record-ship-step`: calling it first aborted a chained command). At the `deploy` stage after merge, re-run with `--merge-commit <SHA>`. This is the producer feeding `episode-deploy-meta`, the `devrl-post-deploy` cron, and every outcome-weighted learning leg — an episode that skips it can never resolve a post-deploy outcome (the 0/95 outcome-starvation root cause, fixed 2026-06-09, PLAN-continuous-loop Phase A).
 
@@ -447,7 +448,7 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 ### 4b. Execution delegation — the orchestrator does not code (Keith directive, 2026-07-04)
 
-The session model (Fable or whatever the env line says) is the ORCHESTRATOR:
+The session model is the ORCHESTRATOR:
 framing, triage, plan authorship, sub-agent briefs, gate parsing, verdicts,
 trajectory bookkeeping, and the final synthesis. It does NOT write
 implementation code inline. (Incident 2026-07-04: the orchestrator implemented a whole execute stage
@@ -473,11 +474,10 @@ inline — expensive session-model tokens, no author/reviewer separation.)
   context; targeted single-file reads the orchestrator needs verbatim in
   context stay inline.
 - **Never spawn `model: "haiku"` for any role in this skill: executor, critic, scorer, eligibility check, summary or lookup.** Keith directive 2026-09-13; evidence in the `review` bullet above. Sonnet is the floor.
-- **Critic model routing: critics run `model: "sonnet"`** (A/B verdict
-  2026-08-02, 4 shipped episodes per arm, flat reward 23.06 vs 22.63 — no
-  measured Opus premium, cost decides; the CLOSED block below records the
-  data). The session model stays reserved for at most ~3 highest-stakes
-  verdict/synthesis passes per task, never fan-outs.
+- **Critic model routing: critics run `model: "opus"`.** A critic verdict is a
+  review, and `~/.claude/CLAUDE.md` (Sub-agents, 2026-09-23) routes every review
+  to Opus with no per-task cap. The CLOSED A/B below (flat reward, 2026-08-02)
+  predates that rule. Mechanical roles (executors, discovery) stay on Sonnet.
 - Record each executor dispatch on the execute step via `step-record ...
   --prompt <executor-brief-summary>` so the trajectory shows who authored what.
 
@@ -485,9 +485,9 @@ inline — expensive session-model tokens, no author/reviewer separation.)
 4-shipped-episodes-per-arm point).** The question was: do Opus critics earn
 their premium over Sonnet 5 critics? Answer: no measured premium. Mean reward
 23.06 (default-opus) vs 22.63 (default-sonnet); regression 0.0 in both arms
-(2 known outcomes each); friction 4/4 vs 3/4 episodes. FLAT at this n, so
-cost decides: critics run `model: "sonnet"` (folded into the routing bullet
-above). Labels retired — `episode-init` uses the plain `default` critic set;
+(2 known outcomes each); friction 4/4 vs 3/4 episodes. FLAT at this n; the
+2026-09-23 routing rule then moved critics to `model: "opus"` (routing bullet
+above). Labels retired: `episode-init` uses the plain `default` critic set;
 do NOT alternate arms. Re-open only with a bigger pre-registered n if
 critic-trust drops post-switch. Two standing notes survive the retirement: `codex-review-critic`
 always runs — the cross-model catch is the safety net (01KWQF28's
@@ -586,7 +586,7 @@ A separate mode from running an episode — the cross-episode pass. Run it perio
 
 Pick the tier by how settled and how cross-cutting the lesson is:
 
-0. **Audit rule** — reach here FIRST whenever the lesson can be written as "before X, check Y". An audit rule is a TRIGGER plus a concrete check that a later episode either runs or does not, and `audit-record` logs each firing. That makes it the only tier that produces its own evidence: 18 of the 19 rules have fired, 114 times across 34 episodes, and 111 of those firings carry a note saying what the check found. Tiers 1 to 3 are prose, and prose cannot be counted or pruned. (`audit_rule_firings.prevented` is that note, a TEXT column, not a count. Do not aggregate it arithmetically.) Adding one means editing three surfaces that must stay 1:1 — `episode_store.AUDIT_RULE_SLUGS`, the compact rule plus its `→ AUDIT-RULES.md #N` pointer and slug line in §3b of this file, and the numbered detail section in `AUDIT-RULES.md`. Run `pytest tests/test_audit_rules_sync.py` after; it fails on any surface you miss. A lesson that cannot be phrased as a pre-check is not an audit rule — send it to tier 1.
+0. **Audit rule**: reach here FIRST whenever the lesson can be written as "before X, check Y". An audit rule is a TRIGGER plus a concrete check that a later episode either runs or does not, and `audit-record` logs each firing. That makes it the only tier that produces its own evidence: `devrl.py policy-compact-report` prints the current firings per rule. Tiers 1 to 3 are prose, and prose cannot be counted or pruned. (`audit_rule_firings.prevented` is that note, a TEXT column, not a count. Do not aggregate it arithmetically.) Adding one means editing three surfaces that must stay 1:1: `episode_store.AUDIT_RULE_SLUGS`, the compact rule plus its `→ AUDIT-RULES.md #N` pointer and slug line in §3b of this file, and the numbered detail section in `AUDIT-RULES.md`. Run `pytest tests/test_audit_rules_sync.py` after; it fails on any surface you miss. A lesson that cannot be phrased as a pre-check is not an audit rule: send it to tier 1.
 1. **Hippo memory** — for lessons with no check to run. Small or tentative. Cheap, decays, probation-gated (`--memory-added`).
 2. **Skill prompt** — when a workflow or critic actually behaved wrong. Medium weight. Recorded with `--skill-changed <path>`.
 3. **CLAUDE.md (project or global)** — the top tier, deliberately rare. Only a lesson that recurred across many episodes, is a genuine cross-cutting rule, and would keep happening otherwise — a "law", not a tip. Tips go to tier 1.
@@ -937,7 +937,7 @@ both incidents: AUDIT-RULES.md "execute-stage worktree isolation".
 
 ## Real test-DB convention (`verify` stage)
 
-If the project's tests need a real database (per the global `always use real DB for tests` rule), start it **outside the execute agent's process group** so the verify stage can re-run against it cheaply.
+If the project's tests need a real database (per the project's rules), start it **outside the execute agent's process group** so the verify stage can re-run against it cheaply.
 
 - Project should ship a `scripts/test-db-up.sh` (or equivalent) the orchestrator session invokes before the execute stage. Port and auth pinned in `.env.example`.
 - The execute agent uses the existing instance; it does NOT bootstrap its own. If the execute agent stands up an ad-hoc DB inside its own subprocess tree, the DB dies with the agent and the verify stage cannot re-run.

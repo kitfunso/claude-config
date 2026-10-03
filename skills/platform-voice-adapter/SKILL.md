@@ -5,6 +5,8 @@ description: Adapt content tone, length, and format per platform (Twitter, Linke
 
 # Platform Voice Adapter
 
+Before drafting, read the matching sample in `~/.claude/voice/` (`voice-linkedin.md`, `voice-x-posts.md`) and match it; the Human Voice rules in `~/.claude/CLAUDE.md` override every tone tip below.
+
 Automatically transform content to match the unique voice, style, and constraints of different social media platforms. Each platform has distinct audience expectations, technical limits, and engagement patterns—this skill ensures your content fits perfectly everywhere.
 
 ## Overview
@@ -494,33 +496,3 @@ Before publishing adapted content:
 - [ ] Supports visual if required (Instagram, TikTok)
 - [ ] Text doesn't compete with image
 - [ ] Caption enhances rather than repeats visual
-
-## Integration with Content Workflow
-
-**Recommended Stack:**
-1. Content idea generation → Social Media Content Agent
-2. Hook creation → viral-hook-generator skill
-3. Platform adaptation → This skill (platform-voice-adapter)
-4. Platform-specific optimization → linkedin-thought-leader, twitter-thread-builder (as needed)
-5. Publishing → Manual or scheduling tool
-
-**Typical Flow:**
-```
-Raw idea (from daily project scan)
-    ↓
-viral-hook-generator (creates engaging hook)
-    ↓
-platform-voice-adapter (adapts for each platform)
-    ↓
-[Optional] Platform-specific skill (linkedin-thought-leader for deeper LinkedIn adaptation)
-    ↓
-Ready to publish
-```
-
-## Reference Files
-
-See `/references/` for:
-- `platform_specs.json` - Complete specifications for all platforms
-- `voice_guidelines.md` - Detailed tone guides with examples
-- `emoji_usage_guide.md` - Platform-appropriate emoji patterns
-- `hashtag_strategies.md` - Hashtag optimization by platform

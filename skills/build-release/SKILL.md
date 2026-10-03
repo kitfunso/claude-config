@@ -19,7 +19,7 @@ Execute these steps in order. Stop and report if any step fails.
 ### 1. Verify branch
 
 ```bash
-cd "$HOME/phzse" && git branch
+git -C "$HOME/phzse" branch
 ```
 
 Confirm you're on `master`. If not, warn the user before proceeding.
@@ -55,7 +55,7 @@ three iOS ones and `public/icons/moon.png`. Nothing else may write those files.
 **If any dependency changed this session** (`npm install`, `npm audit fix`, version bumps, even indirect ones), run a REAL clean install. `npm ci --dry-run` PASSES FALSELY on lockfiles that real `npm ci` rejects (proven 2026-06-10: dry-run green locally, Codemagic failed with 27 "Missing: <pkg> from lock file" errors):
 
 ```bash
-cd "$HOME/phzse" && npm ci
+npm --prefix "$HOME/phzse" ci
 ```
 
 This wipes node_modules and installs strictly from the lockfile, exactly what Codemagic runs. Takes a few minutes; that is the price of a trustworthy gate. If no dependency changed this session, `npm ci --dry-run` is an acceptable fast path.
@@ -77,7 +77,7 @@ npm install --save-dev <missing-pkg>@<version>
 ### 5. Build web assets
 
 ```bash
-cd "$HOME/phzse" && npm run build
+npm --prefix "$HOME/phzse" run build
 ```
 
 Wait for completion. This must succeed before proceeding.
@@ -91,7 +91,7 @@ cd "$HOME/phzse" && npx cap sync android
 ### 7. Compile-check the Android build
 
 ```bash
-cd "$HOME/phzse/android" && ./gradlew bundleRelease
+"$HOME/phzse/android/gradlew" -p "$HOME/phzse/android" bundleRelease
 ```
 
 30-60 seconds, must finish with `BUILD SUCCESSFUL`. This is a pre-flight, nothing
@@ -102,9 +102,7 @@ catch it here.
 on Codemagic builds and signs its own, with the `phzse_upload_keystore` Codemagic
 holds, and uploads it straight to Play. Do not copy the local `.aab` anywhere and
 do not upload it by hand while CI works: two sources for one artifact is how a
-`versionCode` drifts between the repo and the store. The old step that copied it
-to `app-release-v{VERSION}-build{BUILD}.aab` existed only to feed a manual upload
-and is gone.
+`versionCode` drifts between the repo and the store.
 
 ### 8. Write the App Store release notes
 
@@ -255,8 +253,7 @@ Watch the build page, never poll Play, to learn when the draft has landed.
 
 `tracks.update` REPLACES the releases array. Sending the new release alone as
 `status: completed` supersedes the live one, exactly like the console's rollout
-button; it cannot un-publish anything by omission. An earlier note claimed the
-opposite and cost Keith a hand step he never needed (2026-09-08).
+button; it cannot un-publish anything by omission.
 
 Do NOT move this into `codemagic.yaml`. The draft is the only human gate between a
 green build and every user of a health app, and this one deliberately keeps it.

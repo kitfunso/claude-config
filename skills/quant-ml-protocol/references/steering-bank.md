@@ -4,7 +4,7 @@ Two uses. **Self**: fire these at yourself at the marked stage, in writing,
 before the stage closes. **Write-up**: present the second set beside the
 stage 10 page so the reader can attack the method, not only the numbers.
 Every row was paid for by a real failure or a review catch; the campaign and
-date are named. Stage numbers follow the 2026-09-22 ten-stage list.
+date are named. Stage numbers follow the protocol's current stage list (stages 0-10).
 
 ## Self: fire at yourself, per stage
 

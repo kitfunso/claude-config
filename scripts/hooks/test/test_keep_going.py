@@ -153,8 +153,8 @@ class TestBareGo:
         "not json",
         "[]",
     ])
-    def test_anything_else_gets_the_rule_alone(self, raw: str) -> None:
-        assert do_it_properly.context(raw) == do_it_properly.RULE
+    def test_anything_else_gets_nothing(self, raw: str) -> None:
+        assert do_it_properly.context(raw) == ""
 
     def test_the_script_adds_it_too(self) -> None:
         out = run("do_it_properly.py", {"session_id": "s1", "prompt": "go"})

@@ -130,7 +130,7 @@ When the user invokes `/project-scaffold`:
 | Phase 1 Plan | docs/plans/YYYY-MM-DD-phase-1.md | Ready |
 ```
 
-12. **Offer next step:** "Ready to start Step 1 of the Phase 1 plan?"
+12. **Next step:** name Step 1 of the Phase 1 plan as the next action; do not end on a question.
 
 ## Updating Documents
 

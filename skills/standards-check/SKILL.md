@@ -101,7 +101,9 @@ Look for: business logic in route handlers, circular imports, tight coupling to 
 
 ## Output format
 
-Use this exact structure:
+Write the audit as one self-contained HTML file in the project's docs folder (else
+the scratchpad), open it in the browser, and in chat give the overall score, the
+top action and the file path. The page follows this structure:
 
 ```
 # Standards Audit
@@ -138,7 +140,7 @@ Use this exact structure:
 
 ## Priority Actions
 
-1-3. [Fix, ranked by impact (3-5 items, most impactful first, concrete enough to start on)]
+1. [Fix, ranked by impact: 3 to 5 items, most impactful first, concrete enough to start on]
 ```
 
 The **Overall** score is the weighted average: Security gets 1.5x weight (because security failures have outsized consequences), all others 1x.

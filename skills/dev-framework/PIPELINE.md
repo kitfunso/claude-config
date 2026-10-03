@@ -53,7 +53,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 **Outside-voice rule**: minimum one outside voice (codex OR senior-code-reviewer sub-agent) before code.
 
 **Entry**: SCAFFOLD complete.
-**Exit**: PLAN.md has explicit success criteria per step (Karpathy rule 4), outside voice reviewed, revisions consolidated and applied.
+**Exit**: PLAN.md has explicit success criteria per step (Karpathy Goal-Driven Execution), outside voice reviewed, revisions consolidated and applied.
 **Hippo hook**: `hippo remember "plan locked: <key decisions>"`
 **Block on**: missing per-step success criteria; no outside-voice review.
 
@@ -67,7 +67,6 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 - `/full-power` or `/fast` per task — execution mode (DOES NOT skip later gates)
 - Karpathy rules: simplicity first, surgical changes, no over-engineering
 - **Root Cause Over Patches framing pass** on any "fix it / wire it up / make it work" sub-task (per global CLAUDE.md — non-negotiable)
-- **Lazy-Smart cost-calculus block** on non-trivial sub-tasks
 
 **Mid-execution checkpoints**:
 - `hippo capture` after any commit > 50 lines
@@ -83,7 +82,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 **Purpose**: Confirm runtime behavior, not just static analysis. This is the gate that catches "passes review but doesn't boot".
 
 **Gates** (at least one runtime gate must produce output):
-- `/verify` — launch app, confirm change works in real environment
+- Real commands against the built artifact (CLIs, APIs): run the affected flow and record what it printed
 - `/qa` — browser QA + auto-fix loop (UI projects)
 - `/qa-only` — browser QA report only (no fixes)
 - `/webapp-testing` — Playwright smoke tests (frontend)
@@ -126,7 +125,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 - `/verification-before-completion` — confirm via commands, not assertion
 - `/commit` or `/ship` — make the commit + PR (or `/commit-push-pr`)
 - `/publish-repo` — for npm/PyPI libraries (semver, CHANGELOG, README sync)
-- `/build-release` — for mobile (bump iOS/Android build numbers, build .aab)
+- `/build-release`: Phzse only (bump build numbers, compile-check, commit, push, start both Codemagic workflows)
 
 **Required artifacts**:
 - CHANGELOG entry (if library or mobile)
@@ -176,7 +175,7 @@ The complete chain. Each stage has entry criteria, gates, exit criteria, and hip
 | 2. SCAFFOLD | /project-scaffold, /design-consultation | Required |
 | 3. PLAN | /writing-plans, /plan-eng-review, /codex | Required |
 | 4. EXECUTE | /full-power, /test-driven-development | Required |
-| 5. VERIFY | /verify, /qa, /webapp-testing, /run | **BLOCKING** |
+| 5. VERIFY | /qa, /qa-only, /webapp-testing, /run | **BLOCKING** |
 | 6. REVIEW | /self-review, /review, /codex, /cso, /design-review | **BLOCKING** |
 | 7. SHIP | /ship-check, /sinking-ship, /commit, /publish-repo | Required |
 | 8. DEPLOY | /land-and-deploy, /canary, Lighthouse | **BLOCKING** |

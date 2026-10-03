@@ -122,7 +122,6 @@ For the explain-back card:
   - Most mentioned, minor gaps → `0.7`
   - Major gaps or fundamentally wrong → `0.3`
   - Empty / "I don't know" → `0.0`
-- Be honest. Don't grade-inflate. The whole point is the gate.
 - Record via `quiz.py record`.
 - Reveal the rubric and what was missed.
 

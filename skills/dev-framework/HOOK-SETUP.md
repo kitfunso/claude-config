@@ -2,7 +2,7 @@
 
 To auto-fire `phase-capture` (which fires `hippo capture` on phase transitions), add this hook block to your `~/.claude/settings.json` under `hooks`:
 
-## Option A â€” Stop hook (recommended, fires once per agent turn)
+## Option A: Stop hook (recommended, fires once per agent turn)
 
 ```json
 {
@@ -22,11 +22,11 @@ To auto-fire `phase-capture` (which fires `hippo capture` on phase transitions),
 }
 ```
 
-If you already have a `Stop` hook array, append the new entry to it â€” do not overwrite.
+If you already have a `Stop` hook array, append the new entry to it, do not overwrite.
 
-**Behavior**: runs once per agent turn. Silent when phase is stable. Captures to hippo when phase transitions (DISCOVER â†’ SCAFFOLD, EXECUTE â†’ VERIFY, etc.).
+**Behavior**: runs once per agent turn. Silent when phase is stable. Captures to hippo when phase transitions (DISCOVER -> SCAFFOLD, EXECUTE -> VERIFY, etc.).
 
-## Option B â€” PostToolUse on git commit (fires per commit, more granular)
+## Option B: PostToolUse on git commit (fires per commit, more granular)
 
 ```json
 {
@@ -58,7 +58,7 @@ powershell -File $HOME/.claude/skills/dev-framework/scripts/phase-capture.ps1
 ## How to verify the hook is working
 
 1. Add the hook to settings.json
-2. Run any agent task that changes phase (e.g. create `PRD.md` in a discovery project â†’ moves to SCAFFOLD)
+2. Run any agent task that changes phase (e.g. create `PRD.md` in a discovery project -> moves to SCAFFOLD)
 3. Check the state file:
    ```powershell
    Get-Content $HOME/.claude/dev-framework-state.txt

@@ -55,8 +55,9 @@ For commodity signal models, futures backtesting, financial modeling. Mostly Qua
 ## Required additions per phase
 
 ### EXECUTE
+- Any model build or remodel starts with `/quant-ml-protocol`
 - Real cache hits via `content-hash-cache` skill (not file-path keys)
-- Rolling window backtests, walk-forward only — no point-in-time
+- Walk-forward only, never a random split; expanding vs rolling is chosen on the nomination years and every source carries a point-in-time grade (`/quant-ml-protocol`)
 - Bloomberg panel + explicit `rolls.csv` for any executable claim
 - `commodity_backtest_data` submodule is backtest-only, not live (per `feedback_commodity_backtest_data_not_live`)
 

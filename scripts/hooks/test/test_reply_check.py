@@ -358,21 +358,26 @@ class TestFeedback:
             "suppressOutput": True,
         }
 
-    def test_a_clean_last_reply_leaves_the_rule_alone(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-                                                      capsys: pytest.CaptureFixture) -> None:
+    def silent(self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture, stdin: bytes) -> bool:
+        monkeypatch.setattr(sys, "stdin", io.TextIOWrapper(io.BytesIO(stdin)))
+        return human_voice.main() == 0 and capsys.readouterr().out == ""
+
+    def test_a_clean_last_reply_injects_nothing(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+                                                capsys: pytest.CaptureFixture) -> None:
         log = write_log(tmp_path / "log.jsonl", record("s1", ["table"]), record("s1", []), record("s2", ["table"]))
         monkeypatch.setattr(hook, "LOG", log)
-        assert self.context(monkeypatch, capsys, "s1") == human_voice.RULE
-        assert self.context(monkeypatch, capsys, "s3") == human_voice.RULE
+        assert self.silent(monkeypatch, capsys, json.dumps({"session_id": "s1", "prompt": "hi"}).encode())
+        assert self.silent(monkeypatch, capsys, json.dumps({"session_id": "s3", "prompt": "hi"}).encode())
 
-    def test_no_log_bad_stdin_or_escape_hatch_leave_the_rule_alone(
+    def test_no_log_bad_stdin_or_escape_hatch_inject_nothing(
             self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
+        payload = json.dumps({"session_id": "s1", "prompt": "hi"}).encode()
         monkeypatch.setattr(hook, "LOG", tmp_path / "missing.jsonl")
-        assert self.context(monkeypatch, capsys, "s1") == human_voice.RULE
+        assert self.silent(monkeypatch, capsys, payload)
         monkeypatch.setattr(hook, "LOG", write_log(tmp_path / "log.jsonl", record("s1", ["table"])))
-        assert self.voice(monkeypatch, capsys, b"")["hookSpecificOutput"]["additionalContext"] == human_voice.RULE
+        assert self.silent(monkeypatch, capsys, b"")
         monkeypatch.setenv("CLAUDE_REPLY_CHECK", "off")
-        assert self.context(monkeypatch, capsys, "s1") == human_voice.RULE
+        assert self.silent(monkeypatch, capsys, payload)
 
     def test_only_the_log_tail_is_read(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         log = write_log(tmp_path / "log.jsonl", record("old", ["table"]), *[record("s2", [])] * 50,

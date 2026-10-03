@@ -60,8 +60,6 @@ For npm packages, PyPI libraries, crates — reusable code with semver and a CHA
 
 **hippo**:
 - Per `feedback_hippo_release_workflow`: `/self-review` → `/review` → `/ship-check` → `/publish-repo` chain MANDATORY
-- Adaptive decay, XDG/HIPPO_HOME, auto-share, multi-project scan are shipped features (per memory `session-2026-04-08`)
-- Physics branch (`feat/physics-local-testing`) has pending local validation
 
 ## Tools
 

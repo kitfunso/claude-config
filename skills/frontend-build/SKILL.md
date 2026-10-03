@@ -1,10 +1,10 @@
 ---
 name: frontend-build
-description: "Run the canonical frontend build pipeline: lock taste via DESIGN.md, implement with /frontend-design, QA with /design-review"
+description: "Run the house frontend build pipeline: lock taste via DESIGN.md, implement with /frontend-design, QA with /design-review"
 argument-hint: [what to build, e.g. "landing page for hippo"]
 ---
 
-You are running the canonical frontend build pipeline. The user wants: $ARGUMENTS
+You are running the house frontend build pipeline. The user wants: $ARGUMENTS
 
 Follow these stages in order. Skip stages only if the trigger condition fails. Confirm direction with the user once at the end of Stage 1, then commit and execute.
 

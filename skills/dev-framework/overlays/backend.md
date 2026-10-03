@@ -40,9 +40,8 @@ For API / server projects (Express/Fastify/FastAPI/Django/Flask/etc.).
 - **`/cso` REQUIRED if any sensitivity flag** (auth/payments/pii/secrets/regulated)
 - N+1 query check
 - Index audit on new queries
-- `/database-optimizer` agent for query hot paths
 - Auth bypass routes flagged and removed before merge
-- `python-backend-engineer` / `fastapi-pro` agents for Python-specific concerns
+- `python-backend-engineer` agent for Python-specific concerns
 
 ### SHIP
 - Migration rollback plan in PR description
@@ -62,9 +61,7 @@ For API / server projects (Express/Fastify/FastAPI/Django/Flask/etc.).
 
 ## Tools
 
-- `fastapi-pro` agent — FastAPI endpoints, Pydantic V2, async patterns
 - `python-backend-engineer` agent — Python backend, uv tooling
-- `database-optimizer` agent — query optimization, indexing
 - `data-engineer` agent — ETL pipelines
 
 ## Anti-patterns

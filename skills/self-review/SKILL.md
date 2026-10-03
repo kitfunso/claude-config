@@ -5,7 +5,7 @@ description: "Review all changes made this session for mistakes, missed requirem
 
 # Self-Review
 
-Review every change made in this session. Be thorough and honest — the goal is to catch mistakes before the user has to.
+Review every change made in this session. The goal is to catch mistakes before the user has to.
 
 ## Steps
 
