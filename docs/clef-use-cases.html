@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Clef decision models: where we use them</title>
+<style>
+body{font:15px/1.5 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#1d1d1f;background:#fbfbfa}
+h1{font-size:1.6rem;margin-bottom:.2rem}h2{margin-top:2.2rem;border-bottom:2px solid #e5e5e5;padding-bottom:.3rem}
+.sub{color:#666;margin-top:0}
+table{border-collapse:collapse;width:100%;margin:.6rem 0;font-size:14px}
+th,td{border:1px solid #ddd;padding:.45rem .55rem;vertical-align:top;text-align:left}
+th{background:#f0f0ee}
+.tag{display:inline-block;padding:0 .45rem;border-radius:9px;font-size:12px;font-weight:600}
+.live{background:#d8f3dc;color:#1b4332}.build{background:#fff3bf;color:#7a5c00}.next{background:#e7f0ff;color:#1c3d7a}.later{background:#eee;color:#555}
+.box{background:#fff;border:1px solid #e3e3e3;border-radius:8px;padding:.8rem 1rem;margin:.8rem 0}
+code{background:#f1f1ef;padding:0 .25rem;border-radius:3px;font-size:13px}
+</style></head><body>
+
+<h1>Clef decision models: where we use them</h1>
+<p class="sub">KITFUNSO, 3 October 2026. Status tags: <span class="tag live">live</span> <span class="tag build">building now</span> <span class="tag next">next</span> <span class="tag later">later</span></p>
+
+<div class="box">
+<b>The idea.</b> A decision model answers typed questions about any text (and, for the 27B Clef, images): yes/no with a probability, pick one of up to 255 options, or a 2 to 10 level score. It does not write text. Clef-flash answers in about 40 ms at the vendor, about 300 ms from here, and Cloudflare gives 10,000 free neurons a day (about 970 small calls). Run locally on the RTX 5080 it is free and unlimited, and no data leaves the PC.
+<br><br>
+<b>Where it wins.</b> Four places: (1) an LLM call that only picks, grades or routes; (2) a regex that stands in for meaning; (3) a human look that only says yes or no; (4) a judgement nobody makes today because an LLM call per item was too slow or too dear. Place 4 is the big one: at 40 ms and no cost we can judge every tool call, every reply, every memory and every log line.
+<br><br>
+<b>Where it loses.</b> Writing text, counting, dates, arithmetic, and anything a lookup gets right. It never abstains, so every choice needs a no-match option and every noul needs its own threshold from a bench.
+</div>
+
+<h2>1. Foundations (unlock everything else)</h2>
+<table>
+<tr><th>What</th><th>Status</th><th>Check that closes it</th></tr>
+<tr><td><b>Shared client defaults to Clef-flash</b>. <code>hooks/lib/jev.js</code> picks Clef-flash once <code>CLOUDFLARE_ACCOUNT_ID</code> is set; <code>JEV_PROVIDER=jev</code> picks paid Jev, <code>clef</code> the 27B.</td><td><span class="tag live">live</span></td><td>10 unit tests pass; one live call returned noul 0.967 in 796 ms.</td></tr>
+<tr><td><b>Free-allocation guard</b>. Local daily counter stops calls at 9,000 neurons (UTC day) so nothing is billed.</td><td><span class="tag live">live</span></td><td>Unit test: a spent allocation makes no HTTP call.</td></tr>
+<tr><td><b>Durable auth</b>. Today the client borrows wrangler's hourly OAuth token and refreshes it in the background. A permanent <code>CLOUDFLARE_API_TOKEN</code> with Workers AI permission is Keith's step.</td><td><span class="tag build">stopgap live</span></td><td>A call after the token expires succeeds within 5 minutes.</td></tr>
+<tr><td><b>Local Clef-flash on the RTX 5080</b> (hippo CLF2). Same request body on <code>127.0.0.1:8787</code>, <code>JEV_PROVIDER=clef-local</code>. Unlimited, private, no quota.</td><td><span class="tag build">building now</span></td><td>bash-gate bench within 0.06 of hosted on recall and false flags; peak GPU memory and p95 reported.</td></tr>
+</table>
+
+<h2>2. Our harness (Claude Code on this box)</h2>
+<table>
+<tr><th>#</th><th>Use</th><th>Questions</th><th>Today</th><th>Status</th><th>Bench check</th></tr>
+<tr><td>H1</td><td><b>Bash gate</b>: second opinion on shell commands</td><td>nouls: destroys data / sends outward / costs money / touches a live schema</td><td>regex guards</td><td><span class="tag next">benched</span></td><td>Clef-flash 0.971 recall, 0.059 false flags on 68 cases (ties Jev). Next: a log-only replay of a week of real commands, graded by hand.</td></tr>
+<tr><td>H2</td><td><b>Keep going</b>: did the reply hand a step back that it could have taken?</td><td>noul hands-back; noul names a real ASK-FIRST blocker</td><td>phrase regex ("say go", "shall I")</td><td><span class="tag build">building now</span></td><td>Labelled pack from <code>state/keep_going.jsonl</code> and transcripts; beats regex on recall at equal false flags.</td></tr>
+<tr><td>H3</td><td><b>Reply shape</b>: first sentence is the answer; sweeping claims</td><td>noul answer-first; noul sweeping claim with no list</td><td>regex counts in <code>reply_check.py</code></td><td><span class="tag build">building now</span></td><td>Same pack loop, 960 logged replies as the replay set.</td></tr>
+<tr><td>H4</td><td><b>Sourcing check</b>: is each load-bearing number backed by a tool result this turn?</td><td>state = reply plus clipped tool outputs; noul per claim "supported by `tools`"</td><td>"2+ numbers with no tool call" count</td><td><span class="tag next">next</span></td><td>40 replies with known fabrications vs sourced numbers; must catch the 2026-05 style incident with 0 false flags on sourced replies.</td></tr>
+<tr><td>H5</td><td><b>Skill router</b>: which of 138 skills fits this prompt?</td><td>choice over skill names plus "none", built in code from skill descriptions</td><td>model reads the list; <code>/name</code> regex notice</td><td><span class="tag next">next</span></td><td>Label 100 past prompts with the skill actually used; top-1 accuracy and "none" precision vs the current miss rate.</td></tr>
+<tr><td>H6</td><td><b>Memory admission</b>: which of 277 memory files apply to this prompt? (our own CLF5)</td><td>noul per candidate after a BM25 top-20 prefilter</td><td>MEMORY.md index always loaded</td><td><span class="tag next">next</span></td><td>Past prompts labelled with the memory that mattered; inject top-3 pointers; recall@3 and wrong-admission rate.</td></tr>
+<tr><td>H7</td><td><b>Hippo zero-touch outcome</b>: replace the "Rate that turn" prompt</td><td>on the next user message: noul correction, noul frustration, noul approval, choice which earlier claim is corrected</td><td>manual Good/Bad buttons</td><td><span class="tag next">next</span></td><td>Label 80 user follow-ups; precision on "Bad" must be high before it writes outcomes (hippo CLF6 rules: frustration is not a correction).</td></tr>
+<tr><td>H8</td><td><b>Sub-agent model router</b>: judgement or mechanical brief?</td><td>choice opus / sonnet; noul "asks for haiku"</td><td>me reading the rule</td><td><span class="tag later">later</span></td><td>Past 60 Agent spawns labelled; deny on mismatch only above a high threshold.</td></tr>
+<tr><td>H9</td><td><b>Sub-agent report check</b>: did it do every item in the brief?</td><td>state = brief items (split in code) plus report; noul per item done</td><td>I read it</td><td><span class="tag later">later</span></td><td>"Done means done" cases from past runs where an item was silently dropped.</td></tr>
+<tr><td>H10</td><td><b>Question triage</b>: light answer or real work?</td><td>choice light / fix-it / verify-live / build</td><td>none</td><td><span class="tag later">later</span></td><td>Inject the matching rule line only; label 100 prompts.</td></tr>
+<tr><td>H11</td><td><b>Memory writeback</b>: did this session close something a memory says is open?</td><td>at Stop: choice over memory files that hold "pending" claims, plus none</td><td>rule text only</td><td><span class="tag later">later</span></td><td>Sessions where writeback was missed vs done.</td></tr>
+<tr><td>H12</td><td><b>Live-source triage</b>: does this question ask about the world now (prices, deadlines, versions)?</td><td>noul</td><td>rule text only</td><td><span class="tag later">later</span></td><td>Inject "go live first" notice; label 60 prompts.</td></tr>
+</table>
+
+<h2>3. Hippo product (Track CLF on the roadmap, accepted 2026-10-02)</h2>
+<p>Every role below has a roadmap ID, and every one must pass its own CLF12 benefit check before it ships on by default. Z0 priority and frozen defaults stay.</p>
+<table>
+<tr><th>Roadmap</th><th>Role</th><th>Status</th><th>Check</th></tr>
+<tr><td>CLF0/1</td><td>Clef transport for the opt-in reranker; envelope parsing, validation, native fallback, never a silent paid switch</td><td><span class="tag build">building now (PR)</span></td><td>Unit tests plus 3 hosted smoke calls.</td></tr>
+<tr><td>CLF2</td><td>Customer-controlled serving; our RTX 5080 server is the first data point for the 16 GB hardware row</td><td><span class="tag build">building now</span></td><td>Quality within noise of hosted, measured memory and latency.</td></tr>
+<tr><td>CLF4</td><td>Query-conditioned ranking: native vs Jev vs Clef-flash vs Clef on the same top-40 pool</td><td><span class="tag next">next, on local serving</span></td><td>Existing Jev reranker runner; ranking and rendered-token cut reported separately.</td></tr>
+<tr><td>CLF5</td><td>No-memory admission: inject nothing when nothing applies</td><td><span class="tag later">after Z10</span></td><td>Fresh negatives (never-held topics, stale evidence); Lane 21 labels are not clean.</td></tr>
+<tr><td>CLF6</td><td>Capture and correction: is this worth remembering, which kind, which existing memory does a correction hit</td><td><span class="tag later">later</span></td><td>False-write rate and missed lessons on fresh labels; H7 above is the same question on our own data.</td></tr>
+<tr><td>CLF7</td><td>Supersession, contradiction, duplicate, compatible-under-conditions</td><td><span class="tag later">later</span></td><td>Reversible writes only; as-of retrieval survives.</td></tr>
+<tr><td>CLF8</td><td>Lesson and skill selection, including no-match; guards stay local</td><td><span class="tag later">later</span></td><td>H5 above is a dry run of this on our own skills.</td></tr>
+<tr><td>CLF10</td><td>Screenshots and documents (27B Clef has vision)</td><td><span class="tag later">optional</span></td><td>Only after text roles land.</td></tr>
+</table>
+
+<h2>4. Other projects</h2>
+<table>
+<tr><th>Project</th><th>Use</th><th>Why a decision model</th><th>Status</th><th>Check</th></tr>
+<tr><td>fifty</td><td>Watchdog: switch <code>ops/jev.py</code> transport to Clef-flash local</td><td>Same questions, no cost, no egress</td><td><span class="tag next">next</span></td><td>Re-run <code>ops/bench.py</code>; within 0.06 of the Jev run. Wait until the running fifty session is idle.</td></tr>
+<tr><td>phzse</td><td>Medical-claim guard on store text, UI copy and release notes</td><td>"Wellness, never medical" is a meaning test, regex misses paraphrase</td><td><span class="tag next">next</span></td><td>30 labelled lines incl. traps ("track your cycle" fine, "detects PCOS" not).</td></tr>
+<tr><td>2chain</td><td>MCP tool routing: choice over registry tools plus none</td><td>This is the product's core pick; local serving respects no-phone-home</td><td><span class="tag next">next</span></td><td>Label 60 tool-finding queries by hand (the local verdicts file is empty); top-1 vs current ranker.</td></tr>
+<tr><td>synth</td><td>Lloyd's report page finder with Clef vision: which page holds the income statement, the balance sheet</td><td>Cuts extraction tokens; sub-agents only read the right pages</td><td><span class="tag later">later</span></td><td>figure-checker page numbers as labels.</td></tr>
+<tr><td>Grants</td><td>Weekly call triage: eligible for a UK solo Ltd? AI topic? deadline open?</td><td>75+ calls, each a set of yes/no reads</td><td><span class="tag later">later</span></td><td>Past calls with known verdicts in <code>project_grant_applications.md</code>.</td></tr>
+<tr><td>Crude brief</td><td>Headline relevance and direction score for Brent before the brief is written</td><td>Score many headlines cheaply, LLM writes only the top ones</td><td><span class="tag later">later</span></td><td>Hand-label one week of headlines.</td></tr>
+<tr><td>Brain Gym, phzse</td><td>App review triage: bug / feature request / praise / medical claim</td><td>Routes replies and issues</td><td><span class="tag later">later</span></td><td>Label existing reviews.</td></tr>
+<tr><td>Hermes, Telegram</td><td>Inbound message routing: urgent, needs Keith, can auto-handle</td><td>Cheap pre-filter before the agent spends tokens</td><td><span class="tag later">later</span></td><td>One week of messages labelled.</td></tr>
+<tr><td>Video renders</td><td>Grid-check by vision: text cut by the crop band, blank frames</td><td>Replaces a manual look per render</td><td><span class="tag later">later</span></td><td>Past renders with known defects.</td></tr>
+<tr><td>boring-maths</td><td>GSC query triage: intent matches a page we have, or a new page worth building</td><td>Hundreds of queries a month</td><td><span class="tag later">later</span></td><td>Past GSC exports labelled.</td></tr>
+<tr><td>Ops</td><td>Cron and CI log triage: real failure, flake, or noise</td><td>Every log line, every night, free</td><td><span class="tag later">later</span></td><td>Past CI failures with known causes.</td></tr>
+</table>
+
+<h2>5. Rules every use follows</h2>
+<ul>
+<li>Labelled cases first, two free baselines, threshold declared in <code>EXPERIMENT-PROTOCOL.md</code> before the run (the /jev skill loop).</li>
+<li>Fail open: no key, an error or a spent allocation means the old behaviour.</li>
+<li>Hosted calls leave the machine: scrub secrets in code; private data (2chain, work) goes to the local server only.</li>
+<li>Never the paid tier: free allocation or local only.</li>
+<li>A model probability is not a fact. Hippo keeps its observed / inferred / verified status apart from any Clef score.</li>
+</ul>
+</body></html>

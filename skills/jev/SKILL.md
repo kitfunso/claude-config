@@ -39,6 +39,11 @@ call existed, it ADDS a network call: p50 263 ms, p95 701 ms for four questions
    replay is the honest judge.
 7. Go live only on the declared rule. Reworded questions are a new lane.
 
+Provider: the shared client defaults to Cloudflare Clef-flash on the free allocation
+(capped at 9,000 neurons a day) once `CLOUDFLARE_ACCOUNT_ID` is set; `JEV_PROVIDER=jev`
+picks paid Jev, `clef` the 27B, `clef-local` the RTX 5080 server when it runs. Uses and
+status: `~/.claude/docs/clef-use-cases.html`.
+
 Key: `TYPESAFE_API_KEY`, User env var only. A session that started before the key
 was set does not have it; launch with
 `$env:TYPESAFE_API_KEY = [Environment]::GetEnvironmentVariable('TYPESAFE_API_KEY','User')`.

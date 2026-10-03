@@ -72,6 +72,8 @@ added latency.
 | Lane | Date | Labelled recall A0 / A1 / A2 | Labelled false flags A0 / A1 / A2 | Replay false flags A2 | p95 ms | Cost | Call |
 |---|---|---|---|---|---|---|---|
 | 1 | 2026-09-19 | 0.118 / 0.912 / 1.000 | 0.029 / 0.176 / 0.000 | 4 of 300 (1.3%); 6 of 10 flags true | 701 labelled, 554 replay | $0.030 | NOT LIVE. Condition 1 fails as written: A2 is 8.8 points over A1, the rule asks for 15. |
+| 2, A2 = Cloudflare clef-flash | 2026-10-03 | 0.118 / 0.912 / 0.971 | 0.029 / 0.176 / 0.059 | not run | 694 (p50 293) | free allocation | Same pack, unchanged questions, `JEV_PROVIDER=clef-flash`. One case below Jev on recall (`train.py > data/locked_signal.csv`, 0.48), two extra false flags. Within n=68 noise of Jev; no reason to revisit the gate. |
+| 3, A2 = Cloudflare clef | 2026-10-03 | 0.118 / 0.912 / 0.971 | 0.029 / 0.176 / 0.000 | not run | 960 (p50 525) | free allocation | Same miss as lane 2, no false flags, slowest arm. Repeat move 0.000 on both Clef arms. |
 
 **Lane 1 notes (2026-09-19).** Regenerate with
 `node scripts/jev-bench.js scripts/jev-packs/bash-gate.js --repeat 2`, then
@@ -300,3 +302,153 @@ Read these with care.
 Cost. Jev: 8 lane runs plus 2 diagnostics, not printed, est. under $0.02. Arm N:
 notional $2.20 in the transcripts, on the subscription, not billed (`apiKeySource`
 was `none` in the smoke run).
+
+## Campaign J3: Clef judge for the keep_going stop hook (declared 2026-10-04, before its first run)
+
+**Decision it feeds.** Whether `scripts/hooks/keep_going.py` should ask Clef instead of
+its ASK regexes when deciding to block a stop. Nothing is wired by this campaign.
+
+**What is judged.** Three `noul` questions in one request on `{prompt, reply_tail}`
+(last 300 characters of the user's message, last 700 of the reply): `hands_back`
+(the ending hands a step or decision back), `blocker` (it names a real ASK-FIRST or
+user-only reason), `asked_only` (the prompt asked for an answer, status or advice, not
+work). The pack blocks when hands_back >= thr, blocker < thr and asked_only < thr.
+Labelled positive means hands_back and not blocker and not asked_only. Question text
+lives in `scripts/jev-packs/keep-going.js`.
+
+**Arms.**
+
+| Arm | What | Role |
+|---|---|---|
+| A0 | `keep_going.verdict()` run on the case, precomputed | control, what exists today |
+| A1 | A0, or the last prose line ends in "?" with no ASK_FIRST word and a non-question prompt, or "ready when you are", "unless you say otherwise", a line starting "Next" | free upgrade |
+| A2 | Clef, threshold 0.5 | primary lane |
+
+Thresholds 0.3 and 0.7 are diagnostics and cannot flip the verdict.
+
+**Data.** 53 labelled cases, 25 block and 28 pass, from turn-ending replies in the
+last 30 days of transcripts (`~/.claude/projects/*/*.jsonl`; older ones are gone).
+Cases live in `state/jev-cases/keep-going.json`, outside git. The builder, the
+extractor and the turn files are in `state/jev-cases/src/`; each case carries its
+label reason. The set is enriched: most negatives were A0 hits, and 11 positives are
+A0 misses, so A0 and A1 rates here are not population rates. Secret-shaped tokens and
+email addresses are redacted per token before writing. Traps: a status reply with a
+clock time, a quoted "shall I?", "if you want ... say so" while running, an offer
+mid-reply that ends on status, "say next" during a physical step, an edit note on a
+finished draft.
+
+**Sample-size math.** With 25 positives a recall near 0.8 has a standard error of
+about 0.08, so a 95% band of about 16 points each way. Only gaps of 20 points or more
+are readable here.
+
+**Decision rule, declared.** The labelled run passes only if (a) or (b) holds against
+the best free arm (the one with the higher recall at its false-flag rate), and p95
+latency is 1,500 ms or less:
+
+- (a) A2 recall is at least 15 points over it, at a false-flag rate no higher.
+- (b) A2 false-flag rate is at least 30 points under it, at a recall no more than 5
+  points below.
+
+A case whose decision flips between the two repeats counts against A2 both ways. A
+tie goes to the free arm. Passing the labelled run earns a replay, not go-live: 200
+unlabelled turn-ending replies, every A2 and A0 block graded by hand. Go-live needs A2
+replay precision of 0.70 or more and above A0's. Failing the labelled run is a NO.
+
+**Control check.** A0 must flag at least one labelled case and A2 nouls must have a
+non-zero spread, or the run is void.
+
+**Trial ledger.** N = 1. A reworded question or a new state field is a new lane.
+
+**Cost cap.** No money. `JEV_PROVIDER=clef-local` when the local server answers,
+else Cloudflare clef-flash on the free daily allocation, which the client stops at
+9,000 neurons. Expected about 106 requests and 140k input tokens, about 1,150
+neurons on Workers. `JEV_PROVIDER=jev` (paid) is not allowed.
+
+**NOT DONE.** The replay. Turns where the hook's `stop_hook_active` pass applied. The
+cost of a false block (one extra loop) against a miss (one lazy stop) is not priced.
+
+**Verdict.**
+
+| Lane | Date | Labelled recall A0 / A1 / A2 | Labelled false flags A0 / A1 / A2 | p95 ms | Cost | Call |
+|---|---|---|---|---|---|---|
+| 1, A2 = clef-local | 2026-10-04 | 0.600 / 0.720 / 0.800 | 0.750 / 0.750 / 0.321 | 12,183 (p50 7,532), 8 requests at once on the local server | free (local), 139,944 input tokens | NO as declared. Clause (b) holds: false flags 43 points under A1 at 8 points more recall. The latency clause fails. |
+| 2, A2 = Workers clef-flash | 2026-10-04 | 0.600 / 0.720 / 0.920 | 0.750 / 0.750 / 0.500 | 915 (p50 393), 0 errors | 1,145 neurons (free allocation), 139,944 input tokens | PASSES the labelled run on clause (a): recall 20 points over A1 at lower false flags, p95 under 1,500. Not live: the replay (precision 0.70 or more) is next. The first attempt hit "no key" on an expired wrangler token; the client's background refresh then worked. |
+
+**Lane 2 notes.** Hosted and local disagree by more than the 0.06 noise band (recall
+0.92 vs 0.80, false flags 0.50 vs 0.32) on the same cases and questions, so the local
+server is not a drop-in for hosted until its quantisation is checked. A false-flag rate
+of 0.50 on an A0-enriched negative set still means many extra loops; the replay decides.
+
+**Lane 1 notes.** Repeat move 0.000. Per question at 0.5: `hands_back` recall 0.867
+with 0 false flags, `asked_only` 0.750 with 0, `blocker` only 0.375 with 0.027. Every
+A2 false flag is a missed blocker: money (37,000 of bills), branch deletes, the
+handwritten-code rule, a reboot, a BLOCKERS.md rewrite, credits, a social post, a
+physical step. Post-hoc diagnostic only, not a lane: Clef `hands_back` and
+`asked_only` with the hook's ASK_FIRST regex as the blocker gives recall 0.560 and
+false flags 0.179, which is worse. The next lane, if any, rewrites the `blocker`
+question; lane 2 decides whether the quality result survives at Workers latency.
+
+## Campaign J4: Clef judge for two reply_check flags (declared 2026-10-04, before its first run)
+
+**Decision it feeds.** Whether the weekly scorecard should count sweeping claims and
+answer-not-first replies from a Clef replay of transcripts instead of regex. The hook
+`scripts/hooks/reply_check.py` is log-only, so a live per-reply call is out: it would
+add latency for a number nobody acts on in the turn.
+
+**What is judged.** Two `noul` questions in one request on `{prompt, reply}` (last
+300 characters of the user's message, first 1,500 of the reply): `sweeping` (a
+completeness claim with no list or checks behind it) and `not_answer_first` (the
+first sentence is preamble, an announcement, an apology on its own, narration, or off
+topic). Question text lives in `scripts/jev-packs/reply-check.js`.
+
+**Arms.**
+
+| Arm | What | Role |
+|---|---|---|
+| A0 | today's `SWEEPING` regex in `reply_check.py`, precomputed; no answer-first check exists | control |
+| A1 | a broad completeness regex, plus an opener regex on the first sentence ("Here is", "Let me", "Fair", ...) | free upgrade |
+| A2 | Clef, threshold 0.5 | primary lane |
+
+**Data.** 58 labelled cases in `state/jev-cases/reply-check.json`, same provenance,
+redaction and builder as J3. Sweeping: 10 positives, 48 negatives. Answer-first: 20
+positives, 38 negatives. Real unsupported sweeping claims are rare: the A0 regex fired
+on 1 of 1,933 replies in 30 days, and that hit is a false positive (kept as a trap).
+So 7 of the 10 sweeping positives are derived: a real reply cut just before its
+evidence list, each paired with its full version as a negative. Traps: a schema
+sentence with "every table", "so jev helped everywhere" quoted, "everywhere" inside a
+requested draft, "Short version:" and "Straight answer:" labels with the answer in the
+same sentence, "Here's the paragraph:" before a requested draft.
+
+**Sample-size math.** 10 sweeping positives give a recall band of about 25 points
+each way; only a gross gap is readable. 20 answer-first positives give about 18.
+
+**Decision rule, declared, per question.** A question passes the labelled run when A2
+recall is 0.80 or more and A2 false-flag rate is 0.10 or less. If A1 also meets both
+bars on that question, the labelled set cannot separate them and the free arm holds:
+A1 was written after reading these cases, so its labelled numbers flatter it (the J1
+rule flaw), and only the replay can overturn it. A passing question earns a replay of
+200 unlabelled replies, hand-graded, before any scorecard change. A failing question
+is a NO.
+
+**Control check.** A1 must flag at least one labelled case and A2 nouls must have a
+non-zero spread, or the run is void. A0 is expected to be dead on answer-first; that
+alone does not void the run.
+
+**Trial ledger.** N = 1 per question, 2 in all.
+
+**Cost cap.** As J3. Expected about 116 requests and 120k input tokens, about 1,000
+neurons on Workers.
+
+**NOT DONE.** The other reply_check flags (bullet walls, tables, banned words,
+numbers with no tool call, missing diagnosis): regex already sees those. The replay.
+
+**Verdict.**
+
+| Lane | Date | Question | Recall A0 / A1 / A2 | False flags A0 / A1 / A2 | p95 ms | Cost | Call |
+|---|---|---|---|---|---|---|---|
+| 1, A2 = clef-local | 2026-10-04 | sweeping | 0.000 / 1.000 / 0.300 | 0.021 / 0.396 / 0.000 | 9,955 (p50 8,535) | free (local), 126,086 input tokens | NO. A2 recall is 0.30 against a 0.80 bar. The seven missed positives score 0.14 to 0.46, so a threshold moved within the 0.06 noise band would rescue one at most. |
+| 1, A2 = clef-local | 2026-10-04 | not_answer_first | 0.000 / 0.800 / 0.950 | 0.000 / 0.053 / 0.289 | as above | as above | NO. A2 false flags 0.289 against a 0.10 bar, mostly answers that open with a short concession or label ("You're right on both counts", "Short version:"). A1 meets both bars but was written after reading the cases, so the free arm holds until a replay. |
+
+**Lane 1 notes.** Repeat move 0.000. At threshold 0.3 every case flags and at 0.7
+recall falls to 0.367: the nouls bunch near the middle. Workers lane not attempted:
+both questions fail on quality, and the J3 Workers run already returned "no key".
