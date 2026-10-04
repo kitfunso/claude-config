@@ -26,4 +26,8 @@ cut -f1 "$map" | sort -u | xargs git -C "$repo" log --no-walk --format='%H %ct %
       wt=$(printf "%s" "$1" | cut -f1); msg=$(printf "%s" "$1" | cut -f2 | cut -c1-80)
       printf "%s [%s] %s | dirty %s\n" "$wt" "$(git -C "$wt" branch --show-current)" "$msg" \
         "$(git -C "$wt" status --porcelain -uno 2>/dev/null | wc -l)"' _ {}
+if command -v node >/dev/null 2>&1; then
+  echo "== coord claims"
+  node "$HOME/.claude/skills/coord/bin/coord.mjs" list --cwd "$repo"
+fi
 echo "== also run ListAgents for live sessions"
