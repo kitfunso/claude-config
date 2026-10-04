@@ -398,6 +398,24 @@ substituted a self-authored plan. Two failures stacked: asserted absence without
 checking, plus silent pivot. (The story was trimmed from the rule section on
 2026-09-04; the one-line rule stays there and this file holds the story.)
 
+## hippo prompt recall never reached this box (2026-10-04)
+
+Keith corrected the same mistake twice in one session: LongMemEval used as the
+measure of hippo's success. Hippo already held the lesson (`g_927f5afb34a9`,
+recalled once ever) but never delivered it. `hippo_context_cached.py` ran
+`hippo context --pinned-only` from a cache with no hook payload on stdin, so
+hippo's prompt recall (on by default since 1.55.0) never saw a prompt. The cache
+existed for the 28s load stall below.
+
+Fixed at the wrapper: the cached pinned block still goes once per session, and
+one live call per prompt pipes the payload to hippo and appends its
+"Prompt-Relevant Memory" section. Measured 1-4s idle and 4.7-7.2s at 96% CPU
+(bare `hippo --version` 1.7s there), so the call stops at 4s and a timeout pauses
+recall for 5 minutes. `CLAUDE_HIPPO_RECALL=off` turns it off. The lesson was also
+pinned (`mem_5cc8214b2ff0`). Limit that remains: recall matches the user's
+prompt, and this prompt ("brainstorm with fable, close the 6 gaps") never named
+a benchmark. Acting on the agent's own plan is hippo ROADMAP Z4.
+
 ## UserPromptSubmit hooks timing out (2026-09-06)
 
 Reported as three simultaneous failures: 5s, 10s and 15s hooks all discarded on

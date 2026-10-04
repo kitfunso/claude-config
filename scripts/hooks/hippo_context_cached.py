@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Serve hippo's pinned-memory injection from a cache, refreshed out of band.
+"""Serve hippo's pinned rules from a cache and add hippo's live prompt recall.
 
-`hippo context` costs 0.57s idle but 28-57s under 24-core load, against a 15s
-hook budget, so the injection was dropped whenever the box was busy.
-See docs/incidents.md (2026-09-06, and 2026-09-13 for the snapshot and the lock).
+`hippo context` costs 1-4s idle but 28-57s under 24-core load, against a 15s hook
+budget. See docs/incidents.md (2026-09-06, 2026-09-13, and 2026-10-04 for recall).
 """
 
 from __future__ import annotations
@@ -23,7 +22,11 @@ CACHE_DIR = (Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"
              / "cache" / "hippo-context")
 LOCK_TTL = 60.0
 COLD_TIMEOUT = 12.0
+HOOK_BUDGET = 13.0
+RECALL_TIMEOUT = 4.0
+RECALL_BACKOFF = 300.0
 MEMORY_HEADING = "## Project Memory"
+RECALL_HEADING = "## Prompt-Relevant Memory"
 
 
 def hippo() -> str | None:
@@ -55,18 +58,69 @@ def strip_snapshot(payload: str) -> str:
     return json.dumps(doc)
 
 
-def run_hippo(cwd: str, timeout: float) -> str | None:
+def exec_hippo(cwd: str, timeout: float, stdin_text: str | None = None) -> str | None:
     exe = hippo()
     if not exe:
         return None
+    done = subprocess.run([exe, *ARGS], cwd=cwd, capture_output=True, input=stdin_text,
+                          timeout=timeout, text=True, encoding="utf-8",
+                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    out = (done.stdout or "").strip()
+    return out if done.returncode == 0 and out else None
+
+
+def run_hippo(cwd: str, timeout: float) -> str | None:
     try:
-        done = subprocess.run([exe, *ARGS], cwd=cwd, capture_output=True,
-                              timeout=timeout, text=True, encoding="utf-8",
-                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        out = exec_hippo(cwd, timeout)
     except (OSError, subprocess.SubprocessError):
         return None
-    out = (done.stdout or "").strip()
-    return strip_snapshot(out) if done.returncode == 0 and out else None
+    return strip_snapshot(out) if out else None
+
+
+def context_text(raw: str | None) -> str:
+    try:
+        text = json.loads(raw or "")["hookSpecificOutput"]["additionalContext"]
+    except (ValueError, KeyError, TypeError):
+        return ""
+    return text if isinstance(text, str) else ""
+
+
+def recall_section(raw: str | None) -> str:
+    text = context_text(raw)
+    cut = text.find(RECALL_HEADING)
+    return text[cut:].strip() if cut >= 0 else ""
+
+
+def backoff_file() -> Path:
+    return CACHE_DIR / "recall.slow"
+
+
+def prompt_recall(cwd: str, stdin_text: str, prompt: str, timeout: float) -> str:
+    """The cache cannot match a prompt, so recall runs live; a timeout pauses it so a busy box stays fast."""
+    if not prompt.strip() or timeout < 1.0 or os.environ.get("CLAUDE_HIPPO_RECALL", "").lower() == "off":
+        return ""
+    try:
+        if time.time() - backoff_file().stat().st_mtime < RECALL_BACKOFF:
+            return ""
+    except OSError:
+        pass
+    try:
+        return recall_section(exec_hippo(cwd, timeout, stdin_text))
+    except subprocess.TimeoutExpired:
+        write_cache(backoff_file(), str(time.time()))
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return ""
+
+
+def merge(static: str | None, recall: str) -> str | None:
+    """Pinned rules go once per session, recall goes every prompt, so they travel as one block."""
+    if not recall:
+        return static
+    text = context_text(static)
+    joined = f"{text}\n\n{recall}" if text else recall
+    return json.dumps({"hookSpecificOutput": {
+        "hookEventName": "UserPromptSubmit", "additionalContext": joined}})
 
 
 def write_cache(path: Path, payload: str) -> None:
@@ -153,34 +207,41 @@ def main() -> int:
     if len(sys.argv) > 2 and sys.argv[1] == "--refresh":
         return refresh(sys.argv[2])
 
+    started = time.monotonic()
+    raw = sys.stdin.read() or "{}"
     try:
-        payload = json.loads(sys.stdin.read() or "{}")
+        payload = json.loads(raw)
     except ValueError:
+        payload = {}
+    if not isinstance(payload, dict):
         payload = {}
     session_id = payload.get("session_id") or ""
     if len(sys.argv) > 1 and sys.argv[1] == "--reset":
         return reset(session_id)
     cwd = payload.get("cwd") or os.getcwd()
 
-    cached = None
+    static = None
     try:
-        cached = cache_file(cwd).read_text(encoding="utf-8")
+        static = cache_file(cwd).read_text(encoding="utf-8")
     except OSError:
         pass
-
-    if cached:
-        if not already_sent(session_id, cached):
-            print(cached)
+    if static:
         spawn_refresh(cwd)
-        return 0
-
-    out = run_hippo(cwd, timeout=COLD_TIMEOUT)
-    if out:
-        write_cache(cache_file(cwd), out)
-        if not already_sent(session_id, out):
-            print(out)
     else:
-        spawn_refresh(cwd)
+        static = run_hippo(cwd, timeout=COLD_TIMEOUT)
+        if static:
+            write_cache(cache_file(cwd), static)
+        else:
+            spawn_refresh(cwd)
+
+    unsent = static if static and not already_sent(session_id, static) else None
+    prompt = payload.get("prompt")
+    remaining = HOOK_BUDGET - (time.monotonic() - started)
+    recall = prompt_recall(cwd, raw, prompt if isinstance(prompt, str) else "",
+                           min(RECALL_TIMEOUT, remaining))
+    out = merge(unsent, recall)
+    if out:
+        print(out)
     return 0
 
 

@@ -158,5 +158,79 @@ class Dedupe(unittest.TestCase):
             self.assertFalse(hook.already_sent(self.sid, payload(MEMORY)))
 
 
+RECALL = "## Prompt-Relevant Memory (1 entries, 30 tokens)\n\n- **[verified] a lesson**"
+
+
+class PromptRecall(unittest.TestCase):
+    """The cache holds pinned rules only, so the prompt must reach a live hippo call."""
+
+    def setUp(self):
+        hook.backoff_file().unlink(missing_ok=True)
+        self.addCleanup(lambda: hook.backoff_file().unlink(missing_ok=True))
+
+    def test_the_recall_section_is_cut_from_the_live_block(self):
+        self.assertEqual(hook.recall_section(payload(MEMORY + "\n" + RECALL)), RECALL)
+
+    def test_a_block_with_no_recall_gives_nothing(self):
+        self.assertEqual(hook.recall_section(payload(MEMORY)), "")
+        self.assertEqual(hook.recall_section(None), "")
+        self.assertEqual(hook.recall_section("not json"), "")
+
+    def test_the_hook_payload_goes_to_hippo_on_stdin(self):
+        stdin = json.dumps({"prompt": "which benchmark scores hippo"})
+        with mock.patch.object(hook, "exec_hippo", return_value=payload(RECALL)) as run:
+            self.assertEqual(hook.prompt_recall("C:/x", stdin, "which benchmark", 5.0), RECALL)
+        self.assertEqual(run.call_args.args[2], stdin)
+
+    def test_an_empty_prompt_skips_the_live_call(self):
+        with mock.patch.object(hook, "exec_hippo") as run:
+            self.assertEqual(hook.prompt_recall("C:/x", "{}", "  ", 5.0), "")
+        run.assert_not_called()
+
+    def test_no_time_left_skips_the_live_call(self):
+        with mock.patch.object(hook, "exec_hippo") as run:
+            self.assertEqual(hook.prompt_recall("C:/x", "{}", "a prompt", 0.5), "")
+        run.assert_not_called()
+
+    def test_the_env_switch_turns_recall_off(self):
+        import os
+        with mock.patch.dict(os.environ, {"CLAUDE_HIPPO_RECALL": "off"}), \
+                mock.patch.object(hook, "exec_hippo") as run:
+            self.assertEqual(hook.prompt_recall("C:/x", "{}", "a prompt", 5.0), "")
+        run.assert_not_called()
+
+    def test_a_timeout_pauses_recall_for_the_backoff(self):
+        boom = hook.subprocess.TimeoutExpired("hippo", 6)
+        with mock.patch.object(hook, "exec_hippo", side_effect=boom):
+            self.assertEqual(hook.prompt_recall("C:/x", "{}", "a prompt", 5.0), "")
+        with mock.patch.object(hook, "exec_hippo") as run:
+            self.assertEqual(hook.prompt_recall("C:/x", "{}", "a prompt", 5.0), "")
+        run.assert_not_called()
+
+    def test_an_expired_backoff_lets_recall_run_again(self):
+        import os
+        import time
+        hook.write_cache(hook.backoff_file(), "1")
+        old = time.time() - hook.RECALL_BACKOFF - 1
+        os.utime(hook.backoff_file(), (old, old))
+        with mock.patch.object(hook, "exec_hippo", return_value=payload(RECALL)):
+            self.assertEqual(hook.prompt_recall("C:/x", "{}", "a prompt", 5.0), RECALL)
+
+
+class Merge(unittest.TestCase):
+    def test_pinned_and_recall_travel_as_one_block(self):
+        out = hook.merge(payload(MEMORY), RECALL)
+        self.assertEqual(context_of(out), MEMORY + "\n\n" + RECALL)
+        self.assertEqual(json.loads(out)["hookSpecificOutput"]["hookEventName"], "UserPromptSubmit")
+
+    def test_recall_goes_out_after_the_pinned_block_was_deduped(self):
+        self.assertEqual(context_of(hook.merge(None, RECALL)), RECALL)
+
+    def test_no_recall_leaves_the_pinned_block_untouched(self):
+        raw = payload(MEMORY)
+        self.assertEqual(hook.merge(raw, ""), raw)
+        self.assertIsNone(hook.merge(None, ""))
+
+
 if __name__ == "__main__":
     unittest.main()
