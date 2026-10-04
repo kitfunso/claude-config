@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "coord",
+  "version": "0.1.0",
+  "description": "Lets parallel sessions on one repo see and respect each other's claims on branches, releases and named work items",
+  "author": {
+    "name": "Keith",
+    "email": "skfsk27@gmail.com"
+  },
+  "skills": [
+    "./"
+  ]
+}
