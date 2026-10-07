@@ -10,7 +10,9 @@ and it could be 50, rewrite it. Stop climbing at the first rung that holds:
 
 1. Does it need to exist? If the need is speculative, say so in one line and skip it.
 2. Is it already in this codebase? Reuse it. Re-implementing what lives a few files
-   over is the most common form of this mistake.
+   over is the most common form of this mistake. Search before the first line of a new
+   file; if the existing code cannot fit, say why in chat before writing a parallel
+   version. Backstop: `scripts/hooks/reuse_guard.py`. Set 2026-10-07 (probation).
 3. Standard library, native platform feature, or an installed dependency? Use it,
    unless the project's CLAUDE.md bans it. `bitfall` and `fifty` both open with a
    CRITICAL handwritten-only allowlist; there this rung inverts, write it yourself.
