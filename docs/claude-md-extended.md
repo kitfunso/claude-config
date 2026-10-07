@@ -224,8 +224,8 @@ Scope: chat replies, reports, docs, commit messages, code comments, and new UI c
 |---|---|
 | Default session model and every judging sub-agent: review, synthesis, planning, debugging (`opus`) | Opus 5.5 `claude-opus-5-5`, $4/$20 per MTok; better than Fable 5.1 at everything (Keith 2026-09-23) |
 | Premium with no edge over Opus 5.5 | Fable 5.1 `claude-fable-5-1`, $10/$50 per MTok, only on explicit ask |
-| Mechanical sub-agents: search, fan-outs, extraction, smoke tests (`sonnet`) | Sonnet 5 `claude-sonnet-5`, $2/$10 per MTok |
-| Trivial / mechanical | Sonnet 5 too; Haiku is banned (see Sub-agents) |
+| Mechanical sub-agents: search, fan-outs, extraction, smoke tests (`sonnet`) | Sonnet 5.5 `claude-sonnet-5-5` (since 2026-09-28), $2/$10 per MTok |
+| Trivial / mechanical | Sonnet 5.5 too; Haiku is banned (see Sub-agents) |
 
 - Effort ladder is `low | medium | high | xhigh | max` (`output_config.effort`; default `high`). `xhigh` is the sweet spot for coding and agentic work; `max` can overthink with diminishing returns.
 - The session model verifies its own work unprompted and is strongest on long-horizon agentic work. Do not add "double-check / re-verify" scaffolding to prompts for it: that causes over-verification with no accuracy gain.
