@@ -105,7 +105,7 @@ The chat gets three to five sentences and the path.
 - When every defect lives outside the repo (a CDN rule, indexing requests), skip the PR and say so. hippo, 2026-10-10: the www twin needed a Cloudflare rule and nothing in the site was broken.
 - Run the repo's own gates: build, tests, lint and format. A format check may cover only `src/`, so run prettier on new files elsewhere by hand.
 - Cadence (adopted 2026-10-09): publish new pages one or two a week. Leave a shipped page alone for 60 days. Read GSC four and eight weeks after a change. On boring-math, title edits without links did not move rank.
-- Indexing requests (GSC > URL Inspection > Request indexing, in Chrome) go after the fixed pages are live, never before. The quota is roughly 10 to 12 URLs a day (phzse, 2026-09-07), so request the pages that matter most first.
+- Indexing requests (GSC > URL Inspection > Request indexing, in Chrome) go after the fixed pages are live, never before. The quota is roughly 10 URLs a day, and it looks shared across the whole account rather than counted per site: on 2026-10-10, 7 hippo requests plus 3 phzse ones used it up, and the 11th got "Quota Exceeded". Request the pages that matter most first, and carry any leftovers into the next day.
 - **IndexNow setup:**
   - Make a key with `node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`.
   - Put `<key>.txt` at the site root (`public/` or `static/`), holding exactly the key with no newline.
