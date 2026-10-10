@@ -55,9 +55,10 @@ Reading rules. Each one corrected a wrong read on a real site:
 
 ```bash
 node $S/gsc.mjs inspect --site "<property>" [--url https://<host>] [--limit 200]
+node $S/gsc.mjs inspect --site "<property>" --urls https://www.<host>/,https://www.<host>/page/
 ```
 
-It inspects every sitemap URL. It prints the counts by coverage state, the pages that are not indexed with their last crawl, and the pages where Google picked another URL as the canonical. On both test sites this carried the main finding: 7 of 14 hippo pages and 4 of 16 phzse pages were not indexed. Read the states this way:
+It inspects every sitemap URL, or the list given to `--urls` (use it on the twin host's copies: hippo's /benchmarks/ was indexed only on www). It prints the counts by coverage state, the pages that are not indexed with their last crawl, and the pages where Google picked another URL as the canonical. On both test sites this carried the main finding: 7 of 14 hippo pages and 4 of 16 phzse pages were not indexed. Read the states this way:
 - **"Discovered" or "unknown to Google"**: Google has not crawled the page. Request indexing, and add internal links to it.
 - **"Crawled - currently not indexed"**: Google read the page and declined it. That is a content or trust problem, so fix the page first, then request indexing. Indexing requests worked on phzse's phase guides (2026-09-07).
 
@@ -83,13 +84,13 @@ How to read it:
 
 Then by hand:
 - **Bing coverage**, which feeds ChatGPT search and Copilot. Bing Webmaster Tools is the reliable count when the site is verified there. Otherwise run `site:<host>` in Chrome `ba81958c`: scripted reads hit a challenge page (both test runs, 2026-10-10). If Bing is far short of the sitemap, set up IndexNow (section 5).
-- **Cloudflare zones** (`reference_cloudflare_zones.md`): Dashboard > AI Crawl Control, in Chrome `ba81958c`. The wrangler OAuth token cannot read bot settings. Check the AI bot policies. In the 404 list, ignore `/.env`, `/.git`, `/wp-*` and `/actuator`: those are exploit scanners that use crawler names. The other 404s are the leads. Redirect rules for twin hosts live here too.
+- **Cloudflare zones** (`reference_cloudflare_zones.md`): `dash.cloudflare.com/<account>/<zone>/ai/metrics` (AI Crawl Control), in Chrome `ba81958c`. The wrangler OAuth token cannot read bot settings. Check the AI bot policies, then set "Most crawled paths" to 4xx. Ignore `/.env`, `/.git`, `/wp-*`, `/actuator` and other admin probes: those are exploit scanners that use crawler names. A path ending in `/null` is a crawler artefact when the page HTML has no "null" in it (hippo, 2026-10-10). The other 404s are the leads. Redirect rules for twin hosts live in the zone's Rules, because Pages `_redirects` cannot redirect a whole domain.
 - **A build gate for share images**, if the audit found broken ones: use the repo's own gate if it has one (phzse: `scripts/check-og-image.mjs` in `npm run verify`). Otherwise add one, like boring-maths' `scripts/seo/check-og-images.mjs`. On boring-math, 110 of 181 pages had pointed at a 404.
 - **Skip:** `llms.txt` work (Google's AI-features doc says no special file is needed), and FAQ schema for Google (the FAQ rich result stopped on 2026-05-07).
 
 ## 4. Report
 
-Write one self-contained HTML file, `<repo>/docs/seo-aeo-<YYYY-MM-DD>.html` (the scratchpad when there is no repo), and open it in the browser. Reports never go to claude.ai.
+Write one self-contained HTML file and open it in the browser. It goes in `<repo>/docs/seo-aeo-<YYYY-MM-DD>.html` when a PR will carry it, else in `~/Documents/seo-reviews/<YYYY-MM-DD>/<host>.html`: an untracked file in a checkout that parallel sessions share can be swept into their commits. Reports never go to claude.ai.
 - The first paragraph is the answer, in three sentences at most.
 - Then come the numbers, each beside the command that regenerates it, against the last checkpoint.
 - Then the defects with counts, and the fixes ranked.
@@ -101,6 +102,7 @@ The chat gets three to five sentences and the path.
 ## 5. Fix, as a PR
 
 - Branch from a freshly fetched default branch, and open one PR. Fix each defect at its root, and add a build gate for each defect class.
+- When every defect lives outside the repo (a CDN rule, indexing requests), skip the PR and say so. hippo, 2026-10-10: the www twin needed a Cloudflare rule and nothing in the site was broken.
 - Run the repo's own gates: build, tests, lint and format. A format check may cover only `src/`, so run prettier on new files elsewhere by hand.
 - Cadence (adopted 2026-10-09): publish new pages one or two a week. Leave a shipped page alone for 60 days. Read GSC four and eight weeks after a change. On boring-math, title edits without links did not move rank.
 - Indexing requests (GSC > URL Inspection > Request indexing, in Chrome) go after the fixed pages are live, never before. The quota is roughly 10 to 12 URLs a day (phzse, 2026-09-07), so request the pages that matter most first.

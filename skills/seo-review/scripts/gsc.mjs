@@ -7,7 +7,7 @@ const USAGE = `usage: gsc.mjs <mode> --site <property> [--fresh]
   daily     --start <date> --end <date> [--query "<q>"] [--by day|week|month]
   queries   --start <date> --end <date> [--brand "name,other name"]
   windows   --a <start>:<end> --b <start>:<end> [--min 30]
-  inspect   [--url https://host] [--limit 200]
+  inspect   [--url https://host | --urls <url>,<url>] [--limit 200]
   sitemaps
 --fresh adds the last two or three days, still partial (dataState=all); the default, final, matches the pull.`
 
@@ -107,8 +107,8 @@ async function windows() {
 
 async function inspect() {
   const origin = f.url ? new URL(f.url).origin : f.site.startsWith('sc-domain:') ? `https://${f.site.slice(10)}` : new URL(f.site).origin
-  const robots = await fetch(`${origin}/robots.txt`).then(r => (r.ok ? r.text() : ''))
-  const { urls } = await sitemapUrls(origin, robots)
+  const robots = f.urls ? '' : await fetch(`${origin}/robots.txt`).then(r => (r.ok ? r.text() : ''))
+  const { urls } = f.urls ? { urls: String(f.urls).split(',') } : await sitemapUrls(origin, robots)
   const list = urls.slice(0, Number(f.limit ?? 200))
   const results = await pool(list, 4, async url => {
     const idx = (await post(INSPECT, { inspectionUrl: url, siteUrl: f.site })).inspectionResult?.indexStatusResult ?? {}
@@ -116,7 +116,7 @@ async function inspect() {
   })
   const states = {}
   for (const r of results) states[r.state] = (states[r.state] ?? 0) + 1
-  console.log(`${origin}: inspected ${list.length} of ${urls.length} sitemap URLs; indexed ${results.filter(r => r.indexed).length}`)
+  console.log(`${origin}: inspected ${list.length} of ${urls.length} ${f.urls ? 'given' : 'sitemap'} URLs; indexed ${results.filter(r => r.indexed).length}`)
   for (const [s, n] of Object.entries(states).sort((x, y) => y[1] - x[1])) console.log(`  ${s}: ${n}`)
   const out = results.filter(r => !r.indexed)
   if (out.length) console.log('not indexed:\n' + out.map(r => `  ${show(r.url).padEnd(60)} ${r.state}, last crawl ${r.crawled}`).join('\n'))
