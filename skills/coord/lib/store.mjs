@@ -1,5 +1,5 @@
 // One file per claim, created with link() so two sessions racing for one key cannot both win.
-import { linkSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { linkSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
@@ -30,13 +30,26 @@ function tmpFor(path, value) {
 
 const writeAtomic = (path, value) => renameSync(tmpFor(path, value), path)
 
-export function touch(sid, cwd, now = Date.now()) {
+export function touch(sid, cwd, transcript, now = Date.now()) {
   const prev = readJson(sessionFile(sid))
-  writeAtomic(sessionFile(sid), { sid, cwd: cwd ?? prev?.cwd, seen: now })
+  writeAtomic(sessionFile(sid), { sid, cwd: cwd ?? prev?.cwd, transcript: transcript ?? prev?.transcript, seen: now })
+}
+
+function mtime(path) {
+  try {
+    return statSync(path).mtimeMs
+  } catch (err) {
+    if (err.code === 'ENOENT') return 0
+    throw err
+  }
 }
 
 export const sessionInfo = sid => readJson(sessionFile(sid))
-export const lastActive = claim => Math.max(sessionInfo(claim.session)?.seen ?? 0, claim.at)
+// Claude Code writes the transcript on every message and tool call, so no per-prompt hook is needed to prove a session alive.
+export function lastActive(claim) {
+  const s = sessionInfo(claim.session)
+  return Math.max(s?.seen ?? 0, s?.transcript ? mtime(s.transcript) : 0, claim.at)
+}
 export const isLive = (claim, now = Date.now()) =>
   (claim.until === undefined || now < claim.until) && now - lastActive(claim) < TTL_MS
 

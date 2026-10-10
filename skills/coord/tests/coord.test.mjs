@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
@@ -68,6 +68,19 @@ test('a silent session goes stale and its claim can be taken', () => {
   assert.equal(coord('sess-eeee5555', 'claim', 'stale-item').code, 0)
 })
 
+test('a fresh transcript keeps a session live with no hook touch', () => {
+  const transcript = join(home, 'sess-ffff6666.jsonl')
+  const file = join(home, 'claims', 'kitfunso_hippo', 'busy-item.json')
+  writeFileSync(transcript, '{}\n')
+  assert.equal(coord('sess-ffff6666', 'claim', 'busy-item').code, 0)
+  const old = Date.now() - 4 * 3600_000
+  writeFileSync(file, JSON.stringify({ ...JSON.parse(readFileSync(file, 'utf8')), at: old }))
+  writeFileSync(join(home, 'sessions', 'sess-ffff6666.json'), JSON.stringify({ sid: 'sess-ffff6666', transcript, seen: old }))
+  assert.equal(coord('sess-gggg7777', 'claim', 'busy-item').code, 2)
+  utimesSync(transcript, old / 1000, old / 1000)
+  assert.equal(coord('sess-gggg7777', 'claim', 'busy-item').code, 0)
+})
+
 test('end drops every claim of the session', () => {
   assert.equal(coord('sess-aaaa1111', 'end').code, 0)
   assert.equal(coord('sess-cccc3333', 'claim', 'Z0').code, 2)
@@ -97,7 +110,9 @@ function hook(event, sid, extra = {}) {
 const bashHook = (sid, command) => hook('PreToolUse', sid, { tool_name: 'Bash', tool_input: { command } })
 
 test('classic hooks: board at start, deny on a held branch, claims gone at end', () => {
-  assert.match(hook('SessionStart', 'hook-a').additionalContext, /kitfunso\/hippo[\s\S]*coord\.mjs claim <item>/)
+  const started = hook('SessionStart', 'hook-a', { transcript_path: join(home, 'hook-a.jsonl') })
+  assert.match(started.additionalContext, /kitfunso\/hippo[\s\S]*coord\.mjs claim <item>/)
+  assert.equal(JSON.parse(readFileSync(join(home, 'sessions', 'hook-a.json'), 'utf8')).transcript, join(home, 'hook-a.jsonl'))
   assert.equal(bashHook('hook-a', 'git switch -c feat/hooked'), undefined)
   const denied = bashHook('hook-b', 'git push origin feat/hooked')
   assert.equal(denied.permissionDecision, 'deny')
@@ -116,4 +131,6 @@ test('parser reads cwd, flags and what each command takes', () => {
   assert.deepEqual(pick('npm --prefix ~/hippo version patch'), [{ mode: 'claim', release: true, cwd: 'C:/Users/me/hippo' }])
   assert.deepEqual(pick('git branch -D x; git tag -l; echo "git push"'), [])
   assert.deepEqual(pick('git push'), [{ mode: 'claim', current: true, cwd: undefined }])
+  assert.deepEqual(pick('git push origin feat 2>&1 | tail -1'), [{ mode: 'claim', branch: 'feat', cwd: undefined }])
+  assert.deepEqual(pick('git push origin feat >out.log 2> /dev/null'), [{ mode: 'claim', branch: 'feat', cwd: undefined }])
 })

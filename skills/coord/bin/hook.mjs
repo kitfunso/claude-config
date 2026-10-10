@@ -12,19 +12,20 @@ const TOUCH_EVERY_MS = 5 * 60_000
 
 const emit = (event, fields) => process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: event, ...fields } }))
 
-function freshen(sid, cwd) {
-  const seen = sessionInfo(sid)?.seen ?? 0
-  if (Date.now() - seen > TOUCH_EVERY_MS) touch(sid, cwd)
+function freshen(sid, cwd, transcript) {
+  const prev = sessionInfo(sid)
+  const moved = transcript !== undefined && prev?.transcript !== transcript
+  if (moved || Date.now() - (prev?.seen ?? 0) > TOUCH_EVERY_MS) touch(sid, cwd, transcript)
 }
 
-function sessionStart(sid, cwd) {
-  touch(sid, cwd)
+function sessionStart(sid, cwd, transcript) {
+  touch(sid, cwd, transcript)
   const repo = repoOf(cwd)
   if (repo !== undefined) emit('SessionStart', { additionalContext: `${board(list(repo), sid, repo)}\n${HOW}` })
 }
 
 function preToolUse(sid, cwd, input) {
-  freshen(sid, cwd)
+  freshen(sid, cwd, input.transcript_path)
   const command = input.tool_input?.command
   if (input.tool_name !== 'Bash' || typeof command !== 'string' || !RELEVANT.test(command)) return
   const verdict = guard(command, sid, cwd)
@@ -35,8 +36,7 @@ const input = JSON.parse(readFileSync(0, 'utf8'))
 const { session_id: sid, cwd } = input
 if (sid && process.env.CLAUDE_COORD !== 'off') {
   const event = input.hook_event_name
-  if (event === 'SessionStart') sessionStart(sid, cwd)
+  if (event === 'SessionStart') sessionStart(sid, cwd, input.transcript_path)
   else if (event === 'PreToolUse') preToolUse(sid, cwd, input)
-  else if (event === 'UserPromptSubmit') freshen(sid, cwd)
   else if (event === 'SessionEnd') endSession(sid)
 }

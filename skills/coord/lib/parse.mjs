@@ -1,5 +1,7 @@
 // SHORTCUT: quote-aware split on && || ; | and newlines; no subshells or variable expansion. A full sh parser if real commands slip past.
 const SEPARATORS = ['&&', '||', ';', '|', '\n']
+// Redirections are not arguments: unparsed, `git push origin x 2>&1` claimed a branch named 2>&1.
+const REDIRECT = /^&?(>\||>>?|<{1,3})(&(\d+|-))?/
 
 export function segments(command) {
   const out = []
@@ -7,8 +9,10 @@ export function segments(command) {
   let word = ''
   let hasWord = false
   let quote = null
+  let skipTarget = false
   const endWord = () => {
-    if (hasWord) words.push(word)
+    if (hasWord && !skipTarget) words.push(word)
+    if (hasWord) skipTarget = false
     word = ''
     hasWord = false
   }
@@ -24,6 +28,12 @@ export function segments(command) {
     } else if (c === '\\' && i + 1 < command.length) {
       word += command[++i]
       hasWord = true
+    } else if (c === '>' || c === '<' || (c === '&' && command[i + 1] === '>')) {
+      const m = REDIRECT.exec(command.slice(i))
+      if (/^\d+$/.test(word)) hasWord = false
+      endWord()
+      i += m[0].length - 1
+      skipTarget = m[2] === undefined
     } else if (SEPARATORS.some(s => command.startsWith(s, i))) {
       endWord()
       if (words.length > 0) out.push(words)
