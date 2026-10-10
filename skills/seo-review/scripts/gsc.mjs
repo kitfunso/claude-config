@@ -21,8 +21,9 @@ const auth = { Authorization: `Bearer ${await getAccessToken({})}` }
 
 async function post(url, body) {
   const res = await fetch(url, { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  if (!res.ok) throw new Error(`${url} ${res.status} ${await res.text()}`)
-  return res.json()
+  if (res.ok) return res.json()
+  const text = await res.text()
+  throw Object.assign(new Error(`${url} ${res.status} ${text}`), { status: res.status, reason: text.match(/"message":\s*"([^"]*)"/)?.[1] })
 }
 const site = `${API}/sites/${encodeURIComponent(f.site)}`
 // SHORTCUT: one page of 25,000 rows; paginate with startRow for a bigger site.
@@ -111,8 +112,14 @@ async function inspect() {
   const { urls } = f.urls ? { urls: String(f.urls).split(',') } : await sitemapUrls(origin, robots)
   const list = urls.slice(0, Number(f.limit ?? 200))
   const results = await pool(list, 4, async url => {
-    const idx = (await post(INSPECT, { inspectionUrl: url, siteUrl: f.site })).inspectionResult?.indexStatusResult ?? {}
-    return { url, indexed: idx.verdict === 'PASS', state: idx.coverageState ?? idx.verdict ?? 'unknown', crawled: idx.lastCrawlTime ?? 'never', google: idx.googleCanonical }
+    try {
+      const idx = (await post(INSPECT, { inspectionUrl: url, siteUrl: f.site })).inspectionResult?.indexStatusResult ?? {}
+      return { url, indexed: idx.verdict === 'PASS', state: idx.coverageState ?? idx.verdict ?? 'unknown', crawled: idx.lastCrawlTime ?? 'never', google: idx.googleCanonical }
+    } catch (e) {
+      // A URL-prefix property 403s the twin host; mark that URL and keep the run.
+      if (e.status !== 403) throw e
+      return { url, indexed: false, state: `403 ${e.reason ?? 'forbidden'}`, crawled: 'n/a' }
+    }
   })
   const states = {}
   for (const r of results) states[r.state] = (states[r.state] ?? 0) + 1

@@ -58,7 +58,7 @@ node $S/gsc.mjs inspect --site "<property>" [--url https://<host>] [--limit 200]
 node $S/gsc.mjs inspect --site "<property>" --urls https://www.<host>/,https://www.<host>/page/
 ```
 
-It inspects every sitemap URL, or the list given to `--urls` (use it on the twin host's copies: hippo's /benchmarks/ was indexed only on www). It prints the counts by coverage state, the pages that are not indexed with their last crawl, and the pages where Google picked another URL as the canonical. On both test sites this carried the main finding: 7 of 14 hippo pages and 4 of 16 phzse pages were not indexed. Read the states this way:
+It inspects every sitemap URL, or the list given to `--urls` (use it on the twin host's copies: hippo's /benchmarks/ was indexed only on www). A URL-prefix property such as phzse's cannot read the twin host: those URLs come back as `403` rows, and only a Domain property (`sc-domain:`) can read them. It prints the counts by coverage state, the pages that are not indexed with their last crawl, and the pages where Google picked another URL as the canonical. On both test sites this carried the main finding: 7 of 14 hippo pages and 4 of 16 phzse pages were not indexed. Read the states this way:
 - **"Discovered" or "unknown to Google"**: Google has not crawled the page. Request indexing, and add internal links to it.
 - **"Crawled - currently not indexed"**: Google read the page and declined it. That is a content or trust problem, so fix the page first, then request indexing. Indexing requests worked on phzse's phase guides (2026-09-07).
 
