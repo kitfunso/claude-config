@@ -1,0 +1,17 @@
+{
+  "skill_name": "seo-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "check the gsc of hippo-memory.com and review its seo/aeo. report only, no PR",
+      "expected_output": "An HTML report whose first paragraph answers how hippo-memory.com is doing, with page-level GSC totals, a same-page or daily read where traffic moved, the aeo-audit results (robots per bot, sitemap count, og:image and JSON-LD findings), ranked levers, and the locked-copy rule respected.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "phzse.com is getting almost no search traffic, can you review seo and aeo for it? just the report for now",
+      "expected_output": "An HTML report on phzse.com (GSC property https://phzse.com/) with page-level totals, sitemap status from GSC, the aeo-audit results, a stated cause or an honest 'not tested', and ranked fixes without opening a PR.",
+      "files": []
+    }
+  ]
+}

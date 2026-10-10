@@ -1,6 +1,6 @@
 ---
 name: gsc-review
-description: Weekly GSC traffic review and improvement batch for boring-math.com.
+description: Weekly GSC traffic review and improvement batch for boring-math.com. Site-wide crawl, AI-search and other sites: /seo-review.
 disable-model-invocation: true
 ---
 
