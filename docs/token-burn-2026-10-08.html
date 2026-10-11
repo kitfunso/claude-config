@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Where the tokens go, 24 Sep to 8 Oct 2026</title>
+<style>
+  body { font: 16px/1.55 system-ui, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; color: #1b1f24; background: #fafaf8; }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  h2 { font-size: 20px; margin-top: 40px; border-bottom: 1px solid #d8d8d2; padding-bottom: 6px; }
+  .sub { color: #5c6470; margin-top: 0; }
+  .lead { font-size: 19px; background: #fff; border-left: 4px solid #c2410c; padding: 14px 18px; }
+  .row { display: grid; grid-template-columns: 250px 1fr 56px; gap: 10px; align-items: center; margin: 5px 0; font-size: 14px; }
+  .bar { height: 14px; background: #c2410c; border-radius: 2px; }
+  .bar.b { background: #1d4ed8; } .bar.g { background: #4d7c0f; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  ol li { margin-bottom: 14px; }
+  .size { display: inline-block; font-size: 12px; background: #1b1f24; color: #fff; border-radius: 3px; padding: 1px 7px; margin-left: 6px; }
+  code { background: #ecece6; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+  pre { background: #1b1f24; color: #e6e6e0; padding: 14px; border-radius: 4px; overflow-x: auto; font-size: 13px; }
+  .note { color: #5c6470; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Where the tokens go</h1>
+<p class="sub">Last 14 days of transcripts on the home box, measured 8 Oct 2026. 60,494 API calls across 173 main sessions and 995 sub-agents. A second pass the same day corrected two of the first pass's recommendations; section 5 says which.</p>
+
+<p class="lead">Two thirds of the burn is sub-agents. The largest single block is Opus agents doing build work: a quarter of all burn went to Opus agents whose brief was a code build with a test check, and the spawn call named Opus every time. The main thread is a third. Reply length and the config files are small by comparison.</p>
+
+<h2>1. Who spends it</h2>
+<div class="row"><span>Sub-agents</span><div><div class="bar" style="width:66%"></div></div><span class="num">66%</span></div>
+<div class="row"><span>Main thread</span><div><div class="bar" style="width:34%"></div></div><span class="num">34%</span></div>
+<p class="note">In August sub-agents were 1.3% of Fable cache reads. The pattern has flipped since the move to Opus plus delegated executors.</p>
+
+<div class="row"><span>Opus</span><div><div class="bar b" style="width:88.7%"></div></div><span class="num">88.7%</span></div>
+<div class="row"><span>Sonnet</span><div><div class="bar b" style="width:9%"></div></div><span class="num">9.0%</span></div>
+<div class="row"><span>Fable</span><div><div class="bar b" style="width:2.3%"></div></div><span class="num">2.3%</span></div>
+
+<div class="row"><span>hippo (all checkouts)</span><div><div class="bar g" style="width:62.3%"></div></div><span class="num">62.3%</span></div>
+<div class="row"><span>home directory sessions</span><div><div class="bar g" style="width:27.2%"></div></div><span class="num">27.2%</span></div>
+<div class="row"><span>Documents (grants)</span><div><div class="bar g" style="width:3.3%"></div></div><span class="num">3.3%</span></div>
+<div class="row"><span>.claude config work</span><div><div class="bar g" style="width:3.1%"></div></div><span class="num">3.1%</span></div>
+<div class="row"><span>everything else</span><div><div class="bar g" style="width:4.1%"></div></div><span class="num">4.1%</span></div>
+<p class="note">hippo = hippo 55.3 + hippo-ent 4.6 + hippo-paper 1.8 + hippo-bench 0.6. Three days (28 Sep, 3 Oct, 4 Oct) carry 78% of the fortnight.</p>
+
+<h2>2. What kind of token</h2>
+<div class="row"><span>Cache reads (re-sent history)</span><div><div class="bar" style="width:49.1%"></div></div><span class="num">49.1%</span></div>
+<div class="row"><span>Cache writes</span><div><div class="bar" style="width:31.1%"></div></div><span class="num">31.1%</span></div>
+<div class="row"><span>Output (replies, thinking, edits)</span><div><div class="bar" style="width:19.7%"></div></div><span class="num">19.7%</span></div>
+<p>Raw counts: 7,303M cache-read tokens, 342M cache-write, 58M output, 0.1M fresh input. Every tool call re-sends the whole conversation, so the bill is roughly <b>calls times context size</b>.</p>
+
+<h2>3. Inside the sub-agents</h2>
+<div class="row"><span>Agents of 100+ calls</span><div><div class="bar" style="width:59.6%"></div></div><span class="num">59.6%</span></div>
+<div class="row"><span>41 to 100 calls</span><div><div class="bar" style="width:22.1%"></div></div><span class="num">22.1%</span></div>
+<div class="row"><span>11 to 40 calls</span><div><div class="bar" style="width:14.4%"></div></div><span class="num">14.4%</span></div>
+<div class="row"><span>1 to 10 calls</span><div><div class="bar" style="width:3.9%"></div></div><span class="num">3.9%</span></div>
+<p class="note">Share of sub-agent burn. The costliest agents ran 200 to 736 calls and all peaked at about 207k context, which is where compaction fires.</p>
+<ul>
+  <li><b>Type:</b> general-purpose 56.4%, typescript-pro 17.3%, senior-code-reviewer 16.0% (251 reviewer spawns), worker 3.2% (228 spawns).</li>
+  <li><b>Model:</b> Opus 83.8%, Sonnet 12.9%, Fable 3.3%. An Opus general-purpose agent runs a median 85 calls; a Sonnet worker runs 5.</li>
+  <li><b>Fixed floor:</b> an all-tools agent starts at 44k to 46k tokens before it reads a line of code. <code>worker</code> and <code>Plan</code> start at 25k. That starting block rides in every later call and is 37.3% of all sub-agent context.</li>
+  <li><b>What fills the rest:</b> Read results are 70.9% of the tool text sub-agents take in (mean 7,966 chars a read). Single results over 20k chars, almost all whole-file reads, are 31.4% of all tool text.</li>
+  <li><b>Cache expiry:</b> sub-agents that sat idle 5 to 60 minutes between calls and then rewrote their whole context cost 6.3% of all burn. Sub-agent caches are mostly the 5-minute kind (278M tokens written at 5 minutes, 64M at 1 hour).</li>
+</ul>
+
+<h2>3b. What the sub-agents were doing</h2>
+<div class="row"><span>Opus, builds or researches</span><div><div class="bar" style="width:61.2%"></div></div><span class="num">30.6%</span></div>
+<div class="row"><span>Opus critic or reviewer</span><div><div class="bar" style="width:27.6%"></div></div><span class="num">13.8%</span></div>
+<div class="row"><span>Opus orchestrator sub-agent</span><div><div class="bar" style="width:14.4%"></div></div><span class="num">7.2%</span></div>
+<div class="row"><span>Sonnet, builds or researches</span><div><div class="bar b" style="width:10.8%"></div></div><span class="num">5.4%</span></div>
+<div class="row"><span>Sonnet critic</span><div><div class="bar b" style="width:3.4%"></div></div><span class="num">1.7%</span></div>
+<div class="row"><span>Fable leaf</span><div><div class="bar g" style="width:2.8%"></div></div><span class="num">1.4%</span></div>
+<div class="row"><span>Sonnet orchestrator sub-agent</span><div><div class="bar b" style="width:2.2%"></div></div><span class="num">1.1%</span></div>
+<p class="note">Share of all burn; bars are drawn at double scale. An Opus builder runs a median 83 calls at a mean context of 124k. A Sonnet builder runs a median 9.</p>
+<ul>
+  <li><b>How Opus was chosen:</b> the Agent call named <code>opus</code> for all but 0.2 points of the Opus builder burn. The <code>model:</code> line in the agent files decided almost nothing, so changing those defaults would not have helped.</li>
+  <li><b>What the briefs asked for:</b> Opus agents that are not critics are 37.0% of all burn, and 35.5 of those points went to agents that made five or more edits. Their briefs run a median 3,407 characters and name the worktree, the tests and the commits: "E3 executor: Z0 surfaces", "Q10 misc long functions", "E1 fix round 4 executor".</li>
+  <li><b>devrl:</b> four sessions that loaded /dev-framework-rl hold 60.9% of sub-agent burn. The skill already sends executors to Sonnet (section 4b of the skill); the orchestrators named Opus anyway.</li>
+  <li><b>Reviewers:</b> 257 senior-code-reviewer spawns in 12 sessions, 9.4% of all burn, median 19 calls, 69% of it inside devrl sessions.</li>
+  <li><b>Idle rewrites by cause</b> (7.2% of all burn over 635 rewrites in the second pass): <code>until grep</code> polling loops 1.0%, agents resumed after their turn had ended 0.8%, <code>gh pr</code> CI waits 0.7%, long <code>vitest</code> runs 0.3%. Waiting, not long test runs, is the main cause.</li>
+  <li><b>One tool per call:</b> 76% of sub-agent tool calls carry a single tool. Chained single reads cost 11.0% of all burn in sub-agents and 3.6% on the main thread.</li>
+</ul>
+
+<h2>3c. What each tool adds to an agent's starting context</h2>
+<div class="row"><span>Six core tools, no CLAUDE.md</span><div><div class="bar g" style="width:17.3%"></div></div><span class="num">6.0k</span></div>
+<div class="row"><span>Six core tools</span><div><div class="bar g" style="width:48.2%"></div></div><span class="num">16.8k</span></div>
+<div class="row"><span>+ WebFetch, WebSearch</span><div><div class="bar g" style="width:50.4%"></div></div><span class="num">17.5k</span></div>
+<div class="row"><span>+ Agent</span><div><div class="bar g" style="width:51.3%"></div></div><span class="num">17.8k</span></div>
+<div class="row"><span>+ PowerShell</span><div><div class="bar g" style="width:59%"></div></div><span class="num">20.5k</span></div>
+<div class="row"><span>+ Skill</span><div><div class="bar g" style="width:81.3%"></div></div><span class="num">28.3k</span></div>
+<div class="row"><span>Every built-in tool, no MCP</span><div><div class="bar g" style="width:97.1%"></div></div><span class="num">33.8k</span></div>
+<div class="row"><span>Tools omitted (general-purpose)</span><div><div class="bar g" style="width:100%"></div></div><span class="num">34.8k</span></div>
+<p class="note">Tokens in the first call of a Sonnet agent given a one-word brief, Claude Code 2.1.288, run from a temp directory. Each "+" row adds one thing to the six core tools (Read, Grep, Glob, Bash, Edit, Write). The Skill tool carries the skill listing, 11.5k of the 18k gap. PowerShell is 3.7k. Every MCP server together is about 1k. CLAUDE.md and the other config text is 10.7k.</p>
+
+<h2>4. Main thread</h2>
+<p>Under a third of the burn. The big sessions hold a mean context of 137k to 154k for 800 to 2,300 calls each. Tool mix: Bash 44.8%, Edit 16.2%, Read 13.5%, Grep 10.0%. Shell reads still happen: 2,152 <code>sed -n</code> calls and about 565 <code>cat</code> calls across all threads.</p>
+<p>Config text is 18,128 tokens a prompt today, against 16,375 on 13 Sep. It is a small part of a 145k context.</p>
+
+<h2>5. What changed on 8 Oct</h2>
+<ol>
+  <li><b>An Opus agent no longer gets a code build without a reason.</b><span class="size">largest</span><br>New Sub-agents rule in the global CLAUDE.md: a code build from a complete brief runs on Sonnet. A new hook, the spawn guard, moves an Agent call that names <code>opus</code> to Sonnet and tells the caller, when the brief names tests and a worktree, branch or commit. A line <code>Opus because: &lt;what is still open&gt;</code> in the brief keeps Opus. The first version denied the call; a deny shows a hook error and costs a second send of the brief, so it became a rewrite the same evening. Reviews, debugging, planning, design, research, drafting and skill-run orchestrators pass untouched. Backtest on these 14 days: 122 of 1,038 spawns caught, 24.6% of all burn, with no review and no Sonnet spawn among them. Sonnet weighs half of Opus, so the ceiling is about 12% of all burn.</li>
+  <li><b>Five agent types lost the Skill and PowerShell tools.</b><span class="size">small, about 2%</span><br><code>typescript-pro</code>, <code>python-backend-engineer</code>, <code>frontend-developer</code>, <code>debugger</code> and <code>senior-code-reviewer</code> now carry <code>disallowedTools: Skill, PowerShell</code>. In 14 days those types made no Skill call and 39 PowerShell calls between them, against 8,818 Bash calls. Measured before and after with the same one-word brief: starting context fell from 35.0k to 37.0k down to 21.4k to 23.4k, 13.6k off every call each of them makes. The 2% is an estimate from shares.</li>
+  <li><b>Every sub-agent starts with a three-line contract.</b><span class="size">unmeasured</span><br>Batch independent reads and read line ranges; do not wait on CI or a remote job; stop when the brief's check passes and return what is done, what remains and the next step. It aims at the 11.0% in chained single reads and the 7.2% in idle rewrites. It is a notice, so the week-on measure decides whether it works.</li>
+  <li><b>Briefs.</b><span class="size">part of item 1's rule</span><br>The same CLAUDE.md bullet asks for one slice per agent ending in a commit, <code>file:line</code> pointers, a return at push, and <code>worker</code> or a specialist type over <code>general-purpose</code>, which starts 14k to 18k tokens heavier.</li>
+</ol>
+<p class="note">Checks that closed the work: 28 unit tests on the hook pass, and the whole hooks test folder passes (209 Python, 80 Node). Live, in fresh <code>claude -p</code> sessions: a sub-agent quoted rule 2 of the contract back; an Opus build spawn ran on Sonnet only and the caller quoted the guard's notice; the same spawn with an <code>Opus because:</code> reason, on its own line or in mid-sentence, ran on Opus. Nothing is committed in <code>~/.claude</code>.</p>
+
+<h2>5a. Measured and left alone</h2>
+<ul>
+  <li><b>The compaction window stays at 250k.</b> The first pass suggested a 150k trial. That was wrong: the simulation puts a 150k window at +4.7% of all burn on the main thread, because compactions cost more than the smaller context saves. Change in all burn by window, main then sub-agents: 220k −1.0 and −3.0; 200k −1.3 and −4.1; 180k −0.8 and −4.8; 160k +1.6 and −4.5; 150k +4.7 and −3.3. A 200k window models at −5.4% in total with two thirds more main-thread compactions (271 to 453). The model leaves out what a compaction loses, so the setting is unchanged. It is the next thing to trial.</li>
+  <li><b>No call cap on sub-agents.</b> The first pass called this the largest lever because agents over 100 calls hold 39% of all burn. Holding the burn is not the same as wasting it. Cutting an agent into slices is close to compacting it earlier, which the simulation puts at 3 to 5% of all burn at best, and a cut in the middle of a task costs a handoff. The one-slice rule sits in the brief rule and the contract; no hook counts calls.</li>
+  <li><b>The agent files keep <code>model: opus</code>.</b> The default decided 0.2% of burn.</li>
+  <li><b>Critics stay on Opus: your call.</b> Opus critics are 13.8% of all burn. devrl's own A/B found no measured premium for Opus critics (mean reward 23.06 against 22.63), and the 23 Sep routing rule then moved every review to Opus. Sonnet critics would save about 7% of all burn.</li>
+  <li><b>One review per PR: not done.</b> devrl runs a critic at every stage by design. Cutting the critic set is a redesign of the skill, not a setting.</li>
+  <li><b>No CLAUDE.md for mechanical agents: not done.</b> <code>omitClaudeMd</code> takes 10.7k off every call, and takes the git, secrets and sourcing rules with it.</li>
+  <li><b>Parallel hippo agents and <code>/clear</code>:</b> habits, nothing to configure.</li>
+</ul>
+
+<h2>5b. The first pass's list, kept for the record</h2>
+<p class="note">Written before the second pass. Item 1's size and item 7's window were wrong, item 2 named the right target but not the cause, and item 6 is now tested (section 3c).</p>
+<ol>
+  <li><b>Cap sub-agent length.</b><span class="size">largest</span><br>Agents over 100 calls are about 39% of all burn. Brief each agent for one slice that ends in a commit, around 60 to 80 calls, and have the next slice start in a fresh agent from the commit plus a short handoff note. A fresh agent restarts at 45k where the old one sat at 135k.</li>
+  <li><b>Route executors to Sonnet when the plan is already written.</b><span class="size">large</span><br>Opus general-purpose and typescript-pro executors dominate. The routing rule already says Sonnet for mechanical work at half the per-token price; an executor following a reviewed plan mostly is mechanical. Keep Opus for the planner and one reviewer.</li>
+  <li><b>One review per PR.</b><span class="size">medium</span><br>251 senior-code-reviewer spawns are about 10.6% of all burn. Review the final diff once; skip per-stage reviews on small changes.</li>
+  <li><b>Hand agents file:line pointers and ranged reads.</b><span class="size">medium</span><br>The main thread usually knows where the code is. Put <code>src/x.ts:120-180</code> in the brief and tell the agent to Grep first and Read with offset and limit. Whole-file reads are close to a third of everything agents take in.</li>
+  <li><b>Keep agent tool calls under five minutes.</b><span class="size">medium, 6.3%</span><br>Run the targeted test file, not the full suite, inside an agent. A call that outlasts the 5-minute cache makes the next call rewrite the full context at the write price.</li>
+  <li><b>Give executors a narrow tool list.</b><span class="size">medium, untested</span><br>The 19k gap between <code>worker</code> (25k start) and all-tools agents (44k start) rides in every call. I have not tested whether the gap is tool schemas or config text. One spawn of each with the same brief would settle it.</li>
+  <li><b>Main thread: <code>/clear</code> between unrelated tasks; try a 150k compaction window.</b><span class="size">small to medium</span><br>Sessions sit near 145k for thousands of calls. A lower window trades more compactions for a smaller context on each call. Worth a one-week trial, measured with the same script.</li>
+  <li><b>Fewer hippo agents in parallel on the heavy days.</b><span class="size">scheduling</span><br>Three days took 78% of the fortnight. The work was real; the plan limit is hit by how many long agents run at once.</li>
+</ol>
+<p class="note">Not worth chasing: reply length, the CLAUDE.md and MEMORY.md text (18k of a 145k context), Fable (2.3%).</p>
+
+<h2>6. How to regenerate</h2>
+<pre>python ~/.claude/scripts/token_burn.py 14      # sections 1, 2, 4
+python ~/.claude/scripts/subagent_burn.py 14   # section 3, project split
+python ~/.claude/scripts/context_fill.py 14    # tool-result sizes, cache-rewrite causes
+python ~/.claude/scripts/measure_context.py    # per-prompt config text
+python ~/.claude/scripts/subagent_roles.py 14  # section 3b: roles, batching, tools each type used
+python ~/.claude/scripts/spawn_model.py 14     # how each sub-agent's model was chosen
+python ~/.claude/scripts/spawn_guard_backtest.py 14   # what the spawn guard would move and pass</pre>
+<p class="note">The week-on check is the first, fifth and sixth line with <code>7</code> in place of <code>14</code>. The idle-gap causes, the compaction simulation and the starting-context runs came from one-off scripts in the session scratchpad; the method is in <code>docs/incidents.md</code> under 2026-10-08.</p>
+
+<h2>7. Limits of the measurement</h2>
+<ul>
+  <li>"Burn" is weighted tokens: cache read 0.1, 5-minute write 1.25, 1-hour write 2, output 5, times a model weight (Fable 1, Opus 0.4, Sonnet 0.2, from the price ratios in the global CLAUDE.md). The plan limit may weigh these differently. The raw token counts in section 2 do not depend on the weights.</li>
+  <li>Calls are deduped by request id. Two scripts split main and sub-agent slightly differently (66.2% by file location, 69.9% when side-chain records inside main files are counted).</li>
+  <li>Transcripts show activity on 24 to 29 Sep, 3 to 4 Oct and 8 Oct only. Nothing is recorded for 30 Sep to 2 Oct or 5 to 7 Oct.</li>
+  <li>The spawn guard's 24.6% is a backtest of what it would have moved to Sonnet in these 14 days. The saving is at most half of that, since Sonnet weighs half of Opus, and less for every brief that keeps Opus with a reason.</li>
+  <li>Not measured: whether a Sonnet builder needs more fix rounds than an Opus one. If it does, the saving shrinks. Burn per merged PR a week on is the check.</li>
+  <li>The compaction simulation replays the measured context growth with a different trigger. It reproduces the measured main-thread cache reads to 100% and the sub-agent ones to 105%, and it does not model the detail a compaction loses.</li>
+</ul>
+</body>
+</html>

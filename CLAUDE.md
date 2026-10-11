@@ -106,6 +106,7 @@ Roles, not names. Opus is the default session model and the top of the ladder: K
 
 ## Sub-agents
 - Set `model` explicitly on every spawn: `opus` for any agent whose output is a judgement (every review, synthesis, planning, debugging), no per-task cap; `sonnet` for mechanical work only (search, wide fan-outs, mechanical edits, extraction, smoke tests, summaries); `fable` only on explicit ask. **Never `haiku`** (2026-09-13: misjudged both ways as a review scorer; a plugin step that prescribes it runs on Sonnet).
+- **A code build from a complete brief runs on `sonnet`.** A brief that names the files, the change and the test check is mechanical under the rule above; keep `opus` only with an `Opus because: <what is still open>` line in the brief. One slice per agent, ending in a commit; point at `file:line`; the agent returns at push and never waits on CI. Name `worker` or a specialist type over `general-purpose`, which starts 14k to 18k tokens heavier. Backstop: the spawn guard (`subagent_contract.py`). Set 2026-10-08 (probation).
 - **On Fable the main thread reads, decides and briefs.** Browser driving, build or test loops, and any run past about 15 exec calls go to a Sonnet agent with the commands, the files and the pass/fail check.
 - Launch parallel agents in one message, split by non-overlapping files, and keep working while they run. Take a sub-agent's findings as done. Single-fact lookups never get a sub-agent. A fan-out that costs money needs the cost and a yes first.
 

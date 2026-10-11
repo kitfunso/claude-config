@@ -22,6 +22,14 @@ is the authority on what is installed.
 | `data-engineer` | Pipelines, ETL |
 | `worker` | Mechanical sub-task with a complete brief (search, extraction, mechanical edits, smoke tests); Sonnet at effort medium |
 
+Starting context, measured 2026-10-08 on Claude Code 2.1.288 with a one-word brief: six
+core tools 16.8k tokens; tools omitted, which is what `general-purpose` gets, 34.8k. The
+Skill tool's listing is 11.5k of that gap and PowerShell 3.7k. So `typescript-pro`,
+`python-backend-engineer`, `frontend-developer`, `debugger` and `senior-code-reviewer`
+carry `disallowedTools: Skill, PowerShell` and start at 21k to 23k (35k to 37k before).
+An agent that must run a skill is `general-purpose`. A code build named `opus` runs on
+`sonnet` unless its brief says `Opus because: <reason>` (spawn guard, `docs/hooks.md`).
+
 The five Quantamental agents (`commodity-backtest`, `signal-validator`, `data-auditor`,
 `model-diff`, `smoke-test-frontend`) and its four skills (`model-improve`, `roll-check`,
 `smoke-test`, `quant-report`) moved to `quantamental/.claude/` on 2026-09-05, the day
