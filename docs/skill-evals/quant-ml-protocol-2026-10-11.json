@@ -1,0 +1,45 @@
+{
+ "skill": "quant-ml-protocol",
+ "date": "2026-10-11",
+ "skill_commit": "b827070",
+ "runs": {"full": "wf_e7855817-7cd", "rerun_after_case_fixes": "wf_d381e798-d3a"},
+ "note": "tuning-not-skipped (train) and natgas-r8-breakthrough (test) failed every run in the full pass; both were case bugs, fixed, and re-run. Rows for those two come from the re-run.",
+ "splits": {
+  "train": {"with": {"k": 22, "n": 24, "p": 0.917, "se": 0.056}},
+  "test": {"with": {"k": 11, "n": 15, "p": 0.733, "se": 0.114}, "without": {"k": 4, "n": 15, "p": 0.267, "se": 0.114}}
+ },
+ "rows": [
+  {"name": "btlab-one-book-signoff", "split": "test", "with": "3/3", "without": "3/3", "trigger": "3/3", "diag": ["no discrimination: the model passes without the skill"]},
+  {"name": "btlab-worker-tripwire", "split": "test", "with": "2/3", "without": "0/3", "trigger": "0/3", "diag": ["noisy"]},
+  {"name": "campaign-start-order", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "3/3", "diag": []},
+  {"name": "final-read-no-reread", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "3/3", "diag": []},
+  {"name": "foundation-model-local-and-cutoff", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "3/3", "diag": []},
+  {"name": "gain-beyond-headroom", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "3/3", "diag": []},
+  {"name": "keep-small-real-gain", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "3/3", "diag": []},
+  {"name": "natgas-r8-breakthrough", "split": "test", "with": "2/3", "without": "0/3", "trigger": "3/3", "diag": ["noisy"]},
+  {"name": "non-temporal-should-not-fire", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "1/3", "diag": []},
+  {"name": "prc26-adsb-stage", "split": "test", "with": "1/3", "without": "0/3", "trigger": "3/3", "diag": ["noisy"]},
+  {"name": "prc26-more-keys", "split": "test", "with": "3/3", "without": "1/3", "trigger": "3/3", "diag": []},
+  {"name": "stagnant-construct", "split": "train", "with": "3/3", "without": "not rerun", "trigger": "3/3", "diag": []},
+  {"name": "tuning-not-skipped", "split": "train", "with": "1/3", "without": "not rerun", "trigger": "3/3", "diag": ["noisy"]}
+ ],
+ "failures": [
+  {"name": "btlab-worker-tripwire", "split": "test", "arm": "without", "run": 1, "failed": ["4"]},
+  {"name": "prc26-adsb-stage", "split": "test", "arm": "with", "run": 1, "failed": ["5"]},
+  {"name": "prc26-adsb-stage", "split": "test", "arm": "without", "run": 1, "failed": ["4", "5"]},
+  {"name": "btlab-worker-tripwire", "split": "test", "arm": "without", "run": 2, "failed": ["4"]},
+  {"name": "prc26-adsb-stage", "split": "test", "arm": "without", "run": 2, "failed": ["4"]},
+  {"name": "prc26-more-keys", "split": "test", "arm": "without", "run": 2, "failed": ["1"]},
+  {"name": "btlab-worker-tripwire", "split": "test", "arm": "with", "run": 3, "failed": ["4"]},
+  {"name": "btlab-worker-tripwire", "split": "test", "arm": "without", "run": 3, "failed": ["4"]},
+  {"name": "prc26-adsb-stage", "split": "test", "arm": "with", "run": 3, "failed": ["5"]},
+  {"name": "prc26-adsb-stage", "split": "test", "arm": "without", "run": 3, "failed": ["4", "5"]},
+  {"name": "prc26-more-keys", "split": "test", "arm": "without", "run": 3, "failed": ["1", "4"]},
+  {"name": "natgas-r8-breakthrough", "split": "test", "arm": "without", "run": 1, "failed": ["2", "4"]},
+  {"name": "natgas-r8-breakthrough", "split": "test", "arm": "without", "run": 2, "failed": ["4"]},
+  {"name": "natgas-r8-breakthrough", "split": "test", "arm": "with", "run": 3, "failed": ["4"]},
+  {"name": "natgas-r8-breakthrough", "split": "test", "arm": "without", "run": 3, "failed": ["4"]},
+  {"name": "tuning-not-skipped", "split": "train", "arm": "with", "run": 1, "failed": ["4: It reopens closed work: it says two stage-0 items 'look missing' (domain baselines, regime register) and that the drafts' intervals should be re-measured against a new champion baseline."]},
+  {"name": "tuning-not-skipped", "split": "train", "arm": "with", "run": 3, "failed": ["4: It holds the brief until three checks are done, and two reopen accepted work: a paired-interval check that could swap the base model to ridge, and stage-0 additions (AR(1) baseline, EFS carry decomposition, regime register)."]}
+ ]
+}

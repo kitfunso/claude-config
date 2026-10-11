@@ -4,7 +4,7 @@ tags: [quant-ml-protocol, tuning, notice]
 plugins: ["../.."]
 execution:
   prompt: |
-    Brent-Dubai spread forecast, 1-month horizon. The four drafts are in the ledger: ridge RMSE 0.71, LightGBM (defaults) 0.64, small MLP 0.69, Chronos-2 zero-shot 0.67, all on the same evaluator windows. LightGBM wins, so we're going straight into feature rounds with LightGBM on its default parameters, and we'll tune at the end if there's time left in the budget. The first feature round is ready to brief. Anything to change before I send it?
+    Brent-Dubai spread forecast, 1-month horizon. Stage 0 is closed: the random-walk baseline row (RMSE 0.78), the error map and a ranked idea pool are on disk. The four drafts are in the ledger with their paired intervals against that baseline: ridge RMSE 0.71, LightGBM (defaults) 0.64, small MLP 0.69, Chronos-2 zero-shot 0.67 (its pretraining data ends before our final-read window), all on the same evaluator windows. LightGBM wins, so we're going straight into feature rounds with LightGBM on its default parameters, and we'll tune at the end if there's time left in the budget. The first feature round is ready to brief. Anything to change before I send it?
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Skill]
 runs: 3
@@ -21,5 +21,5 @@ graders:
 
       1. It says to run a bounded tuning study before the feature rounds, on the top one or two drafts (LightGBM, and optionally Chronos-2 or ridge).
       2. It says the study is capped (by time or trials) and scored on an inner purged walk-forward inside the training data, not on the evaluator windows it is compared on.
-      3. It says the feature rounds then reuse that study's parameters, with a re-tune when the model family changes.
-      4. It does not block the campaign on anything else: the four drafts and the ledger are accepted as done.
+      3. It says the feature rounds then run on the tuned parameters from that study, not on the defaults and not with a fresh study every round.
+      4. It does not block the campaign on anything else: stage 0, the four drafts and the ledger are accepted as done.
