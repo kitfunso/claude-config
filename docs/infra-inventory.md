@@ -30,6 +30,7 @@ lives in the luminus repo `.env`; NTP creds are still unregistered (open item, m
 | npm publish token | memory `reference_npm_publish_token.md` | `cli-publish`, EXPIRES 2026-11-07; `npm login` breaks publishing |
 | Trading212 API | memory `reference_t212_api_auth.md` | auth details in file |
 | Cloudflare | memory `reference_cloudflare_zones.md` | 7 zones incl. hippo-memory.com; LIST before picking a domain |
+| Cloudflare email routing token | `CLOUDFLARE_EMAIL_TOKEN` User env var (set 2026-10-09) | Keith: use it for all email routing. Covers account Email Routing Addresses and zone Email Routing Rules (2026-10-09). Not named `CLOUDFLARE_API_TOKEN`, which would override wrangler's OAuth |
 | ENTSO-E | luminus repo `.env` | used by luminus-mcp |
 | TypeSafe Jev | `TYPESAFE_API_KEY` User env var (set 2026-09-18) | System One decision API; hippo `src/judgment.ts` reads it. Set on the HOME box only so far, set the same var on the work box. Never on disk: `~/.claude` is a git repo |
 | Codemagic API token | NOT STORED. Keith only, from Codemagic > Account settings > API token | Searched 2026-09-08: no `.codemagic` config, no `.env`, not here. The card offers Revoke and Show only, no Generate, and Show leaves it masked in the DOM, so no agent can read it. Route: Keith writes it to a file and `python ~/brain-gym/scripts/codemagic-install-play-key.py --token-file PATH --app <app> --key-file <key>` does the rest. Do not spend a turn hunting for it. |
