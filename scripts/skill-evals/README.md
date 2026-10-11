@@ -35,6 +35,8 @@ truth it never saw. The score is the gain over the case's naive baseline, in the
 - A case folder holds `case.yaml` (name, source, budget_minutes, submission, forbid, brief), `prepare.py CACHE`
   (writes `CACHE/public` for the run and `CACHE/private` for the grader) and `grade.py SUBMISSION PRIVATE`
   (one JSON line; it never raises on a bad file).
+- The run sees its case name in its folder name and every byte of `public/`, comments in a shipped scorer
+  included. Name the case after the task, never its source, and keep anything the brief calls undisclosed out.
 - Runs live in `C:/qmp-replays/runs/`, outside the home folder, so no parent CLAUDE.md loads and no hippo store
   is found by walking up. Hippo recall is off, hippo home is empty, and the web tools are off.
 - The with arm loads the skill; the without arm has the Skill tool disallowed. A run whose transcript touches a

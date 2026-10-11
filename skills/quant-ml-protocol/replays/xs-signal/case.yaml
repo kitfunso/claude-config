@@ -1,0 +1,62 @@
+name: xs-signal
+source: AlphaNova Season 1, cycle 1 package, release 031; the last 12 monthly releases (8,760 hours) are held out because per-hour Sharpe has a standard error near 1/sqrt(n) = 0.011, so a shorter span would mostly measure noise
+budget_minutes: 60
+submission: submission.py
+forbid: [alphanova, comp6, scientist_release, signal_db, signal_cities]
+brief: |
+  # Cross-sectional signal forecast
+
+  Build a trading signal over 20 anonymised assets. The score is the per-hour Sharpe ratio, net of trading costs,
+  of a portfolio that holds your signal through a held-out year (8,760 hours) that starts the hour after your data ends.
+
+  ## Data in `data/`
+
+  - `features.parquet`: 42,055 hourly rows, integer index 0 to 42,054, oldest first. MultiIndex columns
+    `(feature, ticker)`: six undisclosed features `Feature.1` to `Feature.6` for tickers `ticker.1` to `ticker.20`.
+    A feature value at hour t uses only information up to hour t.
+  - `returns.parquet`: the same hours, one column per ticker. X(t) is what a position held from hour t-1 earns at
+    hour t. It is a constructed return series, not raw price returns.
+  - `target.parquet`: a forward-looking series per hour and ticker, cross-sectionally z-scored and clipped at +-5;
+    its horizon and construction are not disclosed. It is the series you can fit. It ends at row 41,814, 240 hours
+    before the features, because later rows would look into the held-out year.
+  - The first 3,463 rows of `returns` (3,462 of `target`) are exactly 0.0: a warm-up stretch, not a bug.
+  - `predictor.py`: the base class. `evaluate.py`: the scorer, described below.
+
+  ## What to submit
+
+  `submission.py` in this folder (not in `data/`), defining one class that subclasses `Predictor`
+  (`from predictor import Predictor`) with:
+
+  - `train(self, features, target)`: fit on history.
+  - `predict(self, features) -> pd.DataFrame`: one row per input row and one column per ticker in the input,
+    cross-sectionally de-meaned in every row (`pred.sub(pred.mean(axis=1), axis=0)`).
+
+  The scorer runs the file in an empty folder with only `predictor.py` beside it, so it must not read any other file.
+  Packages available: numpy, pandas, scikit-learn, lightgbm, xgboost, pyarrow. CPU only.
+
+  ## How it is scored
+
+  1. A fresh instance runs `train(features.iloc[:41815], target)`: every row of `target.parquet` with its feature rows.
+  2. One `predict()` call gets 9,000 hours of features: rows 41,815 to 42,054 of your data, then the 8,760 held-out
+     hours. Only the held-out hours are scored; the 240 leading rows let trailing windows warm up inside the call.
+  3. Ticker labels in that call are re-shuffled: one random relabelling of the 20 tickers, the same in all six
+     features and in the returns. The live setting re-anonymises tickers the same way, so learn cross-sectional
+     structure; per-ticker habits, or per-ticker state carried over from `train()`, will not transfer.
+  4. With P(i) your prediction at hour i, the portfolio earns
+     r(i) = sum_j P_j(i-1) X_j(i) - 0.0005 * sum_j |P_j(i-1) - P_j(i-2)|, a 5 bp charge on every change of position.
+     The score is mean(r) / std(r) over the held-out hours: per hour, not annualised, higher is better, and unchanged
+     by rescaling the signal. The reference is a flat book (all-zero signal), which scores 0.0.
+  5. The submission scores nothing if it fails to load or raises; if `predict()` returns the wrong shape or ticker
+     columns; if any row mean exceeds 1e-6 in absolute value; if `train()` takes over 4 minutes or the `predict()`
+     call over 60 seconds on this machine; or if it looks ahead. The scorer re-runs `predict()` on shortened prefixes
+     of the same input and needs the overlapping rows to come out the same, so each row's prediction may use only
+     that row and earlier ones: no `shift(-n)`, `bfill`, centred windows, or statistics taken over the whole call.
+
+  ## Checking your work
+
+  `python data/evaluate.py submission.py --local` runs this same procedure on your own data. It holds out the last
+  8,760 of your 42,055 hours (change it with `--holdout N`), trains on the rows before them less the 240-hour gap,
+  and prints the score as one JSON line. Grading trains on about a quarter more rows than the default local check,
+  so leave headroom under the 4-minute limit.
+
+  The web is not available for this task.

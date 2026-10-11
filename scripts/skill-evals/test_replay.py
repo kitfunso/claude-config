@@ -24,8 +24,15 @@ def test_own_folder_is_allowed() -> None:
     assert a.void == "" and a.turns == 7 and a.output_tokens == 900
 
 
+def test_own_folder_in_git_bash_and_relative_spellings_is_allowed() -> None:
+    lines = [use("Bash", command="ls -la /c/qmp-replays/runs/r1/"), use("Bash", command="cd ../r1 && ls")]
+    # A forbidden fragment inside the run's own id (a case named after its source) must not void the run.
+    assert audit(lines, "with", ("r1",), WORK).void == ""
+
+
 def test_sibling_run_and_case_paths_void() -> None:
     assert "qmp-replays/runs/" in audit([use("Bash", command="ls C:/qmp-replays/runs/r2")], "with", (), WORK).void
+    assert "qmp-replays/runs/" in audit([use("Bash", command="ls /c/qmp-replays/runs/r10")], "with", (), WORK).void
     assert "prc26" in audit([use("Glob", path="C:/Users/skf_s/prc26-final")], "with", ("prc26",), WORK).void
     assert audit([use("Read", file_path="C:\\Users\\skf_s\\.hippo\\hippo.db")], "with", (), WORK).void
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -54,14 +55,20 @@ def tool_uses(lines: list[str]) -> list[dict]:
     return uses
 
 
+def own_folder(work: str) -> re.Pattern[str]:
+    """The run's own folder however a tool call spells it: C:/..., Git Bash /c/..., or a bare ../<run id>."""
+    parts = work.replace("\\", "/").lower().rstrip("/").split("/")
+    return re.compile(f"(?:{re.escape('/'.join(parts[-3:-1]))}/)?{re.escape(parts[-1])}(?![\\w-])")
+
+
 def audit(lines: list[str], arm: str, forbid: tuple[str, ...], work: str) -> Audit:
     uses = tool_uses(lines)
     banned = FORBID_ALWAYS + forbid + (FORBID_WITHOUT if arm == "without" else ())
-    own = work.replace("\\", "/").lower()
+    own = own_folder(work)
     void = ""
     for use in uses:
         # A run's own folder sits under qmp-replays/runs/; only its siblings are banned.
-        text = json.dumps(use.get("input", {})).replace("\\\\", "/").lower().replace(own, "<work>")
+        text = own.sub("<work>", json.dumps(use.get("input", {})).replace("\\\\", "/").lower())
         hit = next((f for f in banned if f.lower() in text), None)
         if hit:
             void = f"{use.get('name')} touched '{hit}'"
