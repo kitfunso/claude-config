@@ -11,6 +11,12 @@ try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorde
 let devrlDenial = () => null;
 try { ({ devrlDenial } = require('./lib/devrl-episode-guard')); } catch (e) { process.stderr.write(`devrl episode guard off: ${e.message}\n`); }
 
+// A sleep poll with no deadline outlives the job it waits on; 17 of them starved every hook on 2026-10-11.
+function unboundedPoll(cmd) {
+  if (!/\b(until|while)\s+(?!(IFS=\S*\s+)?read\b)[^]*?\bdo\b[^]*?\bsleep\b/.test(cmd)) return false;
+  return !/\btimeout\s+(-\S+\s+)*\d|\bSECONDS\b|\bdeadline\b|\s-(lt|le|gt|ge)\s/.test(cmd);
+}
+
 function main() {
   let input = '';
   process.stdin.setEncoding('utf8');
@@ -51,6 +57,11 @@ function main() {
         if (!process.env.TMUX && !backgrounded) {
           emit('deny', 'Dev servers hang the session. Use `run_in_background: true` or run in a separate terminal/tmux.');
         }
+      }
+
+      if (unboundedPoll(cmd)) {
+        emit('deny', 'This until/while loop sleeps with no deadline, so it runs forever if the job it waits on dies. '
+          + "Bound it: `timeout 3600 bash -c 'until ...; do sleep 5; done'`, or add `[ $SECONDS -lt 3600 ]` to the condition.");
       }
 
       // Warn on force push to main/master

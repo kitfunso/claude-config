@@ -3,6 +3,158 @@
 Stories evicted from the always-loaded rules. This file is never injected; rules
 point here with one-liners. Append new entries at the top; do not rewrite history.
 
+## 2026-10-09: two of every three hook launches were Git Bash; hooks now start directly
+
+After Keith's third "fix all i said". The entry below left "merging the five prompt hooks
+into fewer processes" alone and counted six launches per prompt. Both were wrong.
+
+What did not work, first. One Node dispatcher per event, starting each hook as a child, was
+slower on every event than the wiring it replaced (medians, 20 rounds per arm, back to
+back: prompt 2424 to 2843 ms, Bash 1132 to 1616, Edit 1307 to 1428, Write 2001 to 2522). A
+child of the dispatcher starts one launch later, and hook time follows the depth of the
+launch chain. The same dispatcher with only the `.js` hooks as worker threads was a wash,
+through the shell and again on top of the fix (group minus plain, per round: prompt -134 ms,
+Bash +2, PowerShell +241, Edit +146, Write -16). It was built with 20 tests, reviewed,
+measured and dropped. It is not in the repo.
+
+The count was wrong too. A hook written as one command string is three launches on this
+box: `claude.exe` starts `Git\bin\bash.exe`, which starts `Git\usr\bin\bash.exe`, which
+starts the program. Five prompt hooks were 15 launches, 16 with hippo's node.
+
+The fix was in the hooks reference all along: "A command hook runs as exec form when `args`
+is set, and shell form when `args` is omitted." With `args`, Claude Code starts the program
+itself. All 21 `node` and `python` entries in the home `settings.json` now read
+`"command": "node", "args": ["<script>"]`. The five `hippo ...` entries stay as they were:
+exec form needs a real `.exe` and `hippo` is a `.cmd` shim. Launches per event: prompt 15
+to 5, a Bash or PowerShell call 9 to 3, Edit 12 to 4, Write 15 to 5, Stop 6 to 2.
+
+Old against new, medians over 20 rounds back to back, wall ms for the whole event: prompt
+2289 to 1232, Bash 1315 to 508, PowerShell 1311 to 492, Edit 1641 to 610, Write 1442 to
+688, Stop 2352 to 1127. Exec form was the faster arm in 13 to 16 of 20 rounds on each, and
+the hooks said the same thing in both forms. The live figures are thin. Claude Code records
+each Stop hook's `durationMs` under `hookInfos` in the transcript, and the first two turns
+after the change (616 and 2009 ms for `keep_going.py`) sit inside the spread of the turns
+before it (118 to 3636 ms). Medians moved by a factor of two between runs an hour apart, so
+only back-to-back rounds count.
+
+Checks. The same hook set fires for 28 event and tool cases under the old and new wiring.
+A process watcher saw 53 hook processes from six live sessions in 45 s, each a direct child
+of `claude.exe`, with no `bash.exe` in any chain. Exec form ran headless on 2.1.288 and on a
+copy of the 2.1.284 binary before the live file changed. `test/settings-wiring.test.js`
+fails on a `node` or `python` hook wired through the shell and on a wired script that is
+missing.
+
+Found on the way: `commit-msg-guard.js` needed `commit` straight after `git`, so
+`git -C <repo> commit -m` passed an em dash. It now uses the match `git_guard.py` already
+had, and has its first test file.
+
+Not tried: `CLAUDE_CODE_GIT_BASH_PATH` (it would change the Bash tool for every session),
+one long-lived hook daemon, porting the Python hooks to JS. Still open and Keith's: why a
+bare launch takes 0.4 to 1 s on this box at all (the Defender recording needs an admin
+shell). Exec form removes two launches in three; each one left still pays that price.
+
+## 2026-10-08: the hippo prompt hook was four launches; process launch itself went slow
+
+Later the same evening, after Keith's second "fix all i said". The entry below left
+"about 1 s per prompt" standing.
+
+hippo's own work is 0.19 s (module load 0.15 s, recall 0.04 s; timed inside node, 14 runs,
+hippo 1.69.0). The rest of `hippo_context_cached.py`'s 0.6 to 1.1 s was four process
+launches in a row: python, a detached refresh, `hippo.CMD` (cmd.exe), node. Changed: the
+hook runs node on hippo's entry script (the npm shim is the fallback), and `spawn_refresh`
+skips while the cache is under `CACHE_TTL` (300 s) old. Two launches per prompt. The cost:
+a new pin reaches a session up to 5 minutes later than before. The output is unchanged:
+pinned block and recall section were identical over four alternating old and new runs on a
+real prompt. A Node compile cache (`NODE_COMPILE_CACHE`) was measured and dropped: module
+load 150 ms without it, 145 ms with it.
+
+Old against new in alternating runs (14 each, a cache folder per arm): the hook alone,
+median 3.1 s then 2.6 s; all five prompt hooks together, 5.3 s then 4.2 s. That is 8
+launches and 6 launches at about 0.7 s each, so prompt latency is the number of launches
+on the path times the cost of one launch.
+
+The 0.7 s is the second finding. A bare `cmd /c exit` took 41 ms (median) early in the
+evening, 455 ms later and 1,005 ms at the end, for every executable, always inside
+`CreateProcess`. The box was not starved: about 9 of 24 cores busy, 18 GB of RAM free, the
+NVMe answering in 0.1 ms. It was starting at least 12.7 processes a second, mostly vitest
+loops in hippo worktrees and shell polling loops from other sessions. Defender real-time
+protection is on (MsMpEng took 0.7 of a core in a 6 s sample, and 46.6 CPU-hours in 15.1
+days of uptime), and Norton's services run beside it though Windows lists Norton's
+antivirus as off. Not proven: that the scan is what queues the launches. The proof needs
+an admin shell: `New-MpPerformanceRecording -RecordTo $env:TEMP\defender.etl -Seconds 60`,
+then `Get-MpPerformanceReport -Path $env:TEMP\defender.etl -TopProcesses 10 -TopScans 10`.
+Time `cmd /c exit` before blaming a hook: 40 ms is healthy.
+
+Also fixed: `jev-trigger.js` dropped its own file name from a prompt but not from edited
+text, so a script that listed the hooks raised the notice. One helper now serves both.
+Left alone: merging the five prompt hooks into fewer processes, which only pays while
+launches are slow.
+
+## 2026-10-08: the spawn guard's deny became a rewrite; five prompt hooks timed out at once
+
+The evening of the entry below. Keith pasted five `UserPromptSubmit hook ... timed out
+after 15s` lines and a red `PreToolUse:Agent hook error` from the spawn guard on a
+`typescript-pro` build spawn, and asked why the hooks were so slow.
+
+The timeouts were a starved box. Another session (hippo, worktree `hippo-wt-flake2`) ran
+48 `node -e "for(;;){}"` loops on 24 cores to stress one vitest file for 30 runs. Process
+start went from 70 ms (Python) and 75 ms (Node) to 0.8 to 1.7 s and 1.4 to 2.3 s, and
+`hippo --version` took 5.3 s, so all five prompt hooks hit the 15 s cap together. The run's
+own `kill $pids` left 46 loops alive for about 11 minutes after it ended. On the idle box
+the five prompt hooks take about 1 s together (median 1.1 s, 0.5 to 4.1 s over 18 runs):
+`hippo_context_cached.py` sets it at 0.6 to 1.1 s alone, the other four take about 0.1 s each. Five hooks timing out together points
+at the box; one timing out points at that hook.
+
+The guard error was the deny itself: it shows the user a hook error and makes the caller
+send the whole brief a second time. On Claude Code 2.1.288 a PreToolUse hook can return
+`updatedInput`, which replaces the whole tool input, with no `permissionDecision`. The
+guard now returns the input with `model: "sonnet"` and its notice in `additionalContext`.
+Live, in fresh `claude -p --model sonnet --output-format json` sessions: a build brief
+named `opus` ran with Sonnet as the only `modelUsage` key and the caller quoted the notice;
+the same brief with `Opus because:` on a line of its own showed an Opus key and no notice.
+The same words in mid-sentence were moved to Sonnet, because the reason counted at the start
+of a line only. On Keith's go the phrase now counts anywhere in the brief (the notice's own
+`<...>` template and a bare backticked mention do not), and the mid-sentence brief then ran
+on Opus. Where the entry below says "denies" and "denied", read "moves to Sonnet".
+
+Also fixed: `jev-trigger.js` fired on any prompt or edit that named its own files. Left
+alone: the 15 s timeouts (a lower cap helps only on a starved box, and on a busy one it
+drops the hippo context block).
+
+## 2026-10-08: Opus build agents were a quarter of the burn
+
+Keith asked where the tokens go, then said "okay go" on the report. Fourteen days of
+home-box transcripts (60,494 API calls, 995 sub-agents; weights from the price ratios in
+Model Routing): sub-agents 66% of burn, Opus 89%. By role: Opus agents that build or
+research 30.6%, Opus critics 13.8%, Opus orchestrator sub-agents 7.2%, every Sonnet
+sub-agent together 8.2%. The Agent call named `opus` for all but 0.2 points of the Opus
+builder burn, so the `model:` line in the agent files played no part. devrl section 4b
+already sent executors to Sonnet; the orchestrators named Opus anyway. A rule with no
+verifier.
+
+Changed: one Sub-agents bullet in CLAUDE.md (a code build from a complete brief runs on
+Sonnet; +133 tokens a prompt); `scripts/hooks/subagent_contract.py`, which denies an Opus
+build spawn that has no `Opus because:` line and gives every sub-agent a three-line
+contract at start; `disallowedTools: Skill, PowerShell` on five agent types (starting
+context 35k to 37k down to 21k to 23k); a four-line note in devrl section 4b. Backtest of
+the guard on the same 14 days: 122 of 1,038 spawns denied, 24.6% of all burn, no review
+and no Sonnet spawn among them. The first, narrower rule (a plan file plus a test command)
+caught 5.7%; most builders get the plan inside the brief.
+
+Measured and left alone: `autoCompactWindow` (a replay of the measured context growth puts
+a 150k window at +4.7% of all burn on the main thread; 200k models at -5.4% in total with
+two thirds more main-thread compactions, untried); a call cap on sub-agents (ceiling 3 to
+5%, and a cut mid-task costs a handoff); critics on Opus (13.8%; the 2026-09-23 rule is
+Keith's to change); `omitClaudeMd` for mechanical agents (10.7k a call, but it drops the
+rules).
+
+Method for the one-off numbers: idle rewrites are sub-agent calls after a 5 to 60 minute
+gap whose cache read is under half their context, labelled by the last tool call in the
+gap; starting context is the first-call usage of agents defined with `claude -p --agents`.
+Report: `docs/token-burn-2026-10-08.html`. Verifier: a week on, `scripts/subagent_roles.py 7`
+and `scripts/spawn_model.py 7`; the Opus builder share should fall from 30.6%. If burn per
+merged PR rises instead, Sonnet builders are costing fix rounds and the guard goes.
+
 ## 2026-10-03: prompt audit against Opus 5.5
 
 `/claude-api prompt-audit` over CLAUDE.md, rules, the prompt-injecting hooks, Keith's own

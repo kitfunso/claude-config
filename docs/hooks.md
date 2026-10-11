@@ -4,6 +4,21 @@ Per-box binding lives in `settings.json`, which git does not track. The hook is 
 the prose rule still binds where the hook is blind. **Box**: `home` = this PC (Node + Python),
 `work` = the work box (Python ports), `both`. Check `settings.json` before trusting a row.
 
+**On Windows, wire a `node` or `python` hook in exec form:** `"command": "node", "args":
+["C:/Users/<you>/.claude/scripts/hooks/x.js"]`. With `args` Claude Code starts the program itself.
+Without it the command goes through Git Bash, two more launches per hook entry, and those were
+about half of each event's hook time on the home box (2026-10-09, `docs/incidents.md`). `command`
+must be a real `.exe` on PATH, so a `.cmd` shim such as `hippo` stays a plain command string.
+Checked on Claude Code 2.1.284 and 2.1.288; run `claude --version` before converting another box.
+`scripts/hooks/test/settings-wiring.test.js` fails on a `node` or `python` hook wired through the shell.
+
+**hippo's prompt context runs once, through `hippo_context_cached.py`.** `hippo init`, `hippo setup`
+and `hippo hook install claude-code` add a raw `hippo context --pinned-only` UserPromptSubmit hook
+whenever no hook `command` contains that text, and the wrapper's text sits in `args`. The raw hook
+is six launches deep (Git Bash, bash, npm's sh shim with `dirname`, `sed`, `uname`, `cygpath`, then
+node) and timed out at 5 s on 2026-10-11. Delete it after any of those commands; the wiring test fails
+while it is present.
+
 | Guard | Box | Fires on | Blind spots | Escape hatch |
 |---|---|---|---|---|
 | Capability existence: `/name` refs get a `[CAPABILITY EXISTS]` notice (`check-skill-references.js`) | home | UserPromptSubmit | bundled skills not on disk, plugin commands, refs without a slash | none |
@@ -21,7 +36,10 @@ the prose rule still binds where the hook is blind. **Box**: `home` = this PC (N
 | Backup: home copies the file to `~/.claude/backups/` (`pre-write-guard.js`); work saves one dated `.old-YYYYMMDD` copy beside it | both | Edit / Write | shell-side edits | none |
 | PS 5.1 stderr: blocks `2>&1` on native exes | both | Bash / PowerShell | none | none |
 | Comment budget: denies more than 3 comment lines in a row in the edit, or more than 20% comment density after the edit (15+ lines); a file already over 20% is graded on what the edit adds; skips markdown, JSON, config, `docs/`, docstrings, and JSDoc blocks carrying an API tag (`@param`, `@returns`, `@type` and the like); untagged prose JSDoc counts as comment lines | both | Edit / Write | shell writes; cannot judge WHY from WHAT | `CLAUDE_COMMENT_BUDGET=off` |
+| Bash pre-guard (`pre-bash-guard.js`): denies a foreground dev server outside tmux, a force push to main/master, and an `until`/`while` loop that runs `sleep` with no deadline (`timeout N`, `$SECONDS`, `deadline` or a `-lt`/`-gt` test); asks before `rm -rf /`, `git reset --hard`, `git clean -fd`. On 2026-10-11, 17 polls on files that would never change had launched about 6 processes a second for up to a week | home | Bash | loops inside script files; PowerShell loops; a bound anywhere in the command passes | none |
 | Resource tripwire: 40+ tool calls with no Skill/Agent/Workflow gets a notice; a command matching `.claude/tripwires.json` is denied without its protocol file, and run N x every is denied until `AUDIT <sid8> #N` is in the audit file | home | UserPromptSubmit; Bash / PowerShell | regex on command text; repos without `tripwires.json` | none |
 | Fable orchestrator (same script): on a Fable main thread, exec call 26+ (shell, Edit, Write, browser) since the last human message or Agent spawn is denied | home | Bash / PowerShell / Edit / Write / browser | Read, Grep, Glob and WebFetch are free; task notifications do not reset the leg | `CLAUDE_FABLE_EXEC_BUDGET=off` or a number |
+| Spawn guard: moves an Agent call that names `opus` for a code build (the brief names tests and a worktree, branch or commit) to `sonnet` and tells the caller, unless the brief says `Opus because: <reason>`; reviewer, debugger, Plan and Explore types, judgement descriptions (review, critique, audit, design, research, draft, diagnose) and skill-run orchestrator briefs pass (`subagent_contract.py`) | home | PreToolUse Agent | regex on the brief; Workflow `agent()` calls; a spawn with no `model`; the reason is not judged | `Opus because:` in the brief; `CLAUDE_SUBAGENT_CONTRACT=off` |
+| Sub-agent contract (same script): every sub-agent starts with three lines: batch reads, no waiting on CI, stop at the brief's check | home | SubagentStart | a notice, not a gate | `CLAUDE_SUBAGENT_CONTRACT=off` |
 | Artifact deny: `permissions.deny` lists `Artifact` and `mcp__claude_ai_Claude_Docs`, so no claude.ai page gets published | both | calls to those tools | also blocks reading or deleting an old artifact | Keith removes the entry |
 | devrl episode: while this session holds a running episode lock, denies a git, npm, npx, vitest or codex command with no absolute `cd`, `-C` or `--prefix`, and git that throws away uncommitted work (checkout --, restore, reset --hard, clean -f, stash but list/show) | home | Bash | PowerShell; heredoc bodies; sub-agents only if they share the session id | `DEVRL_ALLOW_DESTRUCTIVE=1` in the command, destructive git only |

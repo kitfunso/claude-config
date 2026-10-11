@@ -23,6 +23,18 @@ test('prompt without jev words stays silent', () => {
   assert.strictEqual(decide(prompt('javelin and jevons paradox'), opts()), null);
 });
 
+test('a pasted hook error naming this hook stays silent', () => {
+  const pasted = 'UserPromptSubmit hook [node "C:/Users/x/.claude/scripts/hooks/jev-trigger.js"] timed out after 15s';
+  assert.strictEqual(decide(prompt(pasted), opts()), null);
+  assert.ok(decide(prompt(`${pasted} and can jev route this`), opts()));
+});
+
+test('an edit that only lists this hook by file name stays silent', () => {
+  const listing = 'HOOKS = ["triage-prompt.js", "C:/Users/x/.claude/scripts/hooks/jev-trigger.js"]';
+  assert.strictEqual(decide(edit('C:/tmp/time_hooks.py', listing), opts()), null);
+  assert.ok(decide(edit('C:/tmp/time_hooks.py', `${listing}\njev.ask(q)`), opts()));
+});
+
 test('edit writing a TypeSafe call fires once per file', () => {
   const o = opts();
   const e = edit('C:/r/src/gate.ts', 'const key = process.env.TYPESAFE_API_KEY;');
@@ -44,6 +56,8 @@ test('LLM call that only generates text stays silent', () => {
 test('markdown and the skill files themselves stay silent', () => {
   assert.strictEqual(decide(edit('C:/r/README.md', 'uses jev'), opts()), null);
   assert.strictEqual(decide(edit('C:/Users/x/.claude/scripts/jev-bench.js', 'jev'), opts()), null);
+  assert.strictEqual(decide(edit('C:/Users/x/.claude/scripts/hooks/test/jev-trigger.test.js', 'jev'), opts()), null);
+  assert.ok(decide(edit('C:/Users/x/.claude/scripts/hooks/gate.js', 'jev.ask(q)'), opts()));
 });
 
 test('env off disables it', () => {

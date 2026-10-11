@@ -98,6 +98,93 @@ class RefreshLock(unittest.TestCase):
         self.assertFalse(hook.refresh_running(hook.CACHE_DIR / "no-such.lock"))
 
 
+class RefreshDue(unittest.TestCase):
+    """A refresh is a launch on the prompt's path, so a fresh cache must not start one."""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        self.dir = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        patch = mock.patch.object(hook, "CACHE_DIR", self.dir)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def cache(self, age):
+        import os
+        import time
+        path = hook.cache_file("C:/x")
+        path.write_text(payload(MEMORY), encoding="utf-8")
+        then = time.time() - age
+        os.utime(path, (then, then))
+
+    def test_a_fresh_cache_starts_no_refresh(self):
+        self.cache(age=1)
+        with mock.patch.object(hook.subprocess, "Popen") as popen:
+            hook.spawn_refresh("C:/x")
+        popen.assert_not_called()
+        self.assertFalse(hook.lock_file().exists())
+
+    def test_an_old_cache_starts_one(self):
+        self.cache(age=hook.CACHE_TTL + 1)
+        with mock.patch.object(hook.subprocess, "Popen") as popen:
+            hook.spawn_refresh("C:/x")
+        popen.assert_called_once()
+
+    def test_a_missing_cache_starts_one(self):
+        with mock.patch.object(hook.subprocess, "Popen") as popen:
+            hook.spawn_refresh("C:/x")
+        popen.assert_called_once()
+
+
+class HippoCommand(unittest.TestCase):
+    """npm's Windows shim is cmd.exe starting node: one more launch on every call."""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        self.bin = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.bin, True)
+        self.shim = str(self.bin / "hippo.CMD")
+        self.entry = self.bin / "node_modules" / "hippo-memory" / "bin" / "hippo.js"
+
+    def install(self):
+        self.entry.parent.mkdir(parents=True)
+        self.entry.write_text("", encoding="utf-8")
+
+    def path(self, **found):
+        return mock.patch.object(hook.shutil, "which", side_effect=lambda name, *a, **k: found.get(name))
+
+    def test_a_cmd_shim_becomes_node_on_the_entry_script(self):
+        self.install()
+        with self.path(hippo=self.shim, node="C:/node/node.exe"):
+            self.assertEqual(hook.hippo(), ["C:/node/node.exe", str(self.entry)])
+
+    def test_a_shim_with_no_entry_script_runs_as_it_is(self):
+        with self.path(hippo=self.shim, node="C:/node/node.exe"):
+            self.assertEqual(hook.hippo(), [self.shim])
+
+    def test_no_node_on_the_path_runs_the_shim(self):
+        self.install()
+        with self.path(hippo=self.shim):
+            self.assertEqual(hook.hippo(), [self.shim])
+
+    def test_a_plain_executable_runs_as_it_is(self):
+        with self.path(hippo="/usr/local/bin/hippo", node="/usr/bin/node"):
+            self.assertEqual(hook.hippo(), ["/usr/local/bin/hippo"])
+
+    def test_no_hippo_gives_nothing(self):
+        with self.path():
+            self.assertIsNone(hook.hippo())
+
+    def test_the_call_runs_that_command_with_the_query(self):
+        done = mock.Mock(returncode=0, stdout=payload(MEMORY))
+        with mock.patch.object(hook, "hippo", return_value=["node", "hippo.js"]), \
+                mock.patch.object(hook.subprocess, "run", return_value=done) as run:
+            self.assertEqual(hook.exec_hippo("C:/x", 1.0), payload(MEMORY))
+        self.assertEqual(run.call_args.args[0], ["node", "hippo.js", *hook.ARGS])
+
+
 class CacheFile(unittest.TestCase):
     def test_the_name_is_the_hash_of_the_cwd_and_the_query(self):
         with mock.patch.object(hook, "ARGS", ["context", "--pinned-only"]):

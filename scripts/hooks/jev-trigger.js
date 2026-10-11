@@ -9,6 +9,8 @@ const JEV_WORDS = /\bjev\b|typesafe|\bnoul\b|system[ -]?one|TYPESAFE_API_KEY|jev
 const LLM_CALL = /messages\.create|chat\.completions|responses\.create|generateText|generateObject|anthropic\s*\(|new\s+(Anthropic|OpenAI)\b|claude\s+-p\b|\/v1\/messages|ollama\.(chat|generate)/;
 const DECISION = /\b(classif\w*|route|routing|relevan\w*|grade|grading|judge|is_\w+|yes\/no|true\/false|pick\w*|filter\w*|triage|gate|should_\w+|label\w*)\b/i;
 const CODE_EXT = /\.(js|mjs|cjs|ts|tsx|py|go|rs|rb|java|kt|cs|sh|ps1)$/i;
+// A pasted hook error, or a script that lists the hooks, names this hook's own file; that is not Jev work.
+const dropOwnName = (s) => s.replace(/jev-trigger(\.js)?/gi, '');
 
 const LOAD = 'Load the /jev skill with the Skill tool now (and /typesafe-ai for API shape) before writing or changing this.';
 const PROMPT_NOTICE = `[JEV] This prompt is about TypeSafe Jev. ${LOAD} It holds our measured rules: when Jev beats a free baseline, the question-writing lint, the labelled bench, and the go-live rule.`;
@@ -40,15 +42,15 @@ function decide(input, opts) {
   const event = (input && input.hook_event_name) || (input && input.tool_name ? 'PreToolUse' : 'UserPromptSubmit');
 
   if (event === 'UserPromptSubmit') {
-    const prompt = String((input && (input.prompt || input.user_prompt)) || '');
+    const prompt = dropOwnName(String((input && (input.prompt || input.user_prompt)) || ''));
     if (!JEV_WORDS.test(prompt)) return null;
     return firstTime(markerDir, sessionId, 'prompt') ? { event, text: PROMPT_NOTICE } : null;
   }
 
   const file = String(((input && input.tool_input) || {}).file_path || '');
   // The skill's own files and its scripts discuss Jev by design.
-  if (/[\\/]\.claude[\\/](skills[\\/](jev|typesafe-ai)|scripts[\\/]jev-)/i.test(file)) return null;
-  const text = editedText(input);
+  if (/[\\/]\.claude[\\/](skills[\\/](jev|typesafe-ai)|scripts[\\/]([\w-]+[\\/])*jev-)/i.test(file)) return null;
+  const text = dropOwnName(editedText(input));
   if (!text || !CODE_EXT.test(file)) return null;
   const base = path.basename(file);
   if (JEV_WORDS.test(text)) {

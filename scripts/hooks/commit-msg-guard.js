@@ -12,6 +12,10 @@
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
+// Same match as git_guard.py: git's own options may sit before the subcommand (`git -C <repo> commit`).
+const GIT_COMMIT = /\bgit\b[^|&;]*\bcommit\b/;
+const PIPED_COMMIT = /\|\s*git\b[^|&;]*\bcommit\b/;
+
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));
 process.stdin.on('end', () => {
@@ -23,7 +27,7 @@ process.stdin.on('end', () => {
   }
   const cmd = (input.tool_input && input.tool_input.command) || '';
   const tool = input.tool_name || '';
-  if (!/git\s+commit\b/.test(cmd)) process.exit(0);
+  if (!GIT_COMMIT.test(cmd)) process.exit(0);
 
   const deny = (reason) => {
     record({
@@ -53,7 +57,7 @@ process.stdin.on('end', () => {
     return;
   }
 
-  if (tool === 'PowerShell' && /\|\s*git\s+commit\b/.test(cmd)) {
+  if (tool === 'PowerShell' && PIPED_COMMIT.test(cmd)) {
     deny(
       'commit-msg-guard: piping into git commit from PowerShell prepends a UTF-8 BOM to the message subject. Write the message to a file with the Write tool and use: git commit -F <file>.',
     );

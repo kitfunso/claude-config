@@ -21,6 +21,7 @@ ARGS = ["context", "--pinned-only", "--format", "additional-context"]
 CACHE_DIR = (Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
              / "cache" / "hippo-context")
 LOCK_TTL = 60.0
+CACHE_TTL = 300.0
 COLD_TIMEOUT = 12.0
 HOOK_BUDGET = 13.0
 RECALL_TIMEOUT = 4.0
@@ -29,8 +30,14 @@ MEMORY_HEADING = "## Project Memory"
 RECALL_HEADING = "## Prompt-Relevant Memory"
 
 
-def hippo() -> str | None:
-    return shutil.which("hippo")
+def hippo() -> list[str] | None:
+    """npm's Windows shim is cmd.exe starting node: one more launch per call, so run node on the entry script."""
+    exe = shutil.which("hippo")
+    if not exe:
+        return None
+    entry = Path(exe).parent / "node_modules" / "hippo-memory" / "bin" / "hippo.js"
+    node = shutil.which("node") if exe.lower().endswith(".cmd") else None
+    return [node, str(entry)] if node and entry.is_file() else [exe]
 
 
 def cache_file(cwd: str) -> Path:
@@ -59,10 +66,10 @@ def strip_snapshot(payload: str) -> str:
 
 
 def exec_hippo(cwd: str, timeout: float, stdin_text: str | None = None) -> str | None:
-    exe = hippo()
-    if not exe:
+    cmd = hippo()
+    if not cmd:
         return None
-    done = subprocess.run([exe, *ARGS], cwd=cwd, capture_output=True, input=stdin_text,
+    done = subprocess.run([*cmd, *ARGS], cwd=cwd, capture_output=True, input=stdin_text,
                           timeout=timeout, text=True, encoding="utf-8",
                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     out = (done.stdout or "").strip()
@@ -170,9 +177,17 @@ def refresh_running(lock: Path) -> bool:
         return False
 
 
+def refresh_due(cwd: str) -> bool:
+    """Pinned rules change a few times a day; a refresh per prompt put a launch on every prompt's path."""
+    try:
+        return time.time() - cache_file(cwd).stat().st_mtime >= CACHE_TTL
+    except OSError:
+        return True
+
+
 def spawn_refresh(cwd: str) -> None:
     lock = lock_file()
-    if refresh_running(lock):
+    if not refresh_due(cwd) or refresh_running(lock):
         return
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
