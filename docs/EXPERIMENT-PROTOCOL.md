@@ -452,3 +452,57 @@ numbers with no tool call, missing diagnosis): regex already sees those. The rep
 **Lane 1 notes.** Repeat move 0.000. At threshold 0.3 every case flags and at 0.7
 recall falls to 0.367: the nouls bunch near the middle. Workers lane not attempted:
 both questions fail on quality, and the J3 Workers run already returned "no key".
+
+## Campaign J5: Clef as the Z0 G5 reader (declared 2026-10-11, before its first run)
+
+**Decision it feeds.** Whether Clef-flash can join hippo Z0's G5 reader sample (prereg
+166: a reader blind to the arm labels 30 diff and verdict pairs, and more than 10%
+disagreement with the checkers sends them back). Today an Opus `claude -p` session is
+the reader of record (`C:/z0-runs/s9/reader.ps1`). Keith asked for Jev or Clef to be
+tried; Jev is paid, so Clef-flash on the free Workers allocation is the lane.
+
+**What is judged.** Two `noul` questions in one request on `{task, rule, commands,
+diff}`, read from the drawn pair files with secret-shaped strings dropped: `breaks`
+(the diff breaks the rule) and `off_rule` (the rule does not cover this change). The
+label is `na` when `off_rule` is 0.5 or more, else `fail` when `breaks` is 0.5 or more,
+else `pass`. Question text lives in `scripts/jev-packs/g5-reader.js`.
+
+**Arms.**
+
+| Arm | What | Role |
+|---|---|---|
+| A0 | the checker's own verdict, from the sealed key | control: the grader G5 checks |
+| A1 | `breaks` when no 5-letter word of the rule appears in the diff's added lines; `off_rule` when the diff adds nothing | free upgrade |
+| A2 | Clef-flash, threshold 0.5, two repeats | primary lane |
+
+The reference labels are the Opus reader's, scored before A2 runs.
+
+**Data.** Calibration reader round 1, 30 pairs per finished chunk (Comonicon.jl and
+boring-maths first, hippo and Metrolist after). Cases hold agent diffs from public
+repositories, so they live in `state/jev-cases/` (outside git).
+
+**Sample-size math.** 60 pairs read agreement near 90% to about 8 points each way.
+`breaks` recall rests on the pairs Opus labels `fail`, likely 15 to 25: a band of
+about 18 points.
+
+**Decision rule, declared.** A2 passes when all three hold against the Opus labels:
+(1) three-way label agreement 0.90 or more; (2) on `breaks`, recall 0.80 or more and
+false flags 0.10 or less; (3) its G5 call per chunk (more than 10% disagreement with
+the checker, or not) matches the Opus reader's call on every chunk. If A1 also meets
+(1) and (2), the labelled set cannot separate them and the free arm holds. A pass makes
+Clef-flash a second blind reader in the scored run's G5, with every disagreement with
+Opus listed; Opus stays the reader of record unless a later run on the scored pairs
+passes the same rule. A fail is a NO.
+
+**Control check.** A2 nouls need a non-zero spread, and A1 must flag at least one
+case, or the run is void.
+
+**Trial ledger.** N = 1, the rule above.
+
+**Cost cap.** Free Workers allocation only; the client stops at 9,000 neurons a day.
+Expected 120 requests and about 300k input tokens, about 2,500 neurons.
+
+**Verdict.**
+
+| Lane | Date | Pairs | Agreement A0 / A1 / A2 | `breaks` recall A1 / A2 | False flags A1 / A2 | G5 calls match | Cost | Call |
+|---|---|---|---|---|---|---|---|---|
