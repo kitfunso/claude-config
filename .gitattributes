@@ -1,0 +1,2 @@
+# The Workflow tool rejects a script holding carriage returns, so workflow scripts keep LF on Windows checkouts.
+scripts/skill-evals/*.js text eol=lf
