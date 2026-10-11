@@ -24,6 +24,23 @@ Then call Workflow with `scriptPath` set to `~/.claude/scripts/skill-evals/run-e
 contents of `ROOT/args.json`. Each reply gets a blind Opus grader, and the test split gets a second one. Save
 the returned JSON beside the run folder; it is the baseline the next round compares with.
 
+## Replays: score per compute hour
+
+A case above grades one decision. A replay grades a whole campaign: a headless `claude -p` run gets a past
+campaign's frozen data and brief in a sandbox, works for a fixed budget, and the file it leaves is scored on
+truth it never saw. The score is the gain over the case's naive baseline, in the metric's units, per hour.
+
+    python ~/.claude/scripts/skill-evals/replay.py SKILL_DIR/replays/CASE --arms with without --runs 2
+
+- A case folder holds `case.yaml` (name, source, budget_minutes, submission, forbid, brief), `prepare.py CACHE`
+  (writes `CACHE/public` for the run and `CACHE/private` for the grader) and `grade.py SUBMISSION PRIVATE`
+  (one JSON line; it never raises on a bad file).
+- Runs live in `C:/qmp-replays/runs/`, outside the home folder, so no parent CLAUDE.md loads and no hippo store
+  is found by walking up. Hippo recall is off, hippo home is empty, and the web tools are off.
+- The with arm loads the skill; the without arm has the Skill tool disallowed. A run whose transcript touches a
+  forbidden path (the source repo, memory stores, rubrics, another run) is void.
+- Every run appends a row to `C:/qmp-replays/replays.tsv`. Compare arms on runs of the same budget only.
+
 ## Read these before changing the skill
 
 - Noise: `noise_2se` per split. A change smaller than that is noise.

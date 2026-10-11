@@ -1,0 +1,21 @@
+name: taxi-out
+source: prc26 campaign 1 (Sep 2026), the PRC 2026 taxi-out RMSE competition; test months follow the training months as the board followed the training data
+budget_minutes: 60
+submission: submission.csv
+forbid: [prc26, prc-26, merry-octopus, adsb.lol]
+brief: |
+  # Taxi-out time forecast
+
+  Predict the taxi-out time in seconds (off-block to take-off) for every departure in `data/test.parquet`.
+
+  - `data/train.parquet`: movements at European airports, April to August 2025. Arrivals (`PHASE_mvt == "ARR"`)
+    and departures (`"DEP"`), with `TAXITIME_SEC_mvt` known for both.
+  - `data/test.parquet`: September and October 2025 in the same columns. On departure rows `BLOCK_TIME_UTC_mvt`
+    and `TAXITIME_SEC_mvt` are hidden; every other column is as it was when the forecast is made.
+
+  Score: root mean squared error in seconds over the test departures. Lower is better.
+
+  Write `submission.csv` with the columns `MVT_ID_mvt,TAXITIME_SEC_mvt` and one row per test departure. A missing
+  departure is scored with a per-airport average from the training months.
+
+  Anything you can compute from these two files is fair. The web is not available for this task.
