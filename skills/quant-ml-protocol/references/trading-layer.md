@@ -1,6 +1,6 @@
 # The trading layer
 
-Its own page after stage 10, when a project trades the forecast. Money never
+Its own page after stage 5, when a project trades the forecast. Money never
 enters the research metric: research answers whether the forecast has skill,
 this page answers whether it pays. Every rule here was paid for in
 bd-forecast (2026-08), AF2 (2026) or the grade-differentials kickoff
@@ -27,7 +27,7 @@ applied).
 
 ## Decision rule
 
-Declared on the nomination years: a threshold on the forecast or the
+Chosen on the evaluator windows: a threshold on the forecast or the
 probability; sizing (fixed, vol-target, or a Kelly fraction shrunk by the
 edge's standard error, Baker and McHale 2013); risk limits; liquidity. For
 the probabilistic read, expected utility over the declared distribution
@@ -36,18 +36,19 @@ signal adds to, replaces or adjusts the position; P&L is measured at the
 portfolio level; overlapping horizon returns are never counted as separate
 fully invested trades.
 
-## Economic nomination and judge
+## Economic selection and the final read
 
 The skeleton (instrument, execution time and lag, cost categories,
 holding rule, overlap treatment, risk limits, primary economic metric)
-is declared and frozen at stage 1. The decision rule (threshold,
-sizing, holding) is selected on the nomination years against that
-skeleton; one economic rule is frozen before stage 8 opens, before any
-forecast or economic judge outcome is inspected; it gets one economic
-judge read on the judge years, listed in the judge-exposure box beside
-the forecast judge read; the trading ledger follows. A threshold,
-holding rule or instrument revised after the forecast judge read, or
-chosen on judge-year P&L, is a second selection, and the page says so.
+is declared and frozen when the evaluator is built. The decision rule
+(threshold, sizing, holding) is selected on the evaluator windows against
+that skeleton; one economic rule is frozen before the final read, before
+any final-window forecast or P&L is inspected; it gets one economic read
+on the final-read window, listed beside the forecast's final read; the
+trading ledger follows. A threshold, holding rule or instrument revised
+after the final read, or chosen on final-window P&L, is a second
+selection, and the page says so. A claim that will size real money gets
+the P&L checks in `audit.md` first.
 
 ## Backtest engine
 
@@ -57,7 +58,7 @@ daily mark-to-market with the mark's freeze time measured (bd: an intraday
 pull carried a partial-day mark into the settle panel); portfolio exposure
 and risk limits. Metrics: net P&L, Sharpe with autocorrelation-robust errors
 (block bootstrap or Newey-West), drawdown, turnover, each with its paired
-interval against no-trade and against the champion-rule strategy.
+interval against no-trade and against the comparator's strategy.
 
 ## Tripwires, declared before the first live row
 

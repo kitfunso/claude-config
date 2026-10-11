@@ -1,6 +1,6 @@
 # Data hygiene
 
-Read at stage 2. Every check here is a test under `tests/`, run on the frozen
+Read for the data audit, before the evaluator. Every check here is a test under `tests/`, run on the frozen
 pull and again on every later pull before it enters a result.
 
 ## Quality checks, automated
@@ -33,14 +33,14 @@ may be rank- or z-transformed instead.
 | Holiday, no session | Calendar-aware: the row does not exist on the master calendar |
 | Not yet published | Latest known value, forward-filled up to the staleness cap; older is missing |
 | Provider outage | Missingness indicator plus forward fill to the cap |
-| Feature history starts late | The late-start rule at stage 5: window-matched null, flag, re-test date |
+| Feature history starts late | Run it in every evaluator window it covers, flag it thin, set a re-test date |
 | Persistent gap | Investigate the source; exclude and list |
 
-The staleness cap is a dated, source-specific convention on the plan page,
+The staleness cap is a dated, source-specific convention on the campaign page,
 set by the source's expected publication cadence and market use, never a
 fixed ratio to its nominal frequency. Imputation with
 fitted parameters (median, model-based) is fitted inside the fold at each
-refit. A missingness indicator is a cell like any other and counts in K.
+refit. A missingness indicator is a feature like any other.
 Models that accept missing values still get the indicator.
 
 ## Point-in-time availability
@@ -55,7 +55,7 @@ source gets a row in the availability record, on the audit page:
 |---|---|
 | source | vendor or system |
 | series | the column or table |
-| pit_status | verified / unavailable / unknown (provenance grade A / B or C / D, SKILL.md stage 2) |
+| pit_status | verified / unavailable / unknown (provenance grade A / B or C / D, SKILL.md data audit) |
 | revision_risk | low / medium / material / unknown |
 | observation_date | the column that dates the observation |
 | release_date_rule | how the available time is derived (release calendar, publish timestamp, observation date plus lag) |
@@ -66,8 +66,8 @@ source gets a row in the availability record, on the audit page:
 
 Known temporal leakage stays forbidden whatever the grade: no feature whose
 known publication date is after the cutoff, no future observation shifted
-backward, no transform fitted on future rows, no judge outcome inside an
-earlier feature. A result that depends materially on a B to D source is
+backward, no transform fitted on future rows, no final-read outcome inside
+an earlier feature. A result that depends materially on a B to D source is
 reported as a historical backtest on vendor-revised history, never as a
 fully point-in-time backtest.
 

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>quant-ml-protocol review, 2026-10-11</title>
+<style>
+  :root { --ink:#1d2433; --muted:#5b6475; --line:#d9dde5; --bg:#fbfaf7; --card:#ffffff; --accent:#0b6e4f; --warn:#a4421a; --soft:#eef5f1; --softw:#fbefe8; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#e6e8ee; --muted:#9aa3b5; --line:#2e3545; --bg:#141821; --card:#1b2030; --accent:#4cc79a; --warn:#f08a5d; --soft:#16302a; --softw:#3a2219; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 "Iowan Old Style","Palatino Linotype",Georgia,serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font: 700 30px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif; margin:0 0 6px; letter-spacing:-0.01em; }
+  h2 { font: 650 20px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif; margin: 44px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+  h3 { font: 600 16px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif; margin: 22px 0 6px; }
+  .sub { color: var(--muted); font: 14px/1.4 system-ui,sans-serif; margin-bottom: 28px; }
+  .verdict { background: var(--card); border-left: 4px solid var(--accent); padding: 18px 22px; border-radius: 6px; font-size: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+  .cause { display:grid; grid-template-columns: 34px 1fr; gap: 10px; margin: 14px 0; }
+  .num { font: 700 18px system-ui,sans-serif; color: var(--accent); }
+  table { width:100%; border-collapse: collapse; font: 14px/1.45 system-ui,sans-serif; margin: 10px 0 6px; background: var(--card); }
+  th, td { text-align:left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 650; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  code { font: 13px/1.4 ui-monospace,"Cascadia Code",Consolas,monospace; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+  .keep { background: var(--soft); } .cut { background: var(--softw); }
+  .tag { display:inline-block; font: 600 11px system-ui,sans-serif; padding: 2px 7px; border-radius: 10px; margin-right: 4px; background: var(--soft); color: var(--accent); }
+  .tag.w { background: var(--softw); color: var(--warn); }
+  .src { color: var(--muted); font: 13px/1.4 system-ui,sans-serif; }
+  .stages { display:grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 14px 0; font: 13px/1.35 system-ui,sans-serif; }
+  .stage { background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 6px; padding: 10px; }
+  .stage b { display:block; font-size: 13.5px; margin-bottom: 4px; }
+  .stage .pct { color: var(--muted); font-size: 12px; }
+  @media (max-width: 760px) { .stages { grid-template-columns: repeat(2, 1fr); } }
+  ul { padding-left: 22px; } li { margin: 4px 0; }
+  a { color: var(--accent); }
+  .decide { background: var(--card); border: 2px solid var(--accent); border-radius: 8px; padding: 18px 22px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Why quant-ml-protocol keeps letting you down, and what to replace it with</h1>
+<div class="sub">Review of <code>~/.claude/skills/quant-ml-protocol</code> against our own six campaigns and 20+ public ML and quant repos. 2026-10-11. Proposed v2 draft: <code>~/.claude/docs/quant-ml-protocol-v2-draft-SKILL.md</code> (not applied).</div>
+
+<div class="verdict">
+The skill fails because it is a 75 KB rulebook that guards against fooling ourselves and has nothing that drives discovery. Every working ML-research loop we read (Karpathy's autoresearch, AIDE, Numerai's own agent skill, MLEvolve, AI-Scientist-v2) works the other way round: a short program, the checks in a frozen evaluator written in code, a keep rule that accepts any real gain, coded stop-and-pivot triggers, and model-family breadth plus tuning as stages that cannot be skipped. The proposed v2 is 167 lines (8.9 KB) and keeps the validity core in code.
+</div>
+
+<h2>1. Why it failed: five causes</h2>
+
+<div class="cause"><div class="num">1</div><div><b>It defends against false positives and never against false negatives.</b> The skill admits it: the September energy campaigns "ran valid, narrow and null" (<code>SKILL.md:99-102</code>). In prc26 campaign 1 a challenger beat the champion by <b>+1.7 s, 95% CI [+1.1, +2.3]</b> and was refused by <code>FLOOR = 2.0</code> in <code>taxi/verdict.py:8</code>. Your reply: "wtf is refused by the floor?" None of the loops we read refuses a gain with a hand-set floor.</div></div>
+
+<div class="cause"><div class="num">2</div><div><b>The rules live in prose, so the agent cannot hold them and every project hand-rolls them.</b> 1,110 lines and 165 uses of never, must, always, only, mandatory, blocks or refused. btlab found three weaker hand-rolled nulls running at once. Almost every statistic the skill prescribes in prose is one tested library call: <code>arch</code> SPA, StepM, MCS and block bootstraps; skfolio and Nixtla walk-forward with purging; <code>pypbo</code> deflated Sharpe and PBO.</div></div>
+
+<div class="cause"><div class="num">3</div><div><b>Each failure added rules, and the rules made the next failure more likely.</b> <code>SKILL.md</code> grew from 8.3 KB (Aug 19) to 75 KB (Oct 3), and the folder from 16.5 KB to 287 KB. For example, missed tuning ("this is a key step in ML development, how can you miss it?", Sep 8) became "exactly 200 Optuna trials, rerun in every null world". That costs 160,000 trials per window configuration (<code>SKILL.md:342-343</code>), so tuning became too expensive to run again.</div></div>
+
+<div class="cause"><div class="num">4</div><div><b>Its evals grade whether the agent recites the rules, not whether campaigns get better.</b> The <code>optuna-budget</code> case passes only if the agent refuses 40 trials and insists on 200, even with about 60 independent observations. 34 train cases plus 11 held-out cases tuned the skill toward its own text.</div></div>
+
+<div class="cause"><div class="num">5</div><div><b>It has no discovery engine.</b> It has no error map, no oracle ceiling, no external scan of public repos and forums, no model-family scout and no plateau rule. Those are exactly what moved prc26: in the protocol-free days (Sep 12 to 14) the board went 310.891 to 271.783. After the protocol came back (instantiated in campaign 2 on Sep 18, commit <code>e762f69</code>), it sat between 270 and 274 until outside data found in a competitor's repo (ADS-B pushback times) took it to 255.6 and then 240.87 (<code>prc26 LEDGER.md</code> rows v21, v28, v53, v64, v72).</div></div>
+
+<h2>2. Our own campaigns</h2>
+<p>Read-only mining of seven repos (<code>td3c-forecast</code>, <code>bd-forecast</code> and <code>wb-forecast</code> are not on this box). Board scores are RMSE in seconds, lower is better.</p>
+<table>
+<tr><th>Campaign</th><th>Protocol</th><th>Docs vs code lines</th><th>Outcome</th><th>What moved the metric</th></tr>
+<tr><td>prc26 v1 (Sep 4 to 12)</td><td>Full</td><td class="n">8,233 / 13,263</td><td>325.40 to 294.99; gains of 0 to 1.8 s per file from S5 on; holdout stopped predicting the board</td><td>None found</td></tr>
+<tr><td>prc26 campaign 2 (Sep 12 to Oct 11)</td><td>None for 6 days, then yes</td><td class="n">50,874 / 13,446</td><td>310.89 to 271.78 in 3 days; flat at 270 to 274 for v34 to v62; 240.87 at v72</td><td>Error map, window-state features, then ADS-B data from a competitor's repo (+14.81 s in one step)</td></tr>
+<tr><td>qm-natgas (8 rounds)</td><td>Pre-registration</td><td class="n">project-wide</td><td>Null: best min Sharpe 0.43 against a 1.0 bar</td><td>"There is no edge here at the bar this project sets."</td></tr>
+<tr><td>btlab</td><td>Full, 2,981-line protocol</td><td class="n">8,166 / 33,667</td><td>About 28 of 30 verdict rows died; survivors went to paper trading</td><td>None found</td></tr>
+<tr><td>alphanova</td><td>Only from cycle 3</td><td class="n">1,068 / 15,849</td><td>Tiny positive: Q1 star at +0.0048</td><td>Dropping old rows (half-window, no weights)</td></tr>
+<tr><td>fifty</td><td>Light: two-baseline gate and a decision log</td><td class="n">6,721 / 15,618</td><td>Ties Chronos-2 given the same weather; beats operators 15 of 26 on lane T</td><td>Holiday table (D69), median -7.6% holiday-day error</td></tr>
+</table>
+<p class="src">Caveat: natgas and btlab may simply have no edge, and the protocol's filter may have been right to kill them. The data cannot tell those two stories apart. What it shows is that the protocol never produced a lever in any campaign.</p>
+
+<h2>3. What the field does</h2>
+
+<h3>A. A short program and a frozen evaluator <span class="tag">causes 2, 3</span></h3>
+<p>autoresearch's whole instruction is <code>program.md</code>, 115 lines. The agent may edit only <code>train.py</code>; <code>prepare.py</code> (the evaluator) is read-only. Every run appends one row to <code>results.tsv</code>. AIDE's search policy is about 30 lines of code (<code>aide/agent.py:162-193</code>). Numerai's agent research flow is three files totalling about 17 KB (research 2.9 KB, experiment design 9.5 KB, AGENTS.md 4.5 KB, checked via <code>gh api</code>). Our skill folder is 287 KB.</p>
+<p class="src">github.com/karpathy/autoresearch, github.com/WecoAI/aideml, github.com/numerai/example-scripts (numerai/agents/)</p>
+
+<h3>B. A keep rule that accepts any real gain <span class="tag">cause 1</span></h3>
+<p>autoresearch: "If val_bpb improved, you advance the branch". It adds a simplicity tie-break: "An improvement of ~0 but much simpler code? Keep." RD-Agent's quant loop: "Any small improvement should be considered for inclusion as SOTA". Noise control belongs in the stop rule, not the accept rule.</p>
+<p class="src">github.com/microsoft/RD-Agent rdagent/scenarios/qlib/</p>
+
+<h3>C. Coded plateau-and-pivot triggers <span class="tag">cause 3 in alphanova, cause 5</span></h3>
+<p>Numerai runs rounds of 4 to 5 configs and stops after "at least two consecutive rounds" fail to beat the best (<code>numerai-experiment-design/SKILL.md:13,32,51</code>, read this session). MLEvolve marks a branch stagnant after 3 attempts that don't beat its own best, and stagnation switches the search to another branch or a fusion of two. Either rule would have stopped alphanova cycle 2's 30 variants of one ridge.</p>
+<p class="src">github.com/InternScience/MLEvolve (top open-source agent on MLE-bench, 61.33%)</p>
+
+<h3>D. Model-family breadth on day one, foundation models included <span class="tag">cause 5, the TabPFN ask</span></h3>
+<p>AIDE writes 5 independent drafts before improving any. Every Kaggle winner we read blended families: Optiver 1st place (CatBoost, GRU and Transformer), Ubiquant 1st place (LightGBM and TabNet), NVIDIA's grandmasters (GBDT, NN, SVR, with TabPFN in the stack). Chronos-2, TimesFM and TabPFN-TS are each one call zero-shot. On financial returns, the evidence says expect near random walk; they are useful practical priors and cheap baselines (arXiv 2511.18578, 2606.27100, abstracts only). TabPFN-TS sends data to Prior Labs' cloud by default, so run it in <code>LOCAL</code> mode.</p>
+
+<h3>E. Tuning as a bounded stage that cannot be skipped <span class="tag">causes 2, 3</span></h3>
+<p>AI-Scientist-v2 has a baseline_tuning stage that cannot close while the best node is still the base node. Numerai skips sweeps for feature changes and runs them for new architectures. NVIDIA's seven grandmaster techniques leave tuning out. mlforecast's <code>AutoMLForecast</code> makes the caller choose <code>num_samples</code>. No library fixes the trial count.</p>
+
+<h3>F. Validation that mirrors the test, calibrated once against external truth <span class="tag">holdout missed the board</span></h3>
+<p>Optiver 1st place: "The CV score aligns with leaderboard score very well... So I just focus on improving CV". Jane Street 8th place: 2 folds of 200 dates, the size of the public test, plus a gap test against the private set. Ubiquant used two CV schemes and kept only changes that won on both. RD-Agent's feedback checks for an "Exact match between validation metric and official Kaggle metric". MLE-bench lists agents that used test-set feedback separately, as not comparable.</p>
+
+<h3>G. Mechanism and outside information beat search <span class="tag">cause 5</span></h3>
+<p>Jane Street 8th place: online learning gave +0.008 against +0.001 for auxiliary targets. Ubiquant: one market-level aggregate lifted CV from 0.141 to 0.154. Optiver: post-processing read straight off the metric. RD-Agent mines Kaggle notebooks into an idea pool. Deotte's 2026 LLM-run win started from papers, forums and public code. None of the agent repos does error decomposition or oracle ceilings; that part of our prc26 recipe has no prior art in them and is worth keeping as our own.</p>
+
+<h3>H. Multiplicity from the logged search, not reruns <span class="tag">causes 2, 3</span></h3>
+<p>No library reruns the whole search per null world. Every one handles multiplicity from the matrix of logged out-of-sample losses: SPA or StepM for "beats the champion after K tries", MCS for the tie set, deflated Sharpe with N set to the trial count for P&amp;L. If every run is in the ledger, the search is countable and the bar rises as runs pile up.</p>
+
+<h2>4. Keep, move to an audit file, delete</h2>
+<table>
+<tr><th>From the current skill</th><th>v2</th></tr>
+<tr class="keep"><td>Walk-forward, purge of at least a horizon, everything fitted inside the fold, no random split</td><td>Keep, inside <code>evaluate.py</code> with tests</td></tr>
+<tr class="keep"><td>One untouched final read; a disappointing read is the result</td><td>Keep (stage 5)</td></tr>
+<tr class="keep"><td>Append-only live forecast ledger, <code>daily-read.md</code></td><td>Keep</td></tr>
+<tr class="keep"><td>PIT grades A to D, availability before cutoff, "vendor-revised history" wording</td><td>Keep, short, via <code>data-hygiene.md</code></td></tr>
+<tr class="keep"><td>Carry decomposition for market targets; trading page separate; prior-art rings</td><td>Keep (stage 0, references)</td></tr>
+<tr class="keep"><td>Paired block-bootstrap interval</td><td>Keep, as the keep rule, via <code>arch</code></td></tr>
+<tr><td>Full-search null replay over 100 to 200 worlds; signal-injection power check</td><td>Move to <code>references/audit.md</code>, for real-money decisions only</td></tr>
+<tr class="cut"><td>Hand-set effect floors as accept gates</td><td>Delete; economic minimum goes on the trading page</td></tr>
+<tr class="cut"><td>Exactly 200 Optuna trials, rerun in every null world</td><td>Delete; one time-capped study per family</td></tr>
+<tr class="cut"><td>Tier 1 and tier 2 with separate nulls; per-refit rolled cutoffs; n_cap/8; order-statistic brackets; residual-scale-ratio null choice</td><td>Delete</td></tr>
+<tr class="cut"><td>Coverage table with M1 to M10, F1 to F6, G1 to G4 checked by script</td><td>Delete; the ledger and the stage list replace it</td></tr>
+<tr class="cut"><td>Grill, then grill-me, then plan-eng-review plus codex, then a critic plus codex at each freeze</td><td>Delete; one calibration check against external truth replaces them</td></tr>
+<tr class="cut"><td>34 + 11 rule-recital evals</td><td>Replace with outcome evals: replay a past campaign, grade score reached per compute hour and repeat-mistake rate</td></tr>
+</table>
+
+<h2>5. The proposed v2</h2>
+<p>Draft: <code>C:/Users/skf_s/.claude/docs/quant-ml-protocol-v2-draft-SKILL.md</code>, 167 lines. Two files come first, before any model: a frozen <code>evaluate.py</code> (split mirroring the test, purge, paired interval, OOF predictions to disk) and an append-only <code>results.tsv</code>. Then six time-boxed stages:</p>
+<div class="stages">
+  <div class="stage"><b>0 Sources and errors</b><span class="pct">~10%</span><br>External scan, naive baseline, error map, idea pool ranked by headroom</div>
+  <div class="stage"><b>1 Draft breadth</b><span class="pct">~10%</span><br>4+ model classes in parallel, one foundation-model slot</div>
+  <div class="stage"><b>2 Tune</b><span class="pct">~15%</span><br>One time-capped study on the top 1 or 2 drafts</div>
+  <div class="stage"><b>3 Mechanism rounds</b><span class="pct">~45%</span><br>4 to 5 variants per round; keep if CI &gt; 0; stagnant after 3 runs or 2 rounds, then change construct</div>
+  <div class="stage"><b>4 Ensemble</b><span class="pct">~10%</span><br>Hill-climb or NNLS over every OOF file</div>
+  <div class="stage"><b>5 Final read</b><span class="pct">~10%</span><br>One untouched read, then the live ledger</div>
+</div>
+<p>Multiplicity: SPA, StepM or MCS on the logged loss matrix; deflated Sharpe with N = ledger rows for trading claims. Hard rules shrink to six lines, each backed by a test in the project.</p>
+
+<h3>What applying it also needs</h3>
+<ul>
+  <li>Create <code>references/audit.md</code> from the heavy machinery being cut, so nothing is lost.</li>
+  <li>Trim <code>references/model-families.md</code> (it carries the 200-trial rules) and <code>steering-bank.md</code> to match.</li>
+  <li>Retire <code>evals/</code> and <code>evals-test/</code>, and write 3 to 5 outcome evals from past campaigns.</li>
+  <li>Update the pinned hippo rule: "ten runs of one construct" becomes the v2 stagnation rule (3 runs or 2 rounds).</li>
+  <li>Later: a starter <code>templates/evaluate.py</code> and <code>scripts/ledger.py</code> (stagnation check read off <code>results.tsv</code>).</li>
+</ul>
+
+<h2>6. What we know, believe and have not tested</h2>
+<ul>
+  <li><b>Know:</b> the size growth, the floor refusal, the zero finished tuning studies by Sep 8, the eval design, the prc26 score path. Each is read from files or git this session.</li>
+  <li><b>Believe:</b> the v2 loop would have found the prc26 levers sooner and stopped the alphanova sweep. Both are reasoned from the public loops, not measured.</li>
+  <li><b>Not tested:</b> whether v2 kills false positives as well as v1 in a no-edge market like natgas. The first v2 campaign should run beside a v1-style audit on one claim to check.</li>
+</ul>
+
+<h2>7. claude-config sync</h2>
+<p>Pulled 10 upstream commits by fast-forward; one hand-merged conflict in <code>docs/hooks.md</code>; pre-pull copy kept as <code>stash@{0}</code>. Nothing pushed: finished local work (spawn guard, bash pre-guard, hippo context cache, incidents, token-burn scripts) waits for a "push", because another live session is mid-edit on <code>skills/dev-framework-rl/SKILL.md</code> and <code>skills/verify-hippo/</code>. Upstream added a CRITICAL html-plan rule; the html-plan skill is not in this box's skill list.</p>
+
+<div class="decide">
+<b>Applied 2026-10-11.</b> <code>SKILL.md</code> is now v2, with the follow-ups above (audit file, reference realignment, eval swap, pinned-rule update) in one commit. The old version stays in git at <code>6dac91a</code>. Not built yet: the starter <code>evaluate.py</code> template and an eval that replays a whole campaign.
+</div>
+
+<h2>Sources read this session</h2>
+<p class="src">
+Agent loops: github.com/karpathy/autoresearch (program.md); github.com/WecoAI/aideml (aide/agent.py, utils/config.yaml); github.com/microsoft/RD-Agent (scenarios/qlib/proposal/bandit.py, quant_proposal.py, developer/feedback.py; data_science/proposal/exp_gen/prompts_v2.yaml, idea_pool.py); github.com/SakanaAI/AI-Scientist-v2 (bfts_config.yaml, treesearch/agent_manager.py); github.com/openai/mle-bench (README); github.com/InternScience/MLEvolve (config, engine/conditions.py, agents/memory/global_memory.py); github.com/RndmVariableQ/AlphaAgent.<br>
+Competitions: Kaggle write-ups for Jane Street 2024-25 (8th place), Optiver Trading at the Close (1st), Ubiquant (1st); github.com/Mcompetitions/M5-methods; arXiv 2310.13357 (M6); github.com/numerai/example-scripts (numerai/agents/), numerai-tools; NVIDIA Kaggle Grandmasters Playbook (Sep 2025); two Chris Deotte NVIDIA posts.<br>
+Libraries: github.com/microsoft/qlib; Nixtla statsforecast, mlforecast, neuralforecast and experiments; amazon-science/chronos-forecasting; google-research/timesfm; PriorLabs/tabpfn-time-series; skfolio; baobach/mlfinpy; esvhd/pypbo; bashtage/arch; alphalens-reloaded.<br>
+Ours: SKILL.md and git history; transcripts for Sep 4, 7, 8 and 24; prc26 LEDGER.md and docs; qm-natgas, btlab, alphanova, fifty repos. Raw downloads are in the session scratchpad.
+</p>
+
+</main>
+</body>
+</html>

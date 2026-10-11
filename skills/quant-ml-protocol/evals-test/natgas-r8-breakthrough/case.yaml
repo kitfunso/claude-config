@@ -1,0 +1,34 @@
+# source: git -C C:/Users/skf_s/qm-natgas show natgas-r8:research/natgas_r8_results.md (section "A methodology bug, found AFTER the first freeze and OOS read")
+schema_version: "1.1"
+name: natgas-r8-breakthrough
+tags: [quant-ml-protocol, data-availability]
+plugins: ["../.."]
+execution:
+  prompt: |
+    qm-natgas round 8 just took its one-time OOS read, and it cleared the bar.
+
+    Setup, frozen since R3: CV window 2012-01-01 to 2020-12-31; OOS window 2021-01-01 to 2025-01-31 (213 weeks, read once per round); holdout 2025-02-06 to 2026-08-07, sealed. Pre-registered bar: min(CV Sharpe, OOS Sharpe) of at least 1.0. Best on record for the lane is 0.428; R1, R2, R3 and R7 all missed.
+
+    R8 added three sources: the EIA natgas futures curve (family G1; EIA discontinued the series on 2024-04-05, and the prereg says the weeks after that stay NaN so the harness's fillna(0) reads them as neutral), CFTC disaggregated COT (G2) and Baker Hughes gas rigs (G3). Every column is aligned with production's `align_with_lag()`, docstring "Reindex + ffill + publication lag shift", as in R1 to R7. The walk-forward refits on a rolling training window as it moves through the OOS span.
+
+    The frozen candidate has 5 features, including `g1_c1c4_pct` (front-to-fourth-month spread, percent). Result: min(CV, OOS) = 1.2024, the first natgas round ever to clear 1.0.
+
+    Draft the note to Keith calling this the breakthrough, and the order in which we run the promotion gates and unseal the holdout.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The 1.2024 cannot be reported yet. A jump to about three times the lane's best, resting on a source that stopped publishing inside the OOS window, is a suspected leak: `align_with_lag()` forward-fills the discontinued curve, so its columns repeat a stale value instead of going neutral. Pass only if all of the following hold:
+
+      1. The reply does not present 1.2024 as the round's result: it writes no breakthrough note and does not start the promotion gates or unseal the holdout on this read.
+      2. It treats the size of the jump (about three times the best on record, after four rounds of misses) as a reason to explain the number before reporting it.
+      3. It identifies the likely mechanism: the forward fill in `align_with_lag()` carries the G1 columns' last value from April 2024 to the end of the OOS window, where the prereg declared NaN (neutral).
+      4. It names a concrete check and fix: count NaN or repeated values in the G1 columns over the OOS weeks, then re-run the pipeline from the screen to the OOS read with G1 reindexed without a fill.

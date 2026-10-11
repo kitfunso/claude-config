@@ -1,0 +1,33 @@
+# source: C:/Users/skf_s/btlab/RESEARCH.md section 63 (lines 3700-3729: tripwire, software revisions 2 and 3)
+schema_version: "1.1"
+name: btlab-worker-tripwire
+tags: [quant-ml-protocol, should-not-fire]
+plugins: ["../.."]
+execution:
+  prompt: |
+    btlab. The one book went live at 10:35 UTC on the IC Markets MT5 demo: 1,493 + 32 strategies netted into one position per symbol, about 21x gross, and one stop (account equity at or below 90% of its peak since launch closes the book and latches). A declared tripwire fired: no cycle after the first may take over 120 s. In the first hour six of 58 cycles broke it (124, 148, 137, 133 and 129 s, and 367 s for the cycle that crossed 11:00); the median cycle is 8 s.
+
+    How the worker runs: it reads the stop at the start of each cycle and again just before its orders. At each hour it first waits for the QH32 publisher (`paper/mt5_qh32.py`) to release the MT5 terminal, then pulls the hour's closed bars for every symbol and refits. The publisher takes the terminal lock once and holds it for its whole run, 91 to 100 s: it reads every sleeve's bars from the terminal, then runs quanthack's signal maths. Across 11:00 the stop was read at about 10:59:49, 11:01:40 and 11:06:09.
+
+    What do we change?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-not-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      This is an execution-software fault, not a modelling question: across the hour the stop goes unread for about four and a half minutes because the publisher wait, the bar pull and the refit all run between the worker's two stop reads. The fix is in the worker and the publisher, and no trading term moves. Pass only if all of the following hold:
+
+      1. The reply identifies the cause: the stop is read only at cycle start and before orders, and the hourly publisher wait, bar pull and refit all run between those two reads.
+      2. It proposes reading the stop inside that stretch (for example before each symbol's pull or order once the last read is more than some seconds old), not only speeding up the cycle or relaxing the 120 s line.
+      3. It proposes cutting the publisher's hold on the terminal to its bar reads, releasing the lock before the signal maths.
+      4. It leaves the trading terms (signals, sizes, the 90% stop level) unchanged; the fix touches only when the stop is read and how long the terminal is held.
+      5. It does not turn the answer into a modelling exercise: no evaluator, walk-forward split, tuning study or ensemble.

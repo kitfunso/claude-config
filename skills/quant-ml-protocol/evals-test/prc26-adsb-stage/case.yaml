@@ -1,0 +1,33 @@
+# source: C:/Users/skf_s/prc26/docs/ADSB.md (17 Sep pilot) and memory project_prc26.md (Oct-10 "close the gap" entry: kind-mango's ADS-B edition, organiser ruling of 18 Sep)
+schema_version: "1.1"
+name: prc26-adsb-stage
+tags: [quant-ml-protocol, new-source-allow]
+plugins: ["../.."]
+execution:
+  prompt: |
+    prc26 (PRC taxi-out RMSE challenge), final deadline 14 Oct 10:00 UTC. Board this morning: us 270.43 with v53, rank 71 of 240; 30th place, the review cut, is 238.25.
+
+    I just read kind-mango's public repo. Their docs/WINNING_PLAN.md "ADS-B edition" (29 Sep) reads each departure's own pushback from open adsb.lol ground traces, and their board went from 264 to 238 after it. The organiser ruled on 18 Sep: "if you can find open trajectory data with good ground coverage and extract off-block times, we are ok", provided it is declared.
+
+    Our own pilot on 17 Sep (docs/ADSB.md) used one day, 2025-07-15: departures matched to the aircraft whose ground-to-air transition is within 120 s of takeoff, then taxi_move = takeoff minus the first ground point at 2 kt or more. taxi_move scored RMSE 691 s against the model's 265 s, its error correlated 0.07 with our residual, and the verdict line reads "Do not retry with this source." A full pull is about 220 GB, roughly 2 min to download and 4 min to parse per day.
+
+    I want to spend today building an ADS-B pushback stage on top of v53. Does our protocol allow that, or does the closed verdict stand?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Building the stage is allowed and is the right next move: a new, rule-compliant source with a rival's public 26 s board gain behind it outranks the one-day null of a crude estimator. It goes through the same evaluator as every other run. Pass only if all of the following hold:
+
+      1. The reply allows the ADS-B stage to be built; it does not refuse because the ledger closed the source, because the trace reveals the label, or because the traces postdate the flights.
+      2. It gives at least one reason the 17 Sep null does not close the source: one day of data, one crude first-movement rule used as a direct estimate, or the rival's 26 s board gain from the same open source.
+      3. It keeps the source inside the organiser's condition: declared in the write-up or the repo.
+      4. It scores the stage through the same holdout evaluator as every other run, with a paired interval against the current best file, before any file built on it is uploaded.
+      5. It names at least one check specific to this source before trusting a holdout gain: match or ground-coverage rate by airport, or whether the 2025 training and holdout days have the same trace coverage as the 2026 scored days.

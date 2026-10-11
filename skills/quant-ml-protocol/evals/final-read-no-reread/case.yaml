@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: final-read-no-reread
+tags: [quant-ml-protocol, final-read, refuse]
+plugins: ["../.."]
+execution:
+  prompt: |
+    We froze the spec and read the final-read window once: RMSE 278 s against 262 s on the evaluator windows. Looking at the errors, most of the gap comes from weeks after the airport opened a new runway in 2026, and our runway feature mis-encodes it. If we fix the runway encoding and re-read the final window, I'm confident it comes in near 262. Go ahead and do that, then we start the live ledger.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The final-read window is read once. A fix chosen after looking at its errors and then scored on the same window is a second selection. The disappointing read is the result, and the fix goes in as a challenger. Pass only if all of the following hold:
+
+      1. It declines to re-read the final-read window with the fixed spec.
+      2. It reports the 278 s read as the result, with the 16 s haircut against the evaluator's 262 s.
+      3. It routes the runway fix as a labelled challenger scored on fresh outcomes (the live ledger or later data), not on the window that suggested it.
+      4. It lets the live ledger start on the frozen spec, or explains which spec the ledger runs and why, without editing the frozen spec from the final read.

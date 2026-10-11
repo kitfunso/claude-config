@@ -1,87 +1,72 @@
 # The steering bank: questions that caught what checklists missed
 
-Two uses. **Self**: fire these at yourself at the marked stage, in writing,
-before the stage closes. **Write-up**: present the second set beside the
-stage 10 page so the reader can attack the method, not only the numbers.
-Every row was paid for by a real failure or a review catch; the campaign and
-date are named. Stage numbers follow the protocol's current stage list (stages 0-10).
+Two uses. **Self**: fire these at yourself, in writing, before the marked stage
+closes. **Write-up**: present the second set beside the closing report so the reader
+can attack the method, not only the numbers. Every row was paid for by a real
+failure or a review catch, named with its campaign and date. Stage labels follow
+SKILL.md: B is the build (data audit, evaluator, ledger), then stages 0 to 5. The
+questions about null replays live in `audit.md`.
 
 ## Self: fire at yourself, per stage
 
 | Stage | Question | What it caught |
 |---|---|---|
-| 1 | "How many INDEPENDENT observations do I really have?" | bd-forecast 2026-08: overlapping 7-week windows turned about 600 anchors into about 55 observations; SE(IC) 0.135 reframed every later "discovery" as noise-sized |
-| 1 | "What is the market already paying, for free?" | bd-forecast v0 scored 57-65% hit on raw moves; the forward curve priced the whole drift, so the "skill" was collectible by anyone holding the position |
-| 1 | "Which years choose and which years judge, and is that written down?" | td3c 2026-09: nomination and judge years named on the plan page before stage 1 closed, so no later read could be a second look |
-| 1 | "Which earlier reads already touched the judge years?" | td3c plan review 2026-09-22: the champion was quoted pooled 2022-2025 with 2025 a judge year; the page now lists every earlier read and the champion is restated on the nomination years |
-| 1 | "Can this test say yes?" | critique 2026-09-22: enumerate-everything, a campaign-wide maximum and B = 20 stacked to a bar above any plausible incremental effect (td3c had 203,700 cells planned on about 100 honest independent observations); the power line and the screen-null-first rule came from it |
-| 2 | "Did I search the whole table family, or one keyword?" | td3c 2026-09-22: a wide screen missed six daily VLCC tonnage lists because the search stopped at one table name; the family was found by prefix a stage later |
-| 2 | "Is any input stored-revised rather than vintaged?" | bd-forecast's predecessor shipped balances revised three months into the past; the successor stress-lagged its top driver (IC 0.44 to 0.35 at +8 weeks) and started day-one snapshots |
-| 2 | "Does the derived series reconcile with the published count?" | td3c 2026-09-22: the daily AG list vs the vendor's 1-10-day count table, best definition corr 0.37, exact match 4% of days; the count table became its own feature, never a splice |
-| 2 | "Did the power check grow the data, or shrink the search?" | natgas 2026-09-28: 22% power at K = 10 cut the universe to 3 cells and the other 7 were never scored; the pre-2015 history had been left as the user's ETL call on every weekly energy campaign. Now the grow-n routes run first and the universe splits into tiers, never shrinks |
-| 2 | "Is every primary driver in the universe, and if not, have I gone and got it?" | natgas 2026-09-28: storage and weather, the drivers the literature ranks first, were "not in crude-db ... a new pipeline, Keith's call"; the campaign ran without them and closed null. Free data is now pulled at stage 2 |
-| 4 | "Was this universe built for this market, or copied from a sibling?" | natgas 2026-09-28: tier 1 was "HO's tier 1 by name and WTI's by family", so the campaigns tested the same three hypotheses on four markets |
-| 4 | "What has not been tried, and why?" (asked by a fresh-context critic) | the 2026-09-29 diagnosis: four campaigns closed valid and null with no reviewer ever asked about breadth; the critic now runs before the stage 4 and stage 8 freezes |
-| 4 | "Can 'every' be checked against a list?" | td3c 2026-09-22: "every available feature" only meant something once the universe was enumerated from the schema and listed on a page with table, base series and first date |
-| 4 | "Is the count exact, or an estimate wearing a count's clothes?" | td3c plan review 2026-09-22: `approx_count_distinct` gave 1732 for a date column with 1477 distinct dates, and the same estimate decided which columns survived a cardinality cutoff |
-| 4 | "Can the leak test fail for the right reason?" | td3c plan review 2026-09-22: a "+1-day shift lowers IC" test passes clean slow features and leaking fast ones alike; replaced by an availability-time assertion and a future-mutation test |
-| 5 | "Is the cutoff a number I chose, or the null's?" | bd-forecast 2026-08: an 11,872-cell search found +0.099 real while all 20 shift replays of the same recipe found more (mean +0.23); nothing was promoted, correctly |
-| 5 | "Does the null keep the champion?" | td3c plan review 2026-09-22: shifting every source series set the bar for "does anything predict" when the question was "does anything add after a champion at 0.44"; the null became the champion fit plus the shifted residual, and calendar columns got a bar for the first time |
-| 5 | "Is this a second feature, or the champion again?" | td3c 2026-09: with a one-feature champion at rank IC 0.44, raw IC ranks the champion's copies first; incremental IC after the champion is the screening statistic |
-| 5 | "Was the shortlist chosen with outcomes the walk-forward has not seen yet?" | td3c plan review 2026-09-22: one screen on all three nomination years, then a grid predicting the first two with it; screening moved inside the walk-forward at each annual refit |
-| 5 | "Are twenty shifts twenty draws?" | critique 2026-09-22: offsets closer than a horizon are near-duplicate replays (td3c's B = 200 on about 750 daily anchors put them four apart at a 5-day horizon); the v1 effective-draws rule had been cut in the rewrite; the two-horizon spacing and the stated B came back from it |
-| 6 | "Is the cap arithmetic on the window I am actually using?" | td3c 2026-09-22: rows / 8 gives about 25 clusters on an expanding fit and about 3 on a 26-week rolling fit for the same data; one cap for both was wrong |
-| 6 | "Which count feeds the cap (n_cap) and which feeds power (n_rank or n_anchor), each named?" | critique 2026-09-22: "usable training rows / 8" beside "independent observations = anchors / overlap" was a fourfold gap at a 4-week horizon; the cap moved to effective rows |
-| 7 | "Did I import a sibling project's answer as a prior?" | td3c 2026-09-22: "expanding window, annual refit" was written as the primary because bd found it; the user caught it; it became one cell of a 132-cell grid |
-| 7 | "Is the hyperparameter grid itself sane?" | bd-forecast 2026-08: a grid reaching C = 0.003 shrank small specs to the base rate; the "tie" between specs was over-regularisation |
-| 7 | "Did the richer model BEAT or merely TIE the simple one?" | bd-forecast 2026-08: Optuna over boosting, nets and GPs never beat plain L2 logistic at this sample size; ties promote the simpler model |
-| 7 | "How many cells does the tie rule send to the judge?" | td3c plan review 2026-09-22: "every tied cell goes to the judge read" on a 132-cell grid was a second selection on the judge years; now one cell per family by a written tie-break, the tie set reported as a range |
-| 7 | "What is the tie rule, and was it written before the run?" | td3c 2026-09: cells inside one paired interval are a flat surface; without the rule, a flat surface gets read as a winner |
-| 7 | "With every shortlist empty, what did the grid compare?" | natgas 2026-09-28: 108 grid cells across 4 families, every one fitted to the champion's value alone; the grid tested model shape, never the information. Every family now also runs on the whole tier 1 set |
-| 7 | "Which rung is untried, and what accepted reason does its row carry?" | grade-diff 2026-09-07: nine mechanisms untried at the gate at once, each flagged, none with a row; natgas 2026-09-28: zero Optuna trials because "a study adds multiplicity the 313 nomination anchors cannot pay for" |
-| 7 | "Did this round change one thing, and is it in the challenger log?" | bd-forecast 2026-08: numbered iterations, one challenger each against the champion in an experiment log, with the gauntlet on every survivor, reached a champion that passed its 200-shift null and held its sign leaving out any year |
-| 7 | "Is the edge the drift the curve already pays?" | bd-forecast 2026-08: the downdrift was fully carry-priced (drift -0.028 a week against carry roll-down -0.066); the carry decomposition turned a direction "edge" into a target question |
-| 8 | "Which of the judge reads is the result?" | critique 2026-09-22: one cell per family was still four looks at the judge years with none named binding; the standing family is fixed at stage 7 and its read is the result |
-| 8 | "What did selecting cost me?" | bd-forecast 2026-08: choose-on-early, judge-on-late put the selection haircut at +0.08 to +0.17 of apparent IC; the honest expectation is the judge number |
-| 9 | "Is this direction skill, or a volatility artefact?" | bd-forecast 2026-08: one feature's gain survived time-shifting the feature; linear sizing scales up in persistent-vol regimes even when misaligned |
-| 10 | "What else is wrong with what you did?" | bd-forecast 2026-08: asked cold, produced a 12-finding self-audit (overstated p-values, cross-campaign selection unadjusted, thin families without their own nulls) that no checklist had surfaced |
-| 10 | "What price is the entry, really, and when does the mark freeze?" | bd-forecast 2026-08: an intraday pull carried a partial-day mark into the settle panel; the freeze time had to be measured with a probe |
-| 10 | "Why is this row here?" | bd-forecast 2026-08: an off-grid promotion-day call confused the ledger; rows are explained and labelled, never deleted |
-| 10 | "What is the ledger's read rule, and was it written before the first row?" | critique 2026-09-22: "the only judge of the model" had no statistic, no minimum count and no schedule; the v1 anytime-valid rule had been cut in the rewrite; the read rule came back from it |
-| 9 | "Did a judge diagnostic just edit the spec?" | outside review 2026-09-22: stage 9's knockouts and separating-feature list invited "remove X before the ledger starts", which would have made the judge years a second development set |
-| 5 | "Does the null keep the clock?" | outside review 2026-09-22 (third): a whole-block circular shift puts crisis residuals into calm years; the scale check and the standardise-and-rescale option came from it |
-| 10 | "Is the ledger minimum in the metric's own units?" | outside review 2026-09-22 (second and third): (2 / IC)^2 was applied to a Brier reduction; the standardised effect over the long-run s.d. came from it |
+| B | "How many INDEPENDENT observations do I really have?" | bd-forecast 2026-08: overlapping 7-week windows turned about 600 anchors into about 55 observations; SE(IC) 0.135 reframed every later "discovery" as noise-sized |
+| B | "Which windows score, which window is the final read, and is that written down?" | td3c 2026-09: the windows named on the page before any run, so no later read could be a second look |
+| B | "Which earlier reads already touched the final-read window?" | td3c plan review 2026-09-22: the champion was quoted pooled 2022-2025 with 2025 held back; the page now lists every earlier read |
+| B | "Does the evaluator rank the external scores the way the board does?" | prc26 v1 2026-09: holdout and board disagreed on which model was better (`docs/CEIL.md`), and v19 beat v20 on holdout but lost on the board |
+| B | "Did I search the whole table family, or one keyword?" | td3c 2026-09-22: a search stopped at one table name and missed six daily VLCC tonnage lists |
+| B | "Is any input stored-revised rather than vintaged?" | bd-forecast's predecessor shipped balances revised three months into the past; the successor stress-lagged its top driver (IC 0.44 to 0.35 at +8 weeks) |
+| B | "Does the derived series reconcile with the published count?" | td3c 2026-09-22: a derived daily list matched the vendor's count table on 4% of days; the count table became its own feature, never a splice |
+| B | "Is the count exact, or an estimate wearing a count's clothes?" | td3c plan review 2026-09-22: `approx_count_distinct` gave 1732 for a column with 1477 distinct dates |
+| B | "Can the leak test fail for the right reason?" | td3c plan review 2026-09-22: a "+1-day shift lowers IC" test passed clean slow features and leaking fast ones alike; replaced by an availability-time assertion and a future-mutation test |
+| B | "Is feature selection inside the fold?" | td3c plan review 2026-09-22: one screen on all scoring years, then models predicting those years with it |
+| 0 | "What do the public repos and forums already know?" | prc26 2026-10-10: ADS-B pushback times, read out of a competitor's public repo, gave +14.81 s in one step, more than any model change |
+| 0 | "What is the market already paying, for free?" | bd-forecast v0 scored 57-65% hit on raw moves; the forward curve priced the whole drift (-0.028 a week against carry roll-down -0.066) |
+| 0 | "Where does the loss sit, and what would a perfect version of this idea recover?" | prc26 2026-09-13: 1.6% of rows carried 52.7% of squared error; window-state features later recovered 4.42 of a 7.98 s oracle ceiling |
+| 0 | "Is every primary driver in the data, and if not, have I gone and got it?" | natgas 2026-09-28: storage and weather, the drivers the literature ranks first, were left out as "a new pipeline"; the campaign closed null |
+| 0 | "Was this campaign built for this market, or copied from a sibling?" | natgas 2026-09-28: its feature set was "HO's by name and WTI's by family", so four markets tested one hypothesis |
+| 0 | "Did I import a sibling project's answer as a prior?" | td3c 2026-09-22: "expanding window, annual refit" was written as the answer because bd found it; it became one option among many |
+| 1 | "Did the models see the information, or only the champion's value?" | natgas 2026-09-28: 108 model runs, every one fitted to the champion's value alone; they tested model shape, never the information |
+| 2 | "Did a tuning study run and finish?" | prc26 2026-09-08: three studies declared, zero finished, because budgets were set in hours before a trial was priced; natgas 2026-09-28 ran zero trials |
+| 2 | "Is the hyperparameter grid itself sane?" | bd-forecast 2026-08: a grid reaching C = 0.003 shrank small models to the base rate; the "tie" was over-regularisation |
+| 3 | "Is a floor refusing a real gain?" | prc26 2026-09-08: a challenger at +1.7 s, 95% CI [+1.1, +2.3], was refused by a hand-set 2 s floor |
+| 3 | "Is this the fourth variant of a stagnant construct?" | alphanova cycle 2 2026-09-02: 30 of 32 uploads were parameter variants of one ridge, every one inside the noise bar |
+| 3 | "Did a weak result lead to more information, or to a narrower search?" | natgas 2026-09-28: low power cut the feature set to 3 and left the pre-2015 history unpulled |
+| 3 | "Did this round change one thing, and is it in the ledger?" | bd-forecast 2026-08: numbered iterations, one change each against the champion, reached a champion that held its sign leaving out any year |
+| 3 | "Is this a second feature, or the champion again?" | td3c 2026-09: with a champion at rank IC 0.44, raw IC ranked the champion's copies first; gains are measured over the champion |
+| 3 | "Did the richer model beat the simpler one, or tie it?" | bd-forecast 2026-08: Optuna over boosting, nets and GPs never beat plain L2 logistic at this sample size |
+| 3 | "What has not been tried, and why?" | 2026-09-29: four campaigns closed valid and null with no one asked about breadth |
+| 3 | "Is this direction skill, or a volatility artefact?" | bd-forecast 2026-08: one feature's gain survived time-shifting the feature; linear sizing scales up in persistent-vol regimes |
+| 5 | "Which read of the final window is the result?" | critique 2026-09-22: four models read on the final window with none named binding; one frozen spec reads it, the rest are context |
+| 5 | "What did selecting cost me?" | bd-forecast 2026-08: the haircut was +0.08 to +0.17 of apparent IC; the honest expectation is the final-read number |
+| 5 | "Did a final-read diagnostic just edit the spec?" | outside review 2026-09-22: knockouts on the final window invited "remove X before the ledger starts", which would make it a second development set |
+| 5 | "What else is wrong with what you did?" | bd-forecast 2026-08: asked cold, produced a 12-finding self-audit that no checklist had surfaced |
+| 5 | "What price is the entry, really, and when does the mark freeze?" | bd-forecast 2026-08: an intraday pull carried a partial-day mark into the settle panel |
+| 5 | "What is the ledger's read rule, and was it written before the first row?" | critique 2026-09-22: "the only judge of the model" had no statistic, no minimum count and no schedule |
+| 5 | "Is the ledger minimum in the metric's own units?" | outside review 2026-09-22: (2 / IC)^2 was applied to a Brier reduction |
+| 5 | "Why is this row here?" | bd-forecast 2026-08: an off-grid call confused the ledger; rows are explained and labelled, never deleted |
 
-## Write-up: present beside the stage 10 page
+## Write-up: present beside the closing report
 
-1. **"What was covered, and what was not?"** The coverage table, passing
-   `scripts/coverage_check.py --stage 10`: every primary driver, grow-n
-   route, tier, target treatment, horizon, mechanism rung, family and
-   gauntlet check, ran with its number or blocked with an accepted reason
-   code; beside it the challenger log and the tables profiled and not.
-   (prc26 2026-09-05: the user had to ask "what have you tried, what
-   features, Optuna?" cold; the answers existed across four files and no
-   page had them side by side.)
-2. **"Tied on WHAT?"** Every comparison with its paired interval. (bd 2026-08:
-   an "all tied" verdict was IC-only; a second metric separated the
-   candidates.)
-3. **"What market structure could explain or refute this?"** Domain events
-   the model cannot know. (bd 2026-08: a dismissed 2022+ gain was re-weighed
-   after the user supplied benchmark-inclusion and reroute events.)
-4. **"Is the capacity right for the data frequency?"** (bd 2026-08: "9
-   features is too many for our freq" preceded any statistic saying so.)
+1. **"What was tried, and what was not?"** The ledger, the stage list with done,
+   partial or skipped, and the idea pool with what is still untried. (prc26
+   2026-09-05: the user had to ask "what have you tried, what features, Optuna?"
+   cold; the answers existed across four files.)
+2. **"Tied on WHAT?"** Every comparison with its paired interval. (bd 2026-08: an
+   "all tied" verdict was IC-only; a second metric separated the candidates.)
+3. **"What market structure could explain or refute this?"** Domain events the
+   model cannot know. (bd 2026-08: a dismissed 2022+ gain was re-weighed after the
+   user supplied benchmark-inclusion and reroute events.)
+4. **"Is the capacity right for the data frequency?"** (bd 2026-08: "9 features is
+   too many for our freq" preceded any statistic saying so.)
 5. **"What would make you say no?"** If nothing on the page could block the
    conclusion, the page is theatre; name the blocking conditions.
-6. **"What would have made you say yes?"** The search bar: the smallest
-   effect worth having beside the null cutoff, with the signal-injection
-   power when it ran. If the effect did not clear the bar by the power
-   margin, or the injection power fell short of the declared power, the
-   page says the search was underpowered for the minimum effect we care
-   about, whatever the data held. (critique 2026-09-22.)
-7. **"What is on the re-test list, and when is each due?"** Late-start and
-   thin columns are scheduled, not forgotten, and not quietly promoted.
-8. **"What is missing that we should try?"** At least one untried input
-   (new data), one untried mechanism, one untried tuning or family change
-   and one untried target treatment for
-   the next campaign or a ledger challenger, each with a cost estimate.
-   (prc26 2026-09-05, question 9 of the coverage interrogation.)
+6. **"What would have made you say yes?"** The smallest effect worth having beside
+   the interval the evaluator can resolve. When the interval is wider than that
+   effect, the page says the campaign could not have seen it.
+7. **"What is on the re-test list, and when is each due?"** Late-start and thin
+   features are scheduled, not forgotten, and not quietly promoted.
+8. **"What is missing that we should try?"** At least one untried input (new data),
+   one untried mechanism, one untried model family and one untried target
+   treatment, each with a cost estimate.

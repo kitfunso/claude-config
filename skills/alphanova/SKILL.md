@@ -42,10 +42,10 @@ and repeated cycle 1 (section 11).
    nothing. A sub-bar admission costs a pot ticket for the season (F5).
 4. **The stop rule.** A construct family gets the anchor plus two
    single-variable probes. No third slot unless one scores above +0.0135 on the
-   server (the cycle-1 Q3 cutoff, the protocol's tripwire). Ten local runs of
-   one construct with no new input or mechanism = stop and write the self-audit
-   (quant-ml-protocol steering bank, stage 10: "What else is wrong with what you
-   did?") before run eleven. Cycle 2 ran 47 runner shell calls (10 loops, 134 run logs) and 30 of 32
+   server (the cycle-1 Q3 cutoff, the protocol's tripwire). Three local runs
+   inside the best run's interval, or two rounds with no new best, = stop the
+   construct and write the self-audit (quant-ml-protocol steering bank, stage 5:
+   "What else is wrong with what you did?") before the next run. Cycle 2 ran 47 runner shell calls (10 loops, 134 run logs) and 30 of 32
    uploads on one ridge.
 5. **Hunt constructs and inputs, not parameters.** The unexplored space is the
    hunt map in section 8 (inventory of `research/families/`, Sep-2). Each

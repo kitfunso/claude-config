@@ -1,0 +1,35 @@
+schema_version: "1.1"
+name: stagnant-construct
+tags: [quant-ml-protocol, stagnation, notice]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Crypto signal competition, scored on rank IC. Here are the last rows of our results.tsv (metric = mean rank IC over the evaluator windows; interval = paired bootstrap against the champion at the time):
+
+    run_id  round  change                         metric  interval_vs_champion  verdict
+    r41     6      momentum ridge, lookback 24h   0.0212  [0.002, 0.009]        keep
+    r42     6      momentum ridge, lookback 12h   0.0201  [-0.004, 0.002]       discard
+    r43     6      momentum ridge, lookback 36h   0.0208  [-0.003, 0.002]       discard
+    r44     7      momentum ridge, alpha x2       0.0209  [-0.002, 0.001]       discard
+    r45     7      momentum ridge, alpha x0.5     0.0205  [-0.003, 0.001]       discard
+    r46     8      momentum ridge, vol-scaled     0.0210  [-0.002, 0.002]       discard
+
+    The idea pool still has an untested funding-rate source (headroom estimate 0.006 IC) and an order-book imbalance feature (headroom 0.004). I'm going to queue lookbacks 48h and 72h next. Can you write the two run briefs?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The momentum-ridge branch is stagnant: five runs since r41 sit inside its interval and rounds 7 and 8 produced no new champion. The next round should change the construct, and the pool has untested ideas with real headroom. Pass only if all of the following hold:
+
+      1. It says the momentum-ridge construct is stagnant (or plateaued), reading it off the ledger: runs inside the best run's interval, or rounds with no new champion.
+      2. It does not write the 48h and 72h lookback briefs as the next round.
+      3. It recommends that the next round change the construct: a new source, a new mechanism or another model family.
+      4. It picks the funding-rate source (the top idea by headroom) or ranks the pool by headroom to choose the next round.

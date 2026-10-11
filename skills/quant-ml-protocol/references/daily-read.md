@@ -1,19 +1,20 @@
 # The daily read
 
-Read at stage 10. The last stage of research, never shipping. Everything
-below is declared on the plan page before the first ledger row.
+Read at stage 5. The last stage of research, never shipping. Everything
+below is declared on the campaign page before the first ledger row.
 
 ## Start condition
 
-The daily read starts only if the standing family beat the champion on the
-judge read (paired interval clear of zero). Otherwise either the champion
-alone runs, so the ledger accrues outcomes for it, or nothing runs; the page
-says which and why.
+The daily read starts only if the frozen spec beat the comparator on the
+final read (paired interval clear of zero). The comparator is frozen with
+the spec: the naive baseline, or the incumbent live spec when one exists.
+Otherwise either the comparator alone runs, so the ledger accrues outcomes
+for it, or nothing runs; the page says which and why.
 
 ## The live spec
 
-The frozen cell from stage 8: family, shortlist rule, cap, hyperparameters or
-the declared search with its retuning schedule, calibrator, window and refit
+The frozen spec from stage 5: the model or blend, feature definitions,
+hyperparameters and the retuning rule, calibrator, window and refit
 cadence. It is rolled forward through the same code path. At each declared
 refit date, train on the eligible rows within the selected window. Between
 refits, reuse the last fitted model. Studies rerun only on the declared
@@ -22,8 +23,8 @@ are reused.
 
 Three ids:
 
-- spec_id: frozen modelling and decision rules. Hashed from the cell id,
-  the code commit and the environment; the dataset manifest is left out.
+- spec_id: frozen modelling and decision rules. Hashed from the spec
+  definition, the code commit and the environment; the dataset manifest is left out.
 - fit_id: a particular scheduled refit, including its training-data
   snapshot. The manifest's state at that fit is hashed here.
 - forecast_id: a particular prediction and input snapshot, carrying the
@@ -42,7 +43,7 @@ forecast_ids, not erase the continuity of evidence for spec_id.
 ## The run
 
 1. Scheduled ingest.
-2. Validate incoming rows with the stage 2 checks.
+2. Validate incoming rows with the data audit's checks.
 3. Point-in-time features through the research code path.
 4. Load the spec by spec_id and the current fit by fit_id.
 5. Forecast, with probability or quantiles when declared.
@@ -58,8 +59,9 @@ logs why. It never carries a stale forecast forward.
 One code path builds research features and live features. On the first live
 run and monthly after: truncate the raw data at a past anchor, regenerate,
 compare to the full-history features and to the research prediction at that
-anchor; equal to tolerance or the run is blocked. This is the stage 4
-future-mutation test pointed at production.
+anchor; equal to tolerance or the run is blocked. This is the
+future-mutation test (appending later rows changes no earlier feature or
+prediction) pointed at production.
 
 ## The ledger
 
@@ -74,21 +76,21 @@ deleted: deleting one row makes every remaining row worthless.
 
 ## The read rule, declared before the first row
 
-- Statistic: the stage 1 primary metric on matured outcomes as oriented
-  primary skill against the champion, the frozen comparator rule (for a
-  loss, the champion's loss minus the model's on the same rows; for the
-  timing read, model rank IC minus champion rank IC), with the raw metric
+- Statistic: the evaluator's primary metric on matured outcomes as oriented
+  skill against the frozen comparator (for a loss, the comparator's loss
+  minus the model's on the same rows; for the timing read, model rank IC
+  minus comparator rank IC), with the raw metric
   and sign hit beside it. The reference baselines, the base rate among
   them, are reported and never set the bar.
 - Minimum matured outcomes before the first claim: ((z_level + z_power) /
   e)^2, at least 30, at the declared interval level and power (two-sided
   95% and 80% by default, so z_level = 1.96 and z_power = 0.84), where e
-  is the stage 1 smallest effect worth having in the primary metric,
-  standardised as the conventions say: a rank IC as itself, counted in
+  is the smallest effect worth having in the primary metric, written on the
+  campaign page before the first row and standardised: a rank IC as itself, counted in
   independent outcomes (matured rows divided by horizon overlap); a
   paired-loss metric as the smallest useful mean improvement over the
-  long-run standard deviation of the per-anchor paired differences on
-  nomination rows (block bootstrap or HAC, named on the page), counted in
+  long-run standard deviation of the per-anchor paired differences in the
+  evaluator windows (block bootstrap or HAC, named on the page), counted in
   forecast anchors and not divided again by overlap. The count is a
   planning approximation, not a universal formula for rank-IC
   differences, whole-search maxima or sequential stopping; a rank IC
@@ -96,29 +98,29 @@ deleted: deleting one row makes every remaining row worthless.
   takes its count from the sequence's boundary. The page states the date
   the ledger reaches the count at its accrual rate; when that date lies beyond the declared usefulness
   horizon the ledger is kill-only: it can detect decay and cannot
-  confirm skill, and the page says so before the first row. The judge
+  confirm skill, and the page says so before the first row. The final
   read is shown beside the rule as context, never as its input.
 - Schedule: one fixed read date written on the page, or a confidence
   sequence (an interval valid at every look; a mixture-sequential or
   running-intersection bound). With neither implemented, the fixed date is
   the rule. A daily glance is allowed; a claim, a spec change or a stop
   informed by the ledger before the rule holds is a second look.
-- The claim: the ledger's binding statistic is the same oriented primary
-  skill, against the champion under the same frozen rule, that nomination
-  and the judge read used; the raw metric and the declared secondaries sit beside it,
-  and no live claim changes metric, comparator or orientation. The ledger
-  skill with its interval is read beside the judge skill; a ledger skill
-  below the judge interval is decay, said first.
+- The claim: the ledger's binding statistic is the same oriented skill,
+  against the same frozen comparator, that the evaluator and the final read
+  used; the raw metric and the declared secondaries sit beside it, and no
+  live claim changes metric, comparator or orientation. The ledger skill
+  with its interval is read beside the final-read skill; a ledger skill
+  below the final-read interval is decay, said first.
 
 ## Monitoring
 
 Data quality: missingness, staleness against the cap, out-of-range values per
-source. Feature drift: each shortlist feature's live value against its
-nomination-year distribution, with the count outside the 1st to 99th
+source. Feature drift: each feature's live value against its distribution
+in the evaluator windows, with the count outside the 1st to 99th
 percentile. Prediction drift: the forecast distribution against the
 backtest's. Accuracy: rolling oriented primary skill in the declared metric
 on matured outcomes over a declared window (td3c uses 26 weeks), against the
-champion as in the frozen spec, read against the backtest's own
+frozen comparator, read against the backtest's own
 distribution, alarm at its 5th percentile, with the target family's secondaries beside it
 (timing: oriented rank IC skill with sign hit; magnitude: MAE skill with
 rank IC and sign hit; direction: Brier skill with reliability and log loss
@@ -144,19 +146,19 @@ not permission to stop early.
 
 ## Retrain, challenger, fallback
 
-Retrain schedule = the cell's refit cadence and its declared retuning
+Retrain schedule = the spec's refit cadence and its declared retuning
 schedule, no more often. A challenger runs beside the incumbent on the
 ledger under its own spec_id and replaces it only under the same read rule
 on the same matured outcomes; a spec corrected after a verified validity
-failure (SKILL.md, hard validity rules) runs the same way. Fallback spec: the
-champion alone, or no change. The triggers that switch to it are declared
+failure (SKILL.md, hard rules) runs the same way. Fallback spec: the
+comparator alone, or no change. The triggers that switch to it are declared
 before the first row and the switch is a labelled ledger event: an
 operational or data-validity alarm with its predeclared trigger (a failed
 availability check, a data-gap tripwire) switches immediately; a
 performance alarm switches early only through a separately predeclared
 anytime-valid kill rule, and otherwise waits for the binding ledger read.
 
-A judge-derived idea (a feature dropped, a gate added, a cadence
-changed because of what the judge years showed) enters only as a
-labelled challenger under this rule, never scored on the judge years that
-suggested it; the standing spec is never edited from the judge read.
+An idea taken from the final read (a feature dropped, a gate added, a
+cadence changed because of what the final window showed) enters only as a
+labelled challenger under this rule, never scored on the window that
+suggested it; the frozen spec is never edited from the final read.

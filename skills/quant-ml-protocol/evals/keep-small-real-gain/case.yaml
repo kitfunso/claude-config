@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: keep-small-real-gain
+tags: [quant-ml-protocol, keep-rule, allow]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Taxi-out time forecasting campaign, stage 3. The challenger adds a runway-configuration feature to the champion LightGBM. evaluate.py scored it on all 9 evaluator windows: mean RMSE improvement +1.7 s, paired block-bootstrap 95% interval [1.1, 2.3]. Every window improved. Our campaign page, written by an earlier session, says "keep a challenger only if it beats the champion by at least 2 s". There is no trading page; the score that matters is the competition leaderboard. Do we keep it?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The interval's lower bound (1.1 s) is above zero, so the challenger is a new champion; a hand-set 2 s floor on a leaderboard campaign refuses a real gain. A recommendation in words is enough; an applied edit is not required. Pass only if all of the following hold:
+
+      1. It keeps the challenger as the new champion.
+      2. It gives the reason as the interval clearing zero, and does not let the 2 s floor refuse the gain.
+      3. It says the 2 s floor should come off the keep rule (or be moved off it with a one-line reason on the campaign page), since there is no trading page for an economic minimum to sit on.
+      4. It raises no false blocker: it does not demand a null replay, a fixed trial count or another test before the keep.

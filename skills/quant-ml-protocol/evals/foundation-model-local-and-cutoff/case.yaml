@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: foundation-model-local-and-cutoff
+tags: [quant-ml-protocol, foundation-models, notice]
+plugins: ["../.."]
+execution:
+  prompt: |
+    Stage 1 drafts for a physical crude grade differential forecast (our own desk marks, proprietary, 2019 to June 2026). Linear, LightGBM and MLP drafts are briefed. For the foundation-model slot I'll run TabPFN-TS with its default settings on the desk marks, and Chronos-2 zero-shot beside it. Our final-read window is January to June 2026. Write the brief for the foundation-model draft.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      Two problems sit in the plan without being named: TabPFN-TS by default sends data to the vendor's cloud, which proprietary desk marks must not do, and a pretrained series model whose training data reaches into 2026 has seen the final-read window. The foundation-model slot itself is right and should run. Pass only if all of the following hold:
+
+      1. It says TabPFN-TS must run in local mode (not the default cloud client) because the data is proprietary.
+      2. It says to check the pretrained models' training-data cutoff (Chronos-2 at least) against the January to June 2026 final-read window, and treats overlap as a leak.
+      3. It keeps the foundation-model draft in stage 1 rather than dropping it.
+      4. The brief scores the draft through the same evaluator windows as the other drafts and writes its out-of-fold predictions and a ledger row.

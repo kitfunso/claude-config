@@ -1,0 +1,39 @@
+# source: C:/Users/skf_s/prc26-final/docs/ADSB_STAGE.md:106-155 and memory project_prc26.md (Oct-11 entries, v70 to v72)
+schema_version: "1.1"
+name: prc26-more-keys
+tags: [quant-ml-protocol, round-planning]
+plugins: ["../.."]
+execution:
+  prompt: |
+    prc26 (PRC taxi-out RMSE challenge), about 70 hours to the 14 Oct 10:00 UTC deadline, two board slots left today. v72 scored 240.8664, rank 36 of 242; 30th place is 237.4538.
+
+    ADS-B stage rounds since v70, paired holdout interval against the standing file:
+    - rec (stamp and recording-mode columns): +0.01 [-0.12, +0.13]
+    - LIRF lane B corrected: -1.07 [-2.14, -0.07]
+    - cr (smoothed copy rate per stand and per operator, 50-row prior, own month left out): +0.53 [+0.40, +0.70], shipped as v71, board 241.0532
+    - cr3 (cr split by stamp): +0.04 [-0.04, +0.11]
+    - cb (clock bias per stand, same prior): +0.21 [+0.12, +0.31], shipped as v72
+    - cbo (cb per operator): +0.02 [-0.05, +0.10]
+    - crh (copy rate per airport-hour): +0.00 [-0.07, +0.08]
+
+    Holdout squared error left after v72: unmatched lane B at LFPG 36%, LIRF lane B 15%; unmatched lane A at LTFM 8.2% and LFPG 7.1% (adsb.lol has no traces there); matched lane A misses over 600 s 9.9%.
+
+    cr and cb were the two best things we found today, so I want four more agents on that line: cb per runway, cb per airline-hour, cr per stand-hour, and cb with a 25-row prior. Write the briefs.
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The per-key line has stopped paying: three runs since the last gain sit inside the standing file's interval and the latest round produced no new best. The next round should change the construct and aim at the rows the error map says the stage cannot reach. Pass only if all of the following hold:
+
+      1. The reply does not brief the four per-key variants as the next round.
+      2. It grounds that in the ledger: cr3, cbo and crh (and rec) are inside the noise against the standing file, and the cbo/crh round gave no new best.
+      3. It sends the next round at a slice of the error map the current stage does not reach (unmatched lane B at LFPG or LIRF, unmatched lane A at LTFM or LFPG, or the matched misses over 600 s), with a different construct (a new source, mechanism or model), not another key on the same rates and biases.
+      4. It does not propose spending the remaining board slots on any of the four variants or on a file whose holdout gain sits inside the noise.

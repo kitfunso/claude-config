@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: non-temporal-should-not-fire
+tags: [quant-ml-protocol, should-not-fire]
+plugins: ["../.."]
+execution:
+  prompt: |
+    I have 5,000 customer support tickets, each labelled with one of 12 categories, exported once from our helpdesk. Time plays no role: we just want to auto-tag new tickets. Which classifier should I start with, and is stratified 5-fold cross-validation fine for picking it?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-not-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+    min: 0
+    max: 0
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      This is a one-off, non-temporal text classification problem; the time-series campaign protocol does not apply. Pass only if all of the following hold:
+
+      1. It answers the question directly with a sensible first classifier (for example TF-IDF with logistic regression or linear SVM, or a small fine-tuned text model).
+      2. It says stratified k-fold is fine here.
+      3. It does not impose time-series machinery (walk-forward splits, purges, final-read windows, forecast ledgers).

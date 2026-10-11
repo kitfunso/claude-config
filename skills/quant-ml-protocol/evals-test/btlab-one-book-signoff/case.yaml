@@ -1,0 +1,35 @@
+# source: C:/Users/skf_s/btlab/RESEARCH.md sections 59, 62 and 64 (lines 3592-3602, 3662-3664, 3749-3910)
+schema_version: "1.1"
+name: btlab-one-book-signoff
+tags: [quant-ml-protocol, trading-validation]
+plugins: ["../.."]
+execution:
+  prompt: |
+    btlab. Codex's expanded campaign built 1,493 strategies (853 rule-based, 640 model-based) and I need to sign them off before Keith's one book goes live. How they were chosen, read from the code:
+
+    - `report_expanded_portfolio.py::candidate_rows` keeps a trial when its source screen passed and its source Sharpe is over 1. Both are computed on the trial's whole walk-forward record; the saved daily rows run 2026-01-14 to 2026-09-16.
+    - `portfolio_inputs.py::coverage_core` keeps the 1,493 of those that share 61 common days.
+    - `portfolio_experiment.py` splits the 61 days into 31 warm-up, 10 validation and 20 test days (2026-08-04 to 2026-09-02). Validation froze `lw_min_variance/L60/R5`.
+    - Final test over the 20 days: Sharpe 8.38, +0.63%. The equal-timeframe control on the same days: Sharpe 7.57.
+    - The campaign archive holds 73,603 trials that ran; about 2.8% of them pass the screen with Sharpe over 1.
+
+    Keith wants the 1,493 plus our 32 QH32 sleeves as one book at about 25x on the IC Markets MT5 demo today. Can I tell him the 20-day test validates the 1,493 and size it up?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The 20 test days sit inside the record the members were screened on, so the test is out of sample for the weights and in sample for membership. The 8.38 is selection, and the pick has to be re-run blind to the test days before anyone calls the 1,493 validated. Pass only if all of the following hold:
+
+      1. The reply states that the 20 test days (2026-08-04 to 2026-09-02) fall inside the walk-forward record that the screen and the Sharpe-over-1 pick were computed on.
+      2. It concludes that the 8.38 (and the control's 7.57 on the same days) is not evidence that the 1,493 have an edge.
+      3. It names a test that removes the overlap: re-run the screen and the pick on data before 2026-08-04 only and score that pick on the test days, or walk the pick forward with each held month hidden from it.
+      4. It accounts for the size of the search or the sample in any significance claim: the roughly 73,603 trials (for example a deflated Sharpe with N set by the trials, or SPA/StepM over them), or the large standard error of a 20-day Sharpe.
+      5. It does not tell Keith the 1,493 are validated and does not use the 8.38 to justify the 25x size.

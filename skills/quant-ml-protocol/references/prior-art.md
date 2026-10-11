@@ -1,9 +1,9 @@
 # Prior art
 
-Read at stage 0. The round answers one question before stage 1 freezes
-anything: what is already known about forecasting this exact asset, and how
-good that knowledge is. Its output is one page, `docs/prior-art-<date>.html`,
-dated before stage 1 part one.
+Read at stage 0. The round answers one question before the first draft: what
+is already known about forecasting this exact asset or task, and how good that
+knowledge is. Its output is one page, `docs/prior-art-<date>.html`, and rows in
+the idea pool.
 
 ## The rings
 
@@ -41,10 +41,13 @@ logged as searched.
   banks, IMF, BIS.
 - The target's own definition: the price reporter's methodology (Platts,
   Argus) and the exchange contract specification, read in full, because
-  stage 1's seam rule, roll-clean construction and target mark come from
-  them.
+  the target's seam rule, roll-clean construction and mark come from them.
 - Practitioner work: broker and bank research where reachable, graded
   claimed unless its validation is shown.
+- Open work on the same task: public repos, notebooks, competition write-ups
+  and forum threads, and every external data source they use, each marked
+  held, obtainable or gap. prc26's largest single gain (ADS-B pushback times,
+  +14.81 s) came from a competitor's public repo.
 
 WebSearch finds; WebFetch or a downloaded PDF reads (Read with page ranges,
 or the pdf skill, for a PDF over 10 pages). A paywalled paper is read
@@ -66,8 +69,8 @@ count, has not reached saturation.
 
 ## The core set and the extraction row
 
-The core set is every paper that could change a decision at stages 1 to 7:
-a baseline, a candidate, a source, a regime, a driver, a family. Each is read
+The core set is every paper that could change a decision: a baseline, a
+source, a regime, a driver, a family. Each is read
 in full (data, target construction, validation design, out-of-sample
 results, sensitivity checks). One row per paper:
 
@@ -76,8 +79,7 @@ construction (level, change, log, roll or seam rule); drivers used; method;
 validation design (split type, refit rule, whether selection ran inside the
 walk-forward); baselines beaten (no-change, random walk, futures or FFA
 curve) or none; out-of-sample result in its metric, with the size; evidence
-grade; judge-year overlap (years, or none); red flags; what it feeds (stage
-and item).
+grade; final-read overlap (years, or none); red flags; what it feeds.
 
 ## Evidence grades
 
@@ -95,8 +97,8 @@ and item).
 A published skill is an upper bound: published predictability tends to
 shrink out of sample and after publication, and a paper that searched many
 specifications reports its best. The grade sets the weight an item carries
-on the feed list; every item that is tested still faces this protocol's
-null.
+on the feed list; every item that is tested still goes through the
+evaluator.
 
 ## Red flags
 
@@ -108,41 +110,35 @@ a sample ending on a regime peak; skill in one sub-period only.
 
 ## The feed list
 
-Every item the round suggests, with its stage and its source rows:
+Every item the round suggests, with where it goes and its source rows:
 
-- stage 1: domain baselines and champion candidates, the horizons the market
-  uses, the effect sizes the literature reports (context for the effect
-  worth having, never the effect itself);
-- stage 2: data sources the literature uses, each marked held, obtainable or
-  gap; an obtainable source behind a primary driver is pulled at stage 2,
-  and only paid or new-licence data goes to the user;
-- stage 3: documented events and structural breaks for the regime register;
-- stage 4: the driver survey, every driver ranked with its citations,
-  whether our data holds it and from when; primary drivers (graded
-  walk-forward or replicated, or named by two or more core papers) marked.
-  The survey is tier 1, the domain tier inside the full enumeration, never
-  a reason to cut the universe;
-- stage 7: model families with walk-forward or replicated evidence on this
-  asset or family, entering under the ladder's rules.
+- the evaluator: domain baselines, the horizons the market uses, the effect
+  sizes the literature reports (context for the effect worth having, never
+  the effect itself);
+- the data audit: data sources the literature and open work use, each
+  marked held, obtainable or gap; free and already-licensed data are pulled
+  as part of the work, and only paid or new-licence data goes to the user;
+- the error map: documented events and structural breaks;
+- the idea pool: the driver survey, every driver ranked with its citations,
+  whether our data holds it and from when, primary drivers (graded
+  walk-forward or replicated, or named by two or more core papers) marked;
+- stage 1: model families with walk-forward or replicated evidence on this
+  asset or family.
 
-## Timing and the judge years
+## Timing and the final-read window
 
-The round closes before stage 1 part one, so everything it suggests is
-declared before any nomination outcome is read. A paper whose out-of-sample
-years cover our judge years has shown us judge-year outcomes: it goes on
-stage 1's list of earlier reads that touched the judge years, and a feed item
-supported only by judge-year evidence is labelled so. A paper found after
-stage 4 closes changes nothing frozen, and stopping the screen or
-restarting on the same judge years to admit it is that same change: its
-routes are a labelled challenger on the ledger or a cell for the next
-campaign, judged on years its sample does not cover, entered in the
-flexibility register with its date. A campaign already past stage 1 runs
-the round as a retro under the same rule.
+The round closes before the first draft. A paper whose out-of-sample years
+cover our final-read window has shown us final-read outcomes: it goes on the
+campaign page's list of earlier reads of that window, and a feed item
+supported only by that evidence is labelled so. A paper found mid-campaign
+enters the idea pool like any other idea, with its final-read overlap beside
+it. A campaign already past stage 0 runs the round as a retro under the same
+rule.
 
 ## The page
 
 `docs/prior-art-<date>.html`, self-contained: the search log (ring, source,
 query, date, hits, screened, kept), the saturation note, the core-set table,
-the feed list by stage, the judge-year overlaps, and the searches that found
+the feed list, the final-read overlaps, and the searches that found
 nothing ("no published forecast of X at this horizon" is a finding, shown
 with the queries behind it).

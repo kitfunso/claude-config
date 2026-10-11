@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: campaign-start-order
+tags: [quant-ml-protocol, build-first, notice]
+plugins: ["../.."]
+execution:
+  prompt: |
+    New project: forecast the TD3C tanker freight rate 4 weeks ahead, weekly anchors, 2015 to today. I've pulled the rate history, fleet supply, port congestion and bunker prices into one dataframe. Let's start by training a LightGBM on all the features with a random 80/20 split, to see what kind of accuracy we get. What's the first code to write?
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Skill]
+runs: 3
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: quant-ml-protocol
+  - type: llm
+    name: criteria
+    weight: 2
+    criteria: |
+      The plan skips everything that makes a first number meaningful: no evaluator, no ledger, no baseline, and a random split on a time series with a 4-week horizon. Pass only if all of the following hold:
+
+      1. It replaces the random split with a chronological walk-forward split, with a purge or gap of at least the 4-week horizon.
+      2. It puts a frozen evaluator (one script that owns the split, metric and gate) and a run ledger before the first model.
+      3. It runs a naive baseline (random walk, seasonal naive or similar) through that evaluator before LightGBM.
+      4. It asks for a data audit or point-in-time check on the pulled sources (publication dates or availability of fleet supply, congestion and bunker data) before they become features.
+      5. Its first code is the evaluator, the audit or the baseline, not the LightGBM fit.
