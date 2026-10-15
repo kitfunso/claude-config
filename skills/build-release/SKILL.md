@@ -1,13 +1,13 @@
 ---
 name: build-release
-description: Ships a Phzse or Brain Gym release end to end (version bump, checks, merge, Play publish, site deploy) and starts the Codemagic iOS/Android builds through Codemagic's API, no browser, with a script that watches them and reruns known one-off failures. Use when asked to ship, release or submit a new Phzse or Brain Gym build, or after a merge that changes the app.
+description: Ships a Phzse or Brain Gym release end to end (version bump, checks, merge, Play publish, site deploy) and starts the Codemagic iOS/Android builds from a release tag with no browser, watching them through GitHub check runs. Use when asked to ship, release or submit a new Phzse or Brain Gym build, or after a merge that changes the app.
 ---
 
 # Build Release
 
 Ships a Phzse release: bump build numbers, build web assets, compile-check Android, commit, push, then start both Codemagic workflows. **CI builds and uploads the shipping artifacts.** The local gradle run is a pre-flight only, and the iOS IPA is never built here at all.
 
-**Brain Gym runs a different lane: skip to "Brain Gym" at the end.** Phzse starts Codemagic from a `release-*` tag (step 10), with no browser. Brain Gym starts it with the API script in "Starting a Codemagic build", also with no browser. Keith's rule: he should not have to walk anyone through a release, and no step may wait on his hands. Run every step yourself, and never ask him for a browser click.
+**Brain Gym runs a different lane: skip to "Brain Gym" at the end.** Both apps start Codemagic from a `release-*` tag (Phzse step 10, Brain Gym step 5), with no browser and no token. Keith's rule: he should not have to walk anyone through a release, and no step may wait on his hands. Run every step yourself, and never ask him for a browser click.
 
 ## Prerequisites
 
@@ -155,10 +155,12 @@ text lists every step). The two run one after the other. **A release must never 
 2026-10-15 the old Chrome route stalled 2.3.2 twice while he was out, because the
 Claude in Chrome extension was off and the debugging port needs his Allow click. No
 release goes through a browser. **Use ONE starter per release, never both, or each
-workflow builds twice:** the tag only starts the builds, while the API script in
-"Starting a Codemagic build" starts, watches and reruns them. So when
-`CODEMAGIC_AUTH_TOKEN` is set, run the script for each workflow and push no tag.
-Without the token, push the tag and report that nobody can watch the builds.
+workflow builds twice.** The tag is the default: it needs no token, and the check runs
+show every step. To rerun a one-off failure, push a second tag on the same commit
+(`release-{VERSION_NAME}-2`). On Phzse that reruns both workflows; if Android had
+already passed, its rerun fails on the used versionCode, which changes nothing. The API script in "Starting a Codemagic build" also saves
+failed-step logs and reruns known one-off failures by itself, so when
+`CODEMAGIC_AUTH_TOKEN` is set you may run it for each workflow instead, with no tag.
 
 - **iOS**: start the `ios-release` workflow in Codemagic. A plain push does NOT
   start a build; the tag or the script does (`--app 69ab40d4cb7ed3e0ae357c3e
@@ -217,19 +219,11 @@ Without the token, push the tag and report that nobody can watch the builds.
   `publishing.google_play` has no key for release notes, so the draft ALWAYS
   arrives without them. Step 11 finishes the job; do not leave it for Keith and do
   not type them in the console.
-  **Manual upload is the fallback only, for when CI itself is down.** It needs a
-  local `.aab` from step 7 and a separate PLAIN Chrome window driven by Win32
-  automation (done for build 114 on 2026-09-02). Do NOT use the Chrome MCP
-  extension for the drop: it intercepts the native file chooser. Do NOT use
-  `mcp__claude-in-chrome__file_upload` either: it caps at 10 MB and the classifier
-  denies app binaries through it. The library dialog re-orders rows between
-  screenshot and click, so re-screenshot and confirm the ticked row before Add to
-  release. Only if the Win32 route is also blocked, pre-fill the release name and
-  notes and hand Keith the .aab path to drag. Two console traps: a release with
-  zero bundles shows "You cannot remove all production APKs and Android App
-  Bundles", and the fix is uploading the new bundle, never clicking Include on the
-  old row, which re-ships the live version. After Save, the submit button is on
-  Publishing overview, not the release page.
+  **If Codemagic itself is down, wait and start again later.** Never upload through
+  the Play Console in a browser. The 2026-09-02 manual upload needed a Win32-driven
+  Chrome window and, failing that, Keith's hands. If an upload from this box is ever
+  needed, Brain Gym's `scripts/play-release.py` (`publish --aab`) shows the Play API
+  route; its package name is fixed to Brain Gym's.
   Play's "native code without debug symbols" warning is EXPECTED and unfixable.
   Do not chase it. `ndk { debugSymbolLevel 'FULL' }` was tested on 2026-09-04
   with `--rerun-tasks` and produced zero symbol entries, because the only native
@@ -275,9 +269,10 @@ Tell the user:
 - The Play track read back after publishing: name, versionCode, status
 - Committed and pushed to remote
 
-## Starting a Codemagic build (both apps)
+## Starting a Codemagic build with the API (optional)
 
-`scripts/codemagic-run.mjs` in this skill starts a workflow through Codemagic's REST API
+The release tag is the default starter for both apps. This script is the other route,
+for when `CODEMAGIC_AUTH_TOKEN` is set. `scripts/codemagic-run.mjs` in this skill starts a workflow through Codemagic's REST API
 (`POST /builds`), polls it (`GET /builds/<id>`), saves the log of a failed step, reruns
 known one-off failures (twice at most) and prints the report step. **No browser and no
 Allow click.** It needs only Node and the API token below. Run it detached, then wait on
@@ -327,8 +322,9 @@ stays out of transcripts:
     $t = Read-Host 'Codemagic API token' -AsSecureString; [Environment]::SetEnvironmentVariable('CODEMAGIC_AUTH_TOKEN', [Net.NetworkCredential]::new('', $t).Password, 'User')
 
 Then `--dry-run --app 6a9af25b162dbd9385d77f04` must print `RESULT dry-run ok`. Without
-the token the script stops at once with `RESULT error no CODEMAGIC_AUTH_TOKEN`. Ask Keith
-for the token once, and never for a browser click.
+the token the script stops at once with `RESULT error no CODEMAGIC_AUTH_TOKEN`; the tag
+route still works. The token is optional: it adds logs and automatic reruns. Never ask
+Keith for a browser click.
 
 ## Brain Gym
 
@@ -363,8 +359,13 @@ session's branch. Branch `main`. Store records live in `docs/STORE-SUBMISSION.md
      android/app/build/outputs/bundle/release/app-release.aab --key <key> --track
      production --name <version>` is the dry run. Add `--commit`, then `read` the track.
    - `git restore android/app/build.gradle`.
-5. **iOS**: the script with `--app 6a9af25b162dbd9385d77f04 --workflow ios-release
-   --branch main --report-step "Submit for review"`. It takes about 7 minutes once a machine is
+5. **iOS**: push `release-<version>` on the merge commit (`git -C <worktree> tag
+   release-1.2.8 <sha>`, then `git -C <worktree> push origin release-1.2.8`), and watch
+   `gh api repos/kitfunso/brain-gym/commits/<sha>/check-runs`. This works once brain-gym
+   PR #30 is merged; the repo's webhook 698563981 to Codemagic exists since 2026-10-15.
+   With `CODEMAGIC_AUTH_TOKEN` set, the script may start it instead (`--app
+   6a9af25b162dbd9385d77f04 --workflow ios-release --branch main --report-step "Submit
+   for review"`), never both. It takes about 7 minutes once a machine is
    free; the queue added 4 on 2026-10-15. The lane uploads the IPA, opens the version
    record, and writes the listing from `scripts/asc-listing.py`: subtitle, keywords,
    description, promotional text and both captioned screenshot sets. It then submits for
