@@ -1,11 +1,13 @@
 ---
 name: build-release
-description: Bumps iOS/Android build numbers, compile-checks the Android build, commits, pushes, then starts both Codemagic workflows for the Phzse app. Use when asked to ship a new Phzse build.
+description: Ships a Phzse or Brain Gym release end to end (version bump, checks, merge, Play publish, site deploy) and starts the Codemagic iOS/Android builds from Keith's signed-in Chrome with a script that watches them and reruns known one-off failures. Use when asked to ship, release or submit a new Phzse or Brain Gym build, or after a merge that changes the app.
 ---
 
 # Build Release
 
 Ships a Phzse release: bump build numbers, build web assets, compile-check Android, commit, push, then start both Codemagic workflows. **CI builds and uploads the shipping artifacts.** The local gradle run is a pre-flight only, and the iOS IPA is never built here at all.
+
+**Brain Gym runs a different lane: skip to "Brain Gym" at the end.** Both apps press Codemagic the same way: "Pressing Start new build". Keith's rule: he should not have to walk anyone through a release. Run every step yourself, and ask him only for the one Chrome Allow click.
 
 ## Prerequisites
 
@@ -157,12 +159,12 @@ git push
   a2905ab. Do not add `submit_to_testflight` back. The submission runs from a
   script step, not a `publishing:` block, because only the script can pass the
   release notes (`--whats-new "@file:..."`), and Apple rejects a submission
-  without them (8b7ff74). There is no Codemagic API token on this box, but the
-  Chrome profile IS signed in to Codemagic, so press the button yourself. A tab
-  resting on a `/login` URL proves nothing: navigate to the settings page and
-  look before you call it logged out.
-- **Android**: start the `android-release` workflow the same way, from the same
-  settings page. It builds the bundle, signs it, and uploads it to the Play
+  without them (8b7ff74). There is no Codemagic API token on this box, but
+  Keith's Chrome IS signed in to Codemagic: press the button with the script in
+  "Pressing Start new build" below (`--app 69ab40d4cb7ed3e0ae357c3e --workflow
+  "iOS Release" --report-step "Publish to App Store Connect"`).
+- **Android**: start the `android-release` workflow the same way (`--workflow
+  "Android Release"`), from the same settings page. It builds the bundle, signs it, and uploads it to the Play
   production track as a draft (`submit_as_draft: true`), so nothing reaches users
   until Keith presses the button. Nothing else is needed from you or from him.
   **This lane is proven end to end** by build `6aa0592a1dafc6b3c2e63184`
@@ -263,3 +265,88 @@ Tell the user:
 - Codemagic build id for `android-release`, and which step it reached
 - The Play track read back after publishing: name, versionCode, status
 - Committed and pushed to remote
+
+## Pressing Start new build (both apps)
+
+`scripts/codemagic-run.mjs` in this skill does the whole Codemagic part on ONE
+connection to Keith's own Chrome. It opens the app's settings page, picks and checks the
+branch and workflow in the dialog, and presses Start. It then watches the build, saves the
+log of a failed step, reruns known one-off failures (twice at most), reports, and closes
+its tab. Run it from the app repo, which supplies `playwright`, detached, then wait on its log:
+
+    node ~/.claude/skills/build-release/scripts/codemagic-run.mjs --detach \
+      --app <app id> --workflow "<workflow name>" --branch main --report-step "<submit step>"
+    # prints LOG <path>. Then wait in the foreground; exit 2 means still running, so repeat:
+    node ~/.claude/skills/build-release/scripts/codemagic-run.mjs --wait <path>
+
+- **Tell Keith "click Allow in Chrome" just before launching.** Chrome asks him for every
+  new debugging connection, not only the first. On 2026-10-15, fifteen one-look scripts
+  cost him fifteen clicks. Never open a second connection for anything the script does.
+- `--detach` matters: Claude Code kills background shells when memory runs low while the
+  session is idle (twice on 2026-10-15). The detached script has no parent shell to be
+  killed with, and `--wait` reads only the log file, never Chrome. Give the wait call a
+  600000 ms tool timeout; it returns by itself after 570 s.
+- `RESULT success <id>` ends a good run, after the `--report-step` lines (for iOS: build
+  number, review submission id, `WAITING_FOR_REVIEW`). `RESULT failed ... log <path>`
+  names the failed step and its saved log: read it, fix the cause, then run again.
+- The one-off failures it reruns, both seen on Brain Gym 2026-10-15 and both gone on
+  rerun: a Turbopack `next/font/google queries have exactly one entry` error in the web
+  build (the build fetches Google Fonts), and Apple 500s on `CHANGE UPLOAD STATE TO
+  COMPLETE`, where altool prints `UPLOAD SUCCEEDED` but cli-tools still exits 1. A rerun
+  takes a new build number; the half-uploaded build sits unused in TestFlight, harmless.
+- `--dry-run` opens the dialog, checks the selection and presses Cancel. `--check
+  <id,id>` reads past builds. Neither starts anything.
+- **Not yet proven in Chrome as one script** (2026-10-15: detach, wait and the failure
+  path were tested; no Allow click came for the Chrome half). Each Chrome step was proven
+  by hand the same day. On the first real run, read the output line by line; if a step
+  misreads the page, fix the script before trusting a RESULT. Delete this bullet once a
+  run passes.
+- How it connects: Keith's main Chrome has remote debugging switched on, so
+  `%LOCALAPPDATA%/Google/Chrome/User Data/DevToolsActivePort` holds the port and the
+  browser path. The `/json` endpoints answer 404 there, so connect to the websocket. The
+  Playwright MCP browser is a separate profile with no Codemagic or GitHub login, and the
+  Claude in Chrome extension is often not connected; neither is the route.
+- App ids: Phzse `69ab40d4cb7ed3e0ae357c3e` (workflows "iOS Release", "Android
+  Release"); Brain Gym `6a9af25b162dbd9385d77f04` ("Brain Gym iOS Release").
+
+## Brain Gym
+
+Repo `~/brain-gym`; work in a worktree, because the main checkout often holds another
+session's branch. Branch `main`. Store records live in `docs/STORE-SUBMISSION.md`.
+
+1. **Version.** `package.json` `version` is the only version, and both Codemagic lanes
+   read it. `android/app/build.gradle` stays at the inert `versionCode 2` / `"1.2.0"` in
+   git. Rewrite `store/appstore/release-notes/en-US.txt` for this release (Apple refuses a
+   submission without it) and show Keith the text: it is public copy.
+2. **Checks, as CI runs them.** `npm run test:all` is not the whole CI. Also run
+   `python3 scripts/test_asc_store_urls.py`, `scripts/test_asc_listing.py`,
+   `scripts/test_play_release.py`, `bash scripts/test_ios_open_version.sh`, and `npm run
+   build`, which fails any route over 240 KB gzipped. Open the PR and wait for CI. The
+   browser job takes about 45 minutes; the Google Fonts failure above hits it too, so
+   rerun it once with `gh run rerun --failed`.
+3. **Merge** with `gh pr merge --squash --match-head-commit <sha>`, then **deploy the
+   site** from the merged tree: `npm run build:web` (not `npm run build`, which skips the
+   paint script), then `npx wrangler pages deploy out --project-name=brain-gym
+   --branch=main`. Check that every sitemap URL answers 200 with the new build id.
+4. **Android, from this box.** Brain Gym's Codemagic `android-release` has never run, so
+   Play gets the bundle from here:
+   - `python scripts/play-release.py read --key ~/Downloads/phzse-488419-94ef93c9d510.json`
+     prints the next free versionCode.
+   - If the worktree lacks them, copy `signing.keystore`, `keystore.properties` and
+     `local.properties` from `~/brain-gym/android/` (all gitignored). Delete the copies
+     afterwards.
+   - Set `versionCode <next free>` and `versionName "<package.json version>"` in
+     `android/app/build.gradle` locally, then run `npm run build`, `npx cap sync android`
+     and `android/gradlew -p android bundleRelease`.
+   - `python scripts/play-release.py publish --aab
+     android/app/build/outputs/bundle/release/app-release.aab --key <key> --track
+     production --name <version>` is the dry run. Add `--commit`, then `read` the track.
+   - `git restore android/app/build.gradle`.
+5. **iOS**: the script with `--app 6a9af25b162dbd9385d77f04 --workflow "Brain Gym iOS
+   Release" --report-step "Submit for review"`. It takes about 7 minutes once a machine is
+   free; the queue added 4 on 2026-10-15. The lane uploads the IPA, opens the version
+   record, and writes the listing from `scripts/asc-listing.py`: subtitle, keywords,
+   description, promotional text and both captioned screenshot sets. It then submits for
+   review as `AFTER_APPROVAL`, so Apple releases it on approval.
+6. **Report**: merge commit, site deploy id, the Play track read back, the Codemagic
+   build id, and the review submission id and state.
