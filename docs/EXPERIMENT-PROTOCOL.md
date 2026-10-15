@@ -506,3 +506,6 @@ Expected 120 requests and about 300k input tokens, about 2,500 neurons.
 
 | Lane | Date | Pairs | Agreement A0 / A1 / A2 | `breaks` recall A1 / A2 | False flags A1 / A2 | G5 calls match | Cost | Call |
 |---|---|---|---|---|---|---|---|---|
+| Clef-flash | 2026-10-15 | 120: round 1 of cj4, bm4, ml2 and post-fix round 2 of bm4 | 0.908 / 0.417 / 0.283 | 0.722 / 0.333 | 0.833 / 0.167 | 2 of 4 (Clef fails bm4-r2 and ml2, Opus passes them) | 3,197 neurons, 390,776 input tokens, free | **NO**: fails all three rules; Opus stays the only G5 reader |
+
+Rows: `C:/z0-runs/s9/j5-rows.jsonl`; numbers from `node C:/z0-runs/s9/g5-compare.mjs C:/z0-runs/s9/j5-rows.jsonl`. Clef labelled 73 of 120 pairs `na` (off the rule); Opus labelled none `na`.
