@@ -294,7 +294,7 @@ its log:
   names the failed step and its saved log: read it, fix the cause, then run again.
 - The one-off failures it reruns, both seen on Brain Gym 2026-10-15 and both gone on
   rerun: a Turbopack `next/font/google queries have exactly one entry` error in the web
-  build (the build fetches Google Fonts), and Apple 500s on `CHANGE UPLOAD STATE TO
+  build (gone at root since Brain Gym 75af437 committed the font files), and Apple 500s on `CHANGE UPLOAD STATE TO
   COMPLETE`, where altool prints `UPLOAD SUCCEEDED` but cli-tools still exits 1. A rerun
   takes a new build number; the half-uploaded build sits unused in TestFlight, harmless.
 - `--dry-run` proves the token can read the app. `--check <id,id>` reads past builds and
@@ -339,8 +339,8 @@ session's branch. Branch `main`. Store records live in `docs/STORE-SUBMISSION.md
    `python3 scripts/test_asc_store_urls.py`, `scripts/test_asc_listing.py`,
    `scripts/test_play_release.py`, `bash scripts/test_ios_open_version.sh`, and `npm run
    build`, which fails any route over 240 KB gzipped. Open the PR and wait for CI. The
-   browser job takes about 45 minutes; the Google Fonts failure above hits it too, so
-   rerun it once with `gh run rerun --failed`.
+   browser job takes about 45 minutes. Builds no longer fetch Google Fonts (75af437), so
+   a font failure there is a real bug, not a flake to rerun.
 3. **Merge** with `gh pr merge --squash --match-head-commit <sha>`, then **deploy the
    site** from the merged tree: `npm run build:web` (not `npm run build`, which skips the
    paint script), then `npx wrangler pages deploy out --project-name=brain-gym
