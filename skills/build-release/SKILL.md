@@ -147,7 +147,11 @@ git push
 on the bump commit, then `git -C "$HOME/phzse" push origin release-{VERSION_NAME}`.
 Since PR #11 (2026-10-15) `ios-release` and `android-release` start on `release-*`
 through GitHub webhook 698407126 to `https://api.codemagic.io/hooks/69ab40d4cb7ed3e0ae357c3e`.
-A plain push still starts nothing. **A release must never wait on Keith's hands**: on
+A plain push still starts nothing. Proven by `release-2.3.2`: iOS `6ad0994a12cce3cb996bb52d`
+(Publish to App Store Connect 4m 48s) then Android `6ad0994a12cce3cb996bb52f`, both green,
+no browser. Watch them with no login: Codemagic posts GitHub check runs on the tagged commit,
+`gh api repos/kitfunso/phzse/commits/<sha>/check-runs` (app `codemagic-ci-cd`; the output
+text lists every step). The two run one after the other. **A release must never wait on Keith's hands**: on
 2026-10-15 the old Chrome route stalled 2.3.2 twice while he was out, because the
 Claude in Chrome extension was off and the debugging port needs his Allow click. No
 release goes through a browser. **Use ONE starter per release, never both, or each
