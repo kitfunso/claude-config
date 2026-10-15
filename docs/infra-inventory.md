@@ -33,7 +33,7 @@ lives in the luminus repo `.env`; NTP creds are still unregistered (open item, m
 | Cloudflare email routing token | `CLOUDFLARE_EMAIL_TOKEN` User env var (set 2026-10-09) | Keith: use it for all email routing. Covers account Email Routing Addresses and zone Email Routing Rules (2026-10-09). Not named `CLOUDFLARE_API_TOKEN`, which would override wrangler's OAuth |
 | ENTSO-E | luminus repo `.env` | used by luminus-mcp |
 | TypeSafe Jev | `TYPESAFE_API_KEY` User env var (set 2026-09-18) | System One decision API; hippo `src/judgment.ts` reads it. Set on the HOME box only so far, set the same var on the work box. Never on disk: `~/.claude` is a git repo |
-| Codemagic API token | NOT STORED. Keith only, from Codemagic > Account settings > API token | Searched 2026-09-08: no `.codemagic` config, no `.env`, not here. The card offers Revoke and Show only, no Generate, and Show leaves it masked in the DOM, so no agent can read it. Route: Keith writes it to a file and `python ~/brain-gym/scripts/codemagic-install-play-key.py --token-file PATH --app <app> --key-file <key>` does the rest. Do not spend a turn hunting for it. |
+| Codemagic API token | Goes in the `CODEMAGIC_AUTH_TOKEN` User env var; NOT SET as of 2026-10-15. Keith only, from Codemagic > Account settings > API token | The card offers Revoke and Show only, no Generate, and Show leaves it masked in the DOM, so no agent can read it. Keith sets it once with the PowerShell line in build-release "One-time setup". Both `build-release/scripts/codemagic-run.mjs` (starts and watches builds, no browser) and `~/brain-gym/scripts/codemagic-install-play-key.py` read that var. Do not spend a turn hunting for it. |
 
 Per-project keys live in each repo's `.env`.
 
