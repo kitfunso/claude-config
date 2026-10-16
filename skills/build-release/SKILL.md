@@ -361,8 +361,10 @@ session's branch. Branch `main`. Store records live in `docs/STORE-SUBMISSION.md
    - `git restore android/app/build.gradle`.
 5. **iOS**: push `release-<version>` on the merge commit (`git -C <worktree> tag
    release-1.2.8 <sha>`, then `git -C <worktree> push origin release-1.2.8`), and watch
-   `gh api repos/kitfunso/brain-gym/commits/<sha>/check-runs`. The trigger is on main
-   since brain-gym PR #30 (1a63c58); the repo's webhook 698563981 to Codemagic exists since 2026-10-15.
+   `gh api repos/kitfunso/brain-gym/commits/<sha>/check-runs`. Proven 2026-10-16 by tag
+   `release-check-2026-10-16` (build 6ad1db4345beff93db2d1e3b): every step through Build IPA
+   passed, and Upload stopped it, as it must for a version Apple has already approved.
+   The tag reaches Codemagic through the repo's webhook 698563981.
    With `CODEMAGIC_AUTH_TOKEN` set, the script may start it instead (`--app
    6a9af25b162dbd9385d77f04 --workflow ios-release --branch main --report-step "Submit
    for review"`), never both. It takes about 7 minutes once a machine is
