@@ -262,9 +262,11 @@ def verify(a: argparse.Namespace) -> None:
 
     def work(chunk: list[tuple[Mutant, list[str]]], root: Path) -> None:
         for mut, sel in chunk:
-            with Planted(root, mut):
-                run = runner.run_pytest(a.python, root, sel, stop_first=True, timeout=a.budget)
-            caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3, 4))
+            caught = False  # no test left to run: pytest with no ids would run the whole suite
+            if sel:
+                with Planted(root, mut):
+                    run = runner.run_pytest(a.python, root, sel, stop_first=True, timeout=a.budget)
+                caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3, 4))
             with lock:
                 rows.append({"id": mut.id, "desc": mut.desc, "selected": sel, "caught": caught})
                 if len(rows) % 25 == 0:
