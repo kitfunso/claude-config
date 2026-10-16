@@ -56,7 +56,7 @@ def _restore(wt: Path, files: list[str]) -> None:
 
 
 def _red(run: runner.Run | None) -> bool:
-    return bool(run and (run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3)))
+    return bool(run and (run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3, 4)))
 
 
 def replay_one(sha: str, files: list[str], ctx: dict) -> dict:
