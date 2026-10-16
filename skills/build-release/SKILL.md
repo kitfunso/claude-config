@@ -300,12 +300,9 @@ its log:
 - `--dry-run` proves the token can read the app. `--check <id,id>` reads past builds and
   saves each one's JSON in the temp dir. Neither starts anything. `node --test
   scripts/codemagic-run.test.mjs` runs the script against a stand-in API.
-- **Not yet run with a real token** (2026-10-15). The calls follow Codemagic's docs and a
-  public script that reads the same JSON (`build.status`, `buildActions[].subactions[]`,
-  `logUrl`). Once the token exists, run `--check
-  6ad06f91546ce6236ceec0f4,6ad070ea546ce6236ceec144,6ad07473546ce6236ceec1e9 --app
-  6a9af25b162dbd9385d77f04`: the first two must read as transient failures, the third as
-  success. Delete this bullet once they do.
+- Proven on the real API 2026-10-16: `--check` read Brain Gym builds 6ad06f91 and 6ad070ea
+  as transient failures and 6ad07473 as success. A script step keeps its name on the
+  action and its log on a nameless subaction; the stand-in in the test copies that shape.
 - Why not Chrome: on 2026-10-15 the Claude in Chrome extension was off, and Chrome's
   debugging port asks Keith to click Allow for every new connection. Two releases stalled
   on his hands that day. Never route a release through a browser again.
@@ -313,18 +310,16 @@ its log:
 
 ### One-time setup: the API token
 
-The script reads `CODEMAGIC_AUTH_TOKEN` from the environment, or from the Windows User
-scope when the session started before it was set. Only Keith can copy the token
-(Codemagic > Account settings > API token > Show; the page keeps it masked from agents).
-He runs this once in his own PowerShell window, never through the chat, so the token
-stays out of transcripts:
+**Set on the home PC since 2026-10-16.** The script reads `CODEMAGIC_AUTH_TOKEN` from the
+environment, or from the Windows User scope when the session started before it was set.
+`--dry-run --app 6a9af25b162dbd9385d77f04` must print `RESULT dry-run ok`. Without the
+token the script stops at once with `RESULT error no CODEMAGIC_AUTH_TOKEN`; the tag route
+still works. Never ask Keith for a browser click.
 
-    $t = Read-Host 'Codemagic API token' -AsSecureString; [Environment]::SetEnvironmentVariable('CODEMAGIC_AUTH_TOKEN', [Net.NetworkCredential]::new('', $t).Password, 'User')
-
-Then `--dry-run --app 6a9af25b162dbd9385d77f04` must print `RESULT dry-run ok`. Without
-the token the script stops at once with `RESULT error no CODEMAGIC_AUTH_TOKEN`; the tag
-route still works. The token is optional: it adds logs and automatic reruns. Never ask
-Keith for a browser click.
+If it is ever revoked: the value lives at https://codemagic.io/settings, API token card,
+Show, which fetches `/api/v3/user/api-key`. `~/.claude/scripts/chrome/` reaches his
+Chrome and clicks its Allow prompt itself (README there). Keep the value out of every
+output and write it straight to the User env var.
 
 ## Brain Gym
 

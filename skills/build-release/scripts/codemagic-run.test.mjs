@@ -6,7 +6,10 @@ import assert from 'node:assert/strict';
 
 const SCRIPT = new URL('./codemagic-run.mjs', import.meta.url).pathname.replace(/^\/(\w:)/, '$1');
 const IDS = ['a'.repeat(24), 'b'.repeat(24)];
-const step = (name, status, log) => ({ name, status, logUrl: `http://HOST${log}` });
+// Real shape: a script step's log sits on its one nameless subaction; built-in steps hold it themselves.
+const step = (name, status, log) => ({ name, status, type: null, logUrl: null,
+  subactions: [{ command: '#!/usr/bin/env bash\n', status, logUrl: `http://HOST${log}` }] });
+const builtIn = (name, status, log) => ({ name, status, type: 'publishing', logUrl: `http://HOST${log}`, subactions: [] });
 
 // Each build id answers its states in turn, then repeats the last one.
 async function release(states, logs, extra = []) {
@@ -37,7 +40,8 @@ test('reruns a font flake, waits through building, reports the submit step', { t
     [IDS[0]]: [{ status: 'failed', buildActions: [step('Build web', 'failed', '/log/font')] }],
     [IDS[1]]: [
       { status: 'building', buildActions: [step('Build web', 'success', '/log/web')] },
-      { status: 'finished', buildActions: [{ name: 'Publish', subactions: [step('Submit for review', 'success', '/log/submit')] }] },
+      { status: 'finished', buildActions: [step('Build web', 'success', '/log/web'),
+        step('Submit for review', 'success', '/log/submit'), builtIn('Publishing', 'success', '/log/publish')] },
     ],
   }, {
     '/log/font': 'Error: next/font/google queries have exactly one entry',

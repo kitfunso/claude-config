@@ -66,7 +66,11 @@ async function watch(id) {
 async function inspect(id) {
   const { build } = await api(`/builds/${id}`);
   if (args.check) writeFileSync(join(LOG_DIR, `codemagic-${id}.json`), JSON.stringify(build, null, 2));
-  const steps = (build.buildActions ?? []).flatMap((action) => (action.subactions?.length ? action.subactions : [action]));
+  // A script step keeps its name on the action but its log on a nameless subaction.
+  const steps = (build.buildActions ?? []).map((action) => {
+    const sub = action.subactions?.find((s) => s.status === 'failed') ?? action.subactions?.[0];
+    return { name: action.name, status: action.status, logUrl: action.logUrl ?? sub?.logUrl };
+  });
   const done = steps.filter((step) => step.status === 'success').length;
   if (!FINAL.has(build.status)) return { state: 'running', status: build.status, done };
   if (build.status === 'finished') return { state: 'success', steps, done };
