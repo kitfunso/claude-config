@@ -22,9 +22,10 @@ Speed and count are two targets: the minutes usually sit in a few **heavy** test
 - The scripts rewrite source files while they work, so they only run in scratch worktrees:
   `git -C <repo> worktree add --detach $WT/base/<repo-folder-name> HEAD`. Keep the repo's folder
   name: a repo root holding `__init__.py` imports its tests through that name.
-- Copy the ignored files the tests read into the worktree
-  (`git ls-files --others --ignored --exclude-standard`: `.env`, creds, local config). The kill
-  step copies the worktree's untracked files into its extra workers.
+- Put the ignored files the tests read into the worktree
+  (`git ls-files --others --ignored --exclude-standard`): hardlink secrets (`.env`, creds) so no
+  second copy lands on disk, and copy the rest, since a planted bug can write through a hardlink.
+  Extra workers get the same: a hardlink where the worktree has one, else a copy.
 
 ## Stages
 
@@ -62,10 +63,11 @@ run. Tests that fail before any change are left out of every pass. Then:
 
 When heavy candidates (page renders, seconds each) sit on many lines, one pass can run for days:
 size it first by summing each mutant's covering-candidate seconds. Then run two passes. `prune.py
-split --seconds 2` writes `candidates-light.json`, `candidates-heavy.json` and `skip-heavy.txt`.
-Pass 1 scores the light candidates with `--skip skip-heavy.txt`; pass 2 scores the heavy ones with
-`--skip plan-light.json`, so pass 1's cut tests can catch nothing in pass 2. A light test whose
-only twin is heavy stays, the safe direction. `--max-mutants` may sample pass 2; the report then
+split --seconds 2` writes the light and heavy candidate files and a skip list for each.
+Pass 1 scores the light candidates with `--skip skip-heavy.txt`. Pass 2 scores the heavy ones
+with `--skip plan-light.json` after pass 1, or with `--skip skip-light.txt` alongside it, in its
+own base worktree. Either way no cut leans on a test the other pass may cut. A test whose only
+twin sits in the other pass stays, the safe direction. `--max-mutants` may sample pass 2; the report then
 says those cuts rest on a sample. `prune.py merge --plans plan-light.json plan-heavy.json --out
 plan.json` joins them, and verify takes both kills and plans in the same order.
 A greedy **set cover** keeps the fewest candidates that still kill every mutant only candidates
@@ -83,17 +85,18 @@ Done when every ledger and no-coverage row has a decision in notes.md.
 **5. Cut.** In a second worktree at the base commit (`git worktree add --detach $SLIM <base sha>`),
 delete the cut tests, and fold near-duplicates (same body, different values) into one
 `parametrize` table. Touch tests only; source must stay byte-identical or verify refuses. Give a
-change its own small run: mark heavy tests (`@pytest.mark.heavy`, registered in the pytest config)
-so a per-change run can pass `-m "not heavy"`, or write a `-k` map in the repo's test docs naming
-the tests a change to each area needs. The default run keeps every test: a heavy test that alone
+change its own small run, unless the commit hook already picks tests by what the change imports
+(code-health's `venv-run --tests` does): mark heavy tests (`@pytest.mark.heavy`, registered in the
+pytest config) so a per-change run can pass `-m "not heavy"`, or write a `-k` map in the repo's
+test docs. The default run keeps every test: a heavy test that alone
 catches its bugs is still protection, and the stopwatch must compare like with like. Remove
 fixtures and helpers the cut left unused. Commit on the detached HEAD: stage 6 runs on that
 commit. Done when the slim suite passes, minus the stage 1 failures.
 
 **6. Prove it.** Three checks, none of them your own judgement:
 - Planted bugs: `mutate.py verify --repo $SLIM --python $PY --kills $RUN/kills.json --plan $RUN/plan.json --out $RUN/verify.json`
-  re-plants every bug a cut test killed and runs the tests the plan says now catch it. Lost must be 0;
-  each lost bug means restore its cut test.
+  re-plants every bug a cut test killed and runs the tests the plan says now catch it (`--workers`
+  as in stage 3). Lost must be 0; each lost bug means restore its cut test.
 - Past bugs: `replay.py --base $BASE --slim $SLIM --python $PY --map $RUN/map.json --plan $RUN/plan.json --profile-before $RUN/profile-before.json --profile-after $RUN/profile-after.json --out $RUN/replay.json`
   takes up to 20 recent `fix:` commits, reverse-applies each fix's source diff onto today's code
   in both worktrees, and runs the cut tests and the slim tests that cover the rewritten lines.
@@ -106,6 +109,20 @@ other reports if it has a docs folder. Now name the branch, on a fresh commit of
 message carries the numbers: tests before and after, full-run and per-change medians, both lost
 counts. `git -C $SLIM branch chore/prune-tests $(git -C $SLIM commit-tree HEAD^{tree} -p <base sha> -F msg.txt)`.
 Done when lost is 0 on both bug checks, all four timing files exist, and the branch carries the numbers.
+
+## Grading a cut that already landed
+
+When tests were already cut by hand or by another session, grade that cut before cutting more.
+Run stages 1 and 2 on the commit before it (`$BASE`), put the cut commit in `$SLIM`, then
+`prune.py grade --map $RUN/map.json --profile $RUN/profile-before.json --slim $SLIM --python $PY --out-dir $RUN`.
+It lists the removed tests and the **orphaned** lines, source lines that only removed tests ran.
+`mutate.py kill` with `--map map-orphan.json --candidates candidates-removed.json` plants bugs on
+those lines: no remaining test runs them, so every catch is a catch the cut lost. That count is
+a floor: a removed test can also be the only one that checks a line others merely run, which a
+kill run over the removed tests' full lines finds. `replay.py
+--plan removed.json` replays fix commits across the cut. Restore, on a branch, each removed test
+that alone catches a planted bug or a replayed fix. Judge each restore as in stage 4, so a pin stays
+cut, and pick the set by run time: a unit test beats a page render that catches the same bug.
 
 ## Handover
 

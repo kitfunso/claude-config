@@ -143,7 +143,7 @@ def plan(a: argparse.Namespace) -> None:
     runner.write_json(a.out, {"cut": ledger, "kept": [{"test": t, "bugs_only_candidates_catch": only[t]} for t in kept],
                   "catchers": catchers, "heavy": _heavy(dur), "sampled": kd["sampled"],
                   "survivors": sum(r["status"] == "no-candidate-catch" for r in rows),
-                  "unsure_keeper_runs": sum(r["keeper_status"] == "budget" for r in rows)})
+                  "unsure_keeper_runs": sum(r["keeper_status"] not in ("ran", "not-run") for r in rows)})
     print(f"cut {len(cut)}, keep {len(kept)} candidates for unique catches, heavy {len(_heavy(dur))}")
 
 
@@ -156,16 +156,46 @@ def split(a: argparse.Namespace) -> None:
     runner.write_json(out / "candidates-light.json", {**cd, "candidates": light})
     runner.write_json(out / "candidates-heavy.json", {**cd, "candidates": heavy})
     (out / "skip-heavy.txt").write_text("\n".join(sorted(heavy)), encoding="utf-8")
+    (out / "skip-light.txt").write_text("\n".join(sorted(light)), encoding="utf-8")
     print(f"{len(light)} light, {len(heavy)} heavy candidates (over {a.seconds}s)")
 
 
 def merge_plans(a: argparse.Namespace) -> None:
     plans = [runner.read_json(p) for p in a.plans]
+    # a test one pass names as a catcher stays, even when the other pass would cut it
+    relied = {t for p in plans for ts in p["catchers"].values() for t in ts}
+    cut = {r["test"]: r for p in plans for r in p["cut"] if r["test"] not in relied}
     runner.write_json(a.out, {
-        "cut": [r for p in plans for r in p["cut"]], "kept": [r for p in plans for r in p["kept"]],
+        "cut": list(cut.values()), "kept": [r for p in plans for r in p["kept"]],
         "catchers": {k: v for p in plans for k, v in p["catchers"].items()}, "heavy": plans[0]["heavy"],
         "sampled": any(p["sampled"] for p in plans), "survivors": sum(p["survivors"] for p in plans),
         "unsure_keeper_runs": sum(p["unsure_keeper_runs"] for p in plans)})
+
+
+def grade(a: argparse.Namespace) -> None:
+    """Grade a cut that already landed: what it removed, and the lines no remaining test runs."""
+    m, prof = runner.read_json(a.map)["tests"], runner.read_json(a.profile)
+    failing = set(prof["failed"])
+    slim_ids = set(runner.collect_ids(a.python, Path(a.slim).resolve()))
+    removed = sorted(t for t in set(prof["outcomes"]) - slim_ids if t not in failing)
+    ran: dict = {}
+    for t in slim_ids - failing:
+        for f, ls in m.get(t, {}).items():
+            ran.setdefault(f, set()).update(ls)
+    orphan: dict = {}
+    for t in removed:
+        lines = {f: sorted(set(ls) - ran.get(f, set())) for f, ls in m.get(t, {}).items()}
+        if any(lines.values()):
+            orphan[t] = {f: ls for f, ls in lines.items() if ls}
+    out = Path(a.out_dir)
+    runner.write_json(out / "removed.json", {"cut": [{"test": t} for t in removed]})
+    runner.write_json(out / "map-orphan.json", {"tests": orphan, "failed": []})
+    runner.write_json(out / "candidates-removed.json", {"candidates": {t: "removed" for t in orphan},
+                                                         "no_coverage": [], "exempt": [],
+                                                         "failing_at_baseline": sorted(failing)})
+    lines = {(f, ln) for fs in orphan.values() for f, ls in fs.items() for ln in ls}
+    print(f"{len(removed)} tests removed; {len(lines)} lines no remaining test runs, "
+          f"{len(orphan)} removed tests ran them")
 
 
 def main() -> None:
@@ -195,12 +225,18 @@ def main() -> None:
     s = sub.add_parser("merge", help="one plan.json from the light and heavy passes")
     s.add_argument("--plans", nargs="+", required=True)
     s.add_argument("--out", required=True)
+    s = sub.add_parser("grade", help="grade a cut that already landed")
+    s.add_argument("--map", required=True, help="map.json of the commit before the cut")
+    s.add_argument("--profile", required=True)
+    s.add_argument("--slim", required=True, help="scratch worktree of the cut commit")
+    s.add_argument("--python", required=True)
+    s.add_argument("--out-dir", required=True)
     s = sub.add_parser("report")
     s.add_argument("--dir", required=True, help="run folder holding the JSON files")
     s.add_argument("--out", required=True)
     a = p.parse_args()
     {"profile": profile, "map": map_, "subsets": subsets, "plan": plan, "split": split, "merge": merge_plans,
-     "report": lambda a: write_report(Path(a.dir), Path(a.out))}[a.cmd](a)
+     "grade": grade, "report": lambda a: write_report(Path(a.dir), Path(a.out))}[a.cmd](a)
 
 
 if __name__ == "__main__":

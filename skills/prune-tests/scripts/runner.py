@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import tempfile
 import time
@@ -70,14 +71,24 @@ def run_pytest(python: str, repo: Path, args: list[str], *, timeout: float | Non
         cmd = head + ["pytest", "-q", "-p", "no:cacheprovider", "-p", "prune_plugin",
                       *(["-x"] if stop_first else []), *([f"@{argfile}"] if args else [])]
         start = time.monotonic()
+        proc = subprocess.Popen(cmd, cwd=repo, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                start_new_session=os.name != "nt")
         try:
-            proc = subprocess.run(cmd, cwd=repo, env=env, capture_output=True, text=True,
-                                  timeout=timeout, encoding="utf-8", errors="replace")
-            rc, timed_out = proc.returncode, False
+            rc, timed_out = proc.wait(timeout=timeout), False
         except subprocess.TimeoutExpired:
+            _kill_tree(proc)
             rc, timed_out = -1, True
         outcomes, durations, errors = read_log(log)
         return Run(rc, time.monotonic() - start, timed_out, outcomes, durations, errors)
+
+
+def _kill_tree(proc: subprocess.Popen) -> None:
+    """A venv python.exe on Windows is a launcher; killing it alone can leave the real run going."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+    else:
+        os.killpg(proc.pid, signal.SIGKILL)
+    proc.wait()
 
 
 def _env() -> dict:

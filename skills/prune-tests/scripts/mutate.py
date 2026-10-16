@@ -10,6 +10,7 @@ import ast
 import fnmatch
 import hashlib
 import json
+import os
 import random
 import shutil
 import threading
@@ -162,18 +163,20 @@ def _sanity(root: Path, rel: str, tests: list[str], python: str) -> None:
                          "The tests are not running this worktree's code.")
 
 
-def _workers(base: Path, out: Path, n: int) -> list[Path]:
+def _workers(base: Path, out: Path, n: int, prefix: str = "wt") -> list[Path]:
     roots = [base]
     extra = [p for p in runner.git(base, "ls-files", "--others").splitlines() if "__pycache__" not in p]
     for k in range(1, n):
-        wt = out / f"wt-{k}" / base.name  # same folder name: a root __init__.py imports through it
+        wt = out / f"{prefix}-{k}" / base.name  # same folder name: a root __init__.py imports through it
         if wt.exists():
             runner.git(wt, "checkout", "--", ".")  # a crashed run can leave a mutant planted
         else:
             runner.git(base, "worktree", "add", "--detach", str(wt), "HEAD")
         for rel in extra:
             (wt / rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(base / rel, wt / rel)
+            (wt / rel).unlink(missing_ok=True)
+            # a hardlinked secret stays one file on disk; anything the code may write stays a copy
+            (os.link if (base / rel).stat().st_nlink > 1 else shutil.copy2)(base / rel, wt / rel)
         roots.append(wt)
     return roots
 
@@ -188,7 +191,7 @@ def kill(a: argparse.Namespace) -> None:
     skip = set(cdoc["failing_at_baseline"])  # a test red before any bug would "catch" every bug
     for path in a.skip or ():  # a plan.json skips its cut tests; a text file lists node ids
         skip |= ({r["test"] for r in runner.read_json(path)["cut"]} if path.endswith(".json")
-                 else set(Path(path).read_text(encoding="utf-8").split()))
+                 else set(filter(None, Path(path).read_text(encoding="utf-8").splitlines())))
     cover: dict = {}
     targets: dict = {}
     for t, files in tests_map.items():
@@ -249,16 +252,35 @@ def verify(a: argparse.Namespace) -> None:
     slim = Path(a.repo).resolve()
     runner.require_scratch_worktree(slim)
     ids = set(runner.collect_ids(a.python, slim))
-    rows = []
+    jobs = []
     for kpath, ppath in zip(a.kills, a.plan, strict=True):
-        rows += _verify_pass(slim, runner.read_json(kpath), runner.read_json(ppath), ids, a)
+        jobs += _verify_jobs(slim, runner.read_json(kpath), runner.read_json(ppath), ids)
+    roots = _workers(slim, Path(a.out).resolve().parent, a.workers, prefix="vw")
+    rows, lock = [], threading.Lock()
+
+    def work(chunk: list[tuple[Mutant, list[str]]], root: Path) -> None:
+        for mut, sel in chunk:
+            with Planted(root, mut):
+                run = runner.run_pytest(a.python, root, sel, stop_first=True, timeout=a.budget)
+            caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3))
+            with lock:
+                rows.append({"id": mut.id, "desc": mut.desc, "selected": sel, "caught": caught})
+                if len(rows) % 25 == 0:
+                    print(f"{len(rows)}/{len(jobs)} re-planted", flush=True)
+
+    with ThreadPoolExecutor(len(roots)) as pool:
+        list(pool.map(work, [jobs[k::len(roots)] for k in range(len(roots))], roots))
+    for wt in roots[1:]:
+        runner.git(slim, "worktree", "remove", "--force", str(wt))
+        wt.parent.rmdir()
+    rows.sort(key=lambda r: r["id"])
     lost = [r for r in rows if not r["caught"]]
     runner.write_json(a.out, {"checked": len(rows), "lost": lost, "rows": rows})
     print(f"verify: {len(rows)} re-planted bugs, {len(lost)} lost")
 
 
-def _verify_pass(slim: Path, kdoc: dict, plan: dict, ids: set, a: argparse.Namespace) -> list[dict]:
-    rows = []
+def _verify_jobs(slim: Path, kdoc: dict, plan: dict, ids: set) -> list[tuple[Mutant, list[str]]]:
+    jobs = []
     for m in kdoc["mutants"]:
         claimed = plan["catchers"].get(m["id"])
         if claimed is None:
@@ -267,12 +289,8 @@ def _verify_pass(slim: Path, kdoc: dict, plan: dict, ids: set, a: argparse.Names
             raise SystemExit(f"{m['file']} differs from the analysed source; a cut must only touch tests.")
         sel = [t for t in claimed if t in ids] or sorted(
             t for t in ids if t.split("::")[0] in {c.split("::")[0] for c in claimed})
-        mut = Mutant(**{k: m[k] for k in Mutant.__dataclass_fields__})
-        with Planted(slim, mut):
-            run = runner.run_pytest(a.python, slim, sel, stop_first=True, timeout=a.budget)
-        caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3))
-        rows.append({"id": m["id"], "desc": m["desc"], "selected": sel, "caught": caught})
-    return rows
+        jobs.append((Mutant(**{k: m[k] for k in Mutant.__dataclass_fields__}), sel))
+    return jobs
 
 
 def main() -> None:
@@ -297,6 +315,7 @@ def main() -> None:
     v.add_argument("--plan", nargs="+", required=True)
     v.add_argument("--out", required=True)
     v.add_argument("--budget", type=float, default=600)
+    v.add_argument("--workers", type=int, default=1)
     a = p.parse_args()
     kill(a) if a.cmd == "kill" else verify(a)
 
