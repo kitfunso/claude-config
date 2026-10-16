@@ -49,6 +49,7 @@ A direct question gets a light answer: 1 to 3 lines, at most one file read, from
 - Write the message to a file and `git commit -F <file>`; grep that file for em dashes first. Stage named files, review the diff, run tests and the linter, grep for secrets.
 - "Commit and push" means only that. Force-pushing main/master, amending, and `--no-verify` each need an explicit user ask.
 - `git checkout <ref> -- <file>` destroys uncommitted edits: `git status --porcelain` first.
+- Worktrees go in the session scratchpad or through EnterWorktree, never beside the repo in `dev/`. The session that merges a branch removes its worktree and deletes the branch in the same turn; check with `git worktree list`. Set 2026-10-16 (probation).
 - Backstop: the commit-message hook.
 
 ## Hand-Maintained Files (CRITICAL)
