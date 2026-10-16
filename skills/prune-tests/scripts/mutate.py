@@ -116,9 +116,8 @@ class Planted:
 
 
 def _batch_killers(run: runner.Run, tests: list[str]) -> set[str]:
-    if run.rc == 4:
-        raise SystemExit("pytest usage error (rc 4): a node id did not resolve; check the map.")
-    if run.collect_errors or (run.rc in (2, 3) and not run.failed):
+    # kill checks every node id collects first, so rc 4 here is a bug that broke conftest loading
+    if run.rc == 4 or run.collect_errors or (run.rc in (2, 3) and not run.failed):
         return set(tests)  # the bug broke import or collection: the whole batch goes red
     if run.timed_out:  # an endless loop is a catch; unfinished tests count as catchers
         return run.failed | {t for t in tests if t not in run.outcomes}
@@ -158,7 +157,7 @@ def _sanity(root: Path, rel: str, tests: list[str], python: str) -> None:
     finally:
         path.write_bytes(original)
         _drop_pyc(path)
-    if not (run.failed or run.collect_errors or run.rc in (2, 3)):
+    if not (run.failed or run.collect_errors or run.rc in (2, 3, 4)):
         raise SystemExit(f"Sanity failed: breaking {rel} left {tests[:3]} green. "
                          "The tests are not running this worktree's code.")
 
@@ -192,6 +191,9 @@ def kill(a: argparse.Namespace) -> None:
     for path in a.skip or ():  # a plan.json skips its cut tests; a text file lists node ids
         skip |= ({r["test"] for r in runner.read_json(path)["cut"]} if path.endswith(".json")
                  else set(filter(None, Path(path).read_text(encoding="utf-8").splitlines())))
+    stale = sorted(set(tests_map) - skip - set(runner.collect_ids(a.python, base)))
+    if stale:
+        raise SystemExit(f"{len(stale)} map node ids do not collect in {base}, e.g. {stale[:3]}; remap.")
     cover: dict = {}
     targets: dict = {}
     for t, files in tests_map.items():
@@ -262,7 +264,7 @@ def verify(a: argparse.Namespace) -> None:
         for mut, sel in chunk:
             with Planted(root, mut):
                 run = runner.run_pytest(a.python, root, sel, stop_first=True, timeout=a.budget)
-            caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3))
+            caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3, 4))
             with lock:
                 rows.append({"id": mut.id, "desc": mut.desc, "selected": sel, "caught": caught})
                 if len(rows) % 25 == 0:
