@@ -55,8 +55,9 @@ def _restore(wt: Path, files: list[str]) -> None:
     runner.git(wt, "clean", "-fdq", "--", *files)
 
 
-def _red(run: runner.Run | None) -> bool:
-    return bool(run and (run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3, 4)))
+def _red(run: runner.Run | None, wt: Path, tests: list[str], ctx: dict) -> bool:
+    return bool(run) and (runner.is_red(run) or any(
+        runner.red_tests(ctx["python"], wt, run, tests, lambda t: ctx["budget"])))
 
 
 def replay_one(sha: str, files: list[str], ctx: dict) -> dict:
@@ -76,13 +77,14 @@ def replay_one(sha: str, files: list[str], ctx: dict) -> dict:
             cut_files = {t.split("::")[0] for t in cut_cov}
             slim_sel = sorted(t for t in ctx["slim_ids"] if t in covering or t.split("::")[0] in cut_files)
             slim_run = runner.run_pytest(ctx["python"], slim, slim_sel, timeout=ctx["budget"]) if slim_sel else None
+            slim_red, cut_red = _red(slim_run, slim, slim_sel, ctx), _red(cut_run, base, cut_cov, ctx)
         finally:
             for wt in (base, slim):
                 _restore(wt, files)
     cut_failed = sorted(cut_run.failed) if cut_run else []
-    if _red(slim_run):
+    if slim_red:
         verdict = "caught"
-    elif _red(cut_run):
+    elif cut_red:
         verdict = "lost"
     else:
         verdict = "not caught by either" if covering else "no test runs the fixed lines"

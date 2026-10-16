@@ -115,13 +115,11 @@ class Planted:
         _drop_pyc(self.path)
 
 
-def _batch_killers(run: runner.Run, tests: list[str]) -> set[str]:
+def _batch_killers(run: runner.Run, tests: list[str], root: Path, ctx: dict) -> set[str]:
     # kill checks every node id collects first, so rc 4 here is a bug that broke conftest loading
     if run.rc == 4 or run.collect_errors or (run.rc in (2, 3) and not run.failed):
         return set(tests)  # the bug broke import or collection: the whole batch goes red
-    if run.timed_out:  # an endless loop is a catch; unfinished tests count as catchers
-        return run.failed | {t for t in tests if t not in run.outcomes}
-    return run.failed
+    return set(runner.red_tests(ctx["python"], root, run, tests, lambda t: _timeout([t], ctx["dur"])))
 
 
 def _timeout(tests: list[str], durations: dict) -> float:
@@ -135,10 +133,10 @@ def run_mutant(m: Mutant, root: Path, ctx: dict) -> dict:
     keeper, keeper_status = None, "not-run"
     with Planted(root, m):
         run = runner.run_pytest(ctx["python"], root, cands, timeout=_timeout(cands, ctx["dur"]))
-        killers = _batch_killers(run, cands)
+        killers = _batch_killers(run, cands, root, ctx)
         if killers and keepers:
             k = runner.run_pytest(ctx["python"], root, keepers, stop_first=True, timeout=ctx["budget"])
-            caught = _batch_killers(k, keepers) if not k.timed_out else k.failed
+            caught = k.failed if k.timed_out else _batch_killers(k, keepers, root, ctx)
             keeper = min(caught) if caught else None
             keeper_status = "budget" if k.timed_out and not caught else "ran"
     status = "no-candidate-catch" if not killers else ("shared" if keeper else "candidate-only")
@@ -266,7 +264,7 @@ def verify(a: argparse.Namespace) -> None:
             if sel:
                 with Planted(root, mut):
                     run = runner.run_pytest(a.python, root, sel, stop_first=True, timeout=a.budget)
-                caught = bool(run.failed or run.collect_errors or run.timed_out or run.rc in (2, 3, 4))
+                    caught = runner.is_red(run) or any(runner.red_tests(a.python, root, run, sel, lambda t: a.budget))
             with lock:
                 rows.append({"id": mut.id, "desc": mut.desc, "selected": sel, "caught": caught})
                 if len(rows) % 25 == 0:

@@ -138,8 +138,9 @@ lost counts. Everything else is in the report. Remove the scratch worktrees
 - Each parametrized case is its own node id; cutting one case means editing its parameter list.
 - The runner sets `PYTHONDONTWRITEBYTECODE` and deletes the mutated file's `.pyc`: a mutant of the
   same size, written in the same second, can otherwise run from stale bytecode.
-- A candidate batch that times out counts as a catch, so keep all running workers, across every
-  pass and verify, under the core count: an overloaded box shows catches that verify cannot repeat.
+- A busy box times batches out, not just bugs: after a timeout each unfinished test re-runs alone,
+  and only one that fails or hangs alone counts. Keep all workers, across every session, under the
+  core count, or those re-runs eat the pass.
 - A keeper run that hits `--budget` counts as no keeper kill, so its candidates stay. The report
   counts these; raise the budget if they are many.
 - mutmut and cosmic-ray record one killed-or-survived result per mutant, and mutmut needs `os.fork`

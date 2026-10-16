@@ -7,6 +7,7 @@ import signal
 import subprocess
 import tempfile
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -50,8 +51,9 @@ def read_log(path: Path) -> tuple[dict, dict, tuple]:
         tid = row["id"]
         durations[tid] = durations.get(tid, 0.0) + row["s"]
         phases.setdefault(tid, {})[row["when"]] = row["outcome"]
-    outcomes = {tid: "failed" if "failed" in p.values() else p.get("call", p.get("setup", "passed"))
-                for tid, p in phases.items()}
+    # every finished test logs a teardown, so one without it and without a failure was cut off mid-run
+    outcomes = {tid: "failed" if "failed" in p.values() else p.get("call", p["setup"])
+                for tid, p in phases.items() if "failed" in p.values() or "teardown" in p}
     return outcomes, durations, tuple(errors)
 
 
@@ -80,6 +82,22 @@ def run_pytest(python: str, repo: Path, args: list[str], *, timeout: float | Non
             rc, timed_out = -1, True
         outcomes, durations, errors = read_log(log)
         return Run(rc, time.monotonic() - start, timed_out, outcomes, durations, errors)
+
+
+def is_red(run: Run) -> bool:
+    """A failure, or a bug that broke collection. A timeout alone proves nothing."""
+    return bool(run.failed or run.collect_errors or run.rc in (2, 3, 4))
+
+
+def red_tests(python: str, repo: Path, run: Run, tests: list[str], timeout_for) -> Iterator[str]:
+    """Tests the run shows red. A busy box times batches out too, so an unfinished test counts only alone."""
+    yield from sorted(run.failed)
+    if run.timed_out:
+        for t in tests:
+            if t not in run.outcomes:
+                alone = run_pytest(python, repo, [t], timeout=timeout_for(t))
+                if alone.timed_out or is_red(alone):
+                    yield t
 
 
 def _kill_tree(proc: subprocess.Popen) -> None:
