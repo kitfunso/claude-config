@@ -160,6 +160,13 @@ def _sanity(root: Path, rel: str, tests: list[str], python: str) -> None:
                          "The tests are not running this worktree's code.")
 
 
+def _partial(out: Path) -> tuple[Path, dict]:
+    """Results land in a JSON-lines file as they finish, so a crashed run resumes where it stopped."""
+    partial = out.with_suffix(".partial.jsonl")
+    lines = partial.read_text(encoding="utf-8").splitlines() if partial.exists() else []
+    return partial, {r["id"]: r for r in map(json.loads, lines)}
+
+
 def _workers(base: Path, out: Path, n: int, prefix: str = "wt") -> list[Path]:
     roots = [base]
     extra = [p for p in runner.git(base, "ls-files", "--others").splitlines() if "__pycache__" not in p]
@@ -215,11 +222,7 @@ def kill(a: argparse.Namespace) -> None:
     _sanity(base, busiest, sorted({t for (f, _), ts in cover.items() if f == busiest for t in ts if t in cands}),
             a.python)
     out = Path(a.out).resolve()
-    # results land in a JSON-lines file as they finish, so a crashed run resumes where it stopped
-    partial = out.with_suffix(".partial.jsonl")
-    done = {}
-    if partial.exists():
-        done = {r["id"]: r for r in map(json.loads, partial.read_text(encoding="utf-8").splitlines())}
+    partial, done = _partial(out)
     todo = [m for m in mutants if m.id not in done]
     roots = _workers(base, out.parent, a.workers)
     ctx = {"cover": cover, "cands": cands, "dur": dur, "python": a.python, "budget": a.budget}
@@ -255,8 +258,12 @@ def verify(a: argparse.Namespace) -> None:
     jobs = []
     for kpath, ppath in zip(a.kills, a.plan, strict=True):
         jobs += _verify_jobs(slim, runner.read_json(kpath), runner.read_json(ppath), ids)
-    roots = _workers(slim, Path(a.out).resolve().parent, a.workers, prefix="vw")
-    rows, lock = [], threading.Lock()
+    out = Path(a.out).resolve()
+    partial, done = _partial(out)
+    jobs = list({m.id: (m, sel) for m, sel in jobs}.values())  # a bug both passes caught is one bug
+    todo = [(m, sel) for m, sel in jobs if m.id not in done]
+    roots = _workers(slim, out.parent, a.workers, prefix="vw")
+    lock = threading.Lock()
 
     def work(chunk: list[tuple[Mutant, list[str]]], root: Path) -> None:
         for mut, sel in chunk:
@@ -265,17 +272,20 @@ def verify(a: argparse.Namespace) -> None:
                 with Planted(root, mut):
                     run = runner.run_pytest(a.python, root, sel, stop_first=True, timeout=a.budget)
                     caught = runner.is_red(run) or any(runner.red_tests(a.python, root, run, sel, lambda t: a.budget))
+            row = {"id": mut.id, "desc": mut.desc, "selected": sel, "caught": caught}
             with lock:
-                rows.append({"id": mut.id, "desc": mut.desc, "selected": sel, "caught": caught})
-                if len(rows) % 25 == 0:
-                    print(f"{len(rows)}/{len(jobs)} re-planted", flush=True)
+                with partial.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps(row) + "\n")
+                done[mut.id] = row
+                if len(done) % 25 == 0:
+                    print(f"{len(done)}/{len(jobs)} re-planted", flush=True)
 
     with ThreadPoolExecutor(len(roots)) as pool:
-        list(pool.map(work, [jobs[k::len(roots)] for k in range(len(roots))], roots))
+        list(pool.map(work, [todo[k::len(roots)] for k in range(len(roots))], roots))
     for wt in roots[1:]:
         runner.git(slim, "worktree", "remove", "--force", str(wt))
         wt.parent.rmdir()
-    rows.sort(key=lambda r: r["id"])
+    rows = sorted(done.values(), key=lambda r: r["id"])
     lost = [r for r in rows if not r["caught"]]
     runner.write_json(a.out, {"checked": len(rows), "lost": lost, "rows": rows})
     print(f"verify: {len(rows)} re-planted bugs, {len(lost)} lost")
