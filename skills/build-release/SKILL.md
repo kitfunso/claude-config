@@ -151,7 +151,7 @@ A plain push still starts nothing. Proven by `release-2.3.2`: iOS `6ad0994a12cce
 (Publish to App Store Connect 4m 48s) then Android `6ad0994a12cce3cb996bb52f`, both green,
 no browser. Watch them with no login: Codemagic posts GitHub check runs on the tagged commit,
 `gh api repos/kitfunso/phzse/commits/<sha>/check-runs` (app `codemagic-ci-cd`; the output
-text lists every step). The two run one after the other. **A release must never wait on Keith's hands**: on
+text lists every step). On `release-2.4.0` (2026-10-17) the two ran side by side and both finished in 8 minutes. **A release must never wait on Keith's hands**: on
 2026-10-15 the old Chrome route stalled 2.3.2 twice while he was out, because the
 Claude in Chrome extension was off and the debugging port needs his Allow click. No
 release goes through a browser. **Use ONE starter per release, never both, or each
@@ -297,8 +297,9 @@ its log:
   build (gone at root since Brain Gym 75af437 committed the font files), and Apple 500s on `CHANGE UPLOAD STATE TO
   COMPLETE`, where altool prints `UPLOAD SUCCEEDED` but cli-tools still exits 1. A rerun
   takes a new build number; the half-uploaded build sits unused in TestFlight, harmless.
-- `--dry-run` proves the token can read the app. `--check <id,id>` reads past builds and
-  saves each one's JSON in the temp dir. Neither starts anything. `node --test
+- `--dry-run` proves the token can read the app. `--check <id,id> --app <app id>` reads past
+  builds and saves each one's JSON in the temp dir; add `--report-step "Publish to App Store
+  Connect"` to print the iOS build number and review state after a tag-started release. Neither starts anything. `node --test
   scripts/codemagic-run.test.mjs` runs the script against a stand-in API.
 - Proven on the real API 2026-10-16: `--check` read Brain Gym builds 6ad06f91 and 6ad070ea
   as transient failures and 6ad07473 as success. A script step keeps its name on the
