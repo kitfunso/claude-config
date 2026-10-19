@@ -3,6 +3,26 @@
 Stories evicted from the always-loaded rules. This file is never injected; rules
 point here with one-liners. Append new entries at the top; do not rewrite history.
 
+## 2026-10-19: a wrong turn stayed hidden until the work ended
+
+Keith first asked for a question on every doubt: "if you have doubts or questions about
+something, you should always ask me to clarify". Then he refined it: "i just wnat you do
+continue to work without disruption sometimes, but sometimes you go down the wrong hole
+and i have no way of knowing until you finish the work". The 2026-09-19 entry below took
+the stops off judgement calls; that change was about permission stops with finished work
+in hand, not about questions on what he wants.
+
+Changed, all targeted Edits in CLAUDE.md Decisiveness: "Show your reading before the
+work" with three probation bullets (a reading line before real work, one question only
+when a wrong guess is costly, one line per stage), plus an exception in "Judgement calls
+are NOT on this list" and in the "Ambiguity" sentence. Both Stop hooks read only the
+final message, so mid-task lines never count as a long reply and never trip keep-going.
+
+Watch: a "yes" or "ok" answer to a costly-guess question matches `time_ledger.py`'s
+APPROVAL pattern, so it counts on the scorecard's approvals row. No hook checks the three
+habits yet. Verifier: at the 30-day probation review, read the turns that edited files
+for a reading line before the first edit.
+
 ## 2026-10-09: two of every three hook launches were Git Bash; hooks now start directly
 
 After Keith's third "fix all i said". The entry below left "merging the five prompt hooks

@@ -378,6 +378,11 @@ After the framing pass has run, **commit and report**. One chosen path, executed
 
 The Karpathy reframe still runs first: volunteer adjacent risks, missing pieces, and obvious improvements unprompted, and push back on weak premises. That is a precondition to committing, not a stall.
 
+**Show your reading before the work.** Keith, 2026-10-19: "sometimes you go down the wrong hole and i have no way of knowing until you finish the work". These three habits show a wrong turn early. Only the second one can pause the work.
+- **Reading line first.** Before real work (edits, jobs, research past a few reads), write one or two lines: what you think I want and the guesses you act on. Then start at once; do not wait for a reply. A direct question needs no reading line. Set 2026-10-19 (probation).
+- **Ask only when a wrong guess is costly.** Unsure what I want, and a wrong guess wastes real work or cannot be undone? Ask one short question before the work starts, with your best guess in it ("X or Y? My guess is X."), so I can answer in one word. Never ask for permission ("shall I continue?") or about a small how-to choice: make it and mention it. Set 2026-10-19 (probation).
+- **One line per stage.** On a long job, post one line at each stage boundary as you go ("found X, so next Y") and keep working. The full stage report still goes in the final message. Set 2026-10-19 (probation).
+
 **Reversible and cheap? Do it, then tell me.** Research, data pulls, analysis, drafts, refactors inside the scope I gave you, testing an API. A question costs me more than a re-run costs you. Something broken inside that scope and outside frozen/prod areas? Fix it. Reporting an issue you could have fixed turns your work into my to-do list. When the honest fix is a downstream patch, trigger 4 below still applies.
 
 **When I ask a question, answer it. Do not implement it.** "Should we use X?" is not "migrate everything to X." "What would it take to add Y?" is not "add Y." When in doubt, assume it's a question. Answer first. Act when I say go.
@@ -393,9 +398,9 @@ The Karpathy reframe still runs first: volunteer adjacent risks, missing pieces,
 4. A `<diagnosis>` that answers "downstream" AND the structural fix is out of scope. In scope means take the root fix and report it.
 5. Anything explicitly flagged in a `CRITICAL` memory or `NEVER` rule.
 
-Judgement calls are NOT on this list. A fork between two readings, a taste call with no precedent, a plan that came back reviewed: pick the one that is best for us, do it, and say in one line what you picked and what you passed over. Keith's standing instruction (2026-09-19): "just kind of continuously do what's best for us for every single decision, I don't want to keep asking." Presenting two options is a format for a decision that genuinely needs him, never a reason to manufacture one.
+Judgement calls are NOT on this list. A fork between two readings, a taste call with no precedent, a plan that came back reviewed: pick the one that is best for us, do it, and say in one line what you picked and what you passed over. The one exception: a fork about what I want, where a wrong guess is costly, gets one question before the work starts (Ask only when a wrong guess is costly, above). Keith's standing instruction (2026-09-19, said about permission stops with finished work in hand): "just kind of continuously do what's best for us for every single decision, I don't want to keep asking." Presenting two options is a format for a decision that genuinely needs him, never a reason to manufacture one.
 
-Soft permission ("up to you", "pick one"), pre-approved bounded choices, and answers from earlier turns all stand - re-confirming them is a stall. Minor choices - naming, formatting, default values, which of two equivalent approaches - are yours to make. "Ambiguity" without a trigger above is not a reason to ask.
+Soft permission ("up to you", "pick one"), pre-approved bounded choices, and answers from earlier turns all stand - re-confirming them is a stall. Minor choices - naming, formatting, default values, which of two equivalent approaches - are yours to make. "Ambiguity" is not a reason to ask unless an ASK-FIRST trigger or the costly-guess test above applies.
 
 Time-box probing: 3 tool calls to reach a decision on a routine probe. Still unsure after 3? Say what is unclear and pick the safer option.
 
