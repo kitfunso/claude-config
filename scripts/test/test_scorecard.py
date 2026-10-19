@@ -28,7 +28,7 @@ RULES_MD = "\n".join((
     "# Global Claude Code Configuration",
     "## Precedence (when rules conflict)",
     *PRECEDENCE_PROSE,
-    "- **Reports are local HTML files, never claude.ai pages (CRITICAL).** Never publish. Set 2026-09-23 (probation) after a page.",
+    "- **Reports Are Local HTML Files, never claude.ai pages (CRITICAL).** Never publish. Set 2026-09-23 (probation) after a page.",
     "- **Prose:** no em dashes in commits.",
     "## Sourcing (CRITICAL)",
     "A paragraph that says (CRITICAL) is prose.",
@@ -91,7 +91,7 @@ def test_goals_are_seven_with_a_band_to_score_across() -> None:
 
 def test_critical_rules_are_headings_and_bold_lead_bullets_only() -> None:
     names = [sc.rule_name(line) for line in sc.critical_rules(RULES_MD)]
-    assert names == ["Reports are local HTML files, never claude.ai pages", "Sourcing", "Human Voice", "Outside Voice"]
+    assert names == ["Reports Are Local HTML Files, never claude.ai pages", "Sourcing", "Human Voice", "Outside Voice"]
 
 
 @pytest.mark.parametrize("line", PRECEDENCE_PROSE)
@@ -135,7 +135,7 @@ def test_missing_or_unwired_scripts_and_absent_deny_leave_rules_unchecked(tmp_pa
 
 def test_probation_is_owned_by_the_nearest_rule_line() -> None:
     assert sc.probation_rules(RULES_MD) == [
-        ("Reports are local HTML files, never claude.ai pages", date(2026, 9, 23)),
+        ("Reports Are Local HTML Files, never claude.ai pages", date(2026, 9, 23)),
         ("Human Voice", date(2026, 9, 22)),
     ]
 
@@ -162,7 +162,7 @@ def test_fires_counts_only_the_rules_own_flags() -> None:
     replies = [{"flags": ["long", "banned:word", "sweeping"]}, {"flags": []}, {"flags": ["table", "other"]}]
     assert sc.fires("Human Voice", replies) == "3"
     assert sc.fires("Do It Properly", replies) == "1"
-    assert sc.fires("Reports are local HTML files, never claude.ai pages", replies) == "n/a"
+    assert sc.fires("Reports Are Local HTML Files, never claude.ai pages", replies) == "n/a"
     assert sc.fires("Human Voice", None) == "no data yet"
 
 

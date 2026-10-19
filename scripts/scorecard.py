@@ -62,11 +62,13 @@ GOALS = (
 RULE_CHECKS = {
     "Capability Existence": ("check_skill_references.py",),
     "Sourcing": ("reply_check.py",),
+    "No Fabrication": ("reply_check.py",),
     "Git Operations": ("git_guard.py",),
     "Hand-Maintained": ("claude_backup.py", "rewrite_gate.py"),
     "Root Cause": ("reply_check.py",),
     "Human Voice": ("human_voice.py", "reply_check.py"),
     "Do It Properly": ("do_it_properly.py", "reply_check.py"),
+    "Plans use html-plan": ("plan_gate.py",),
     "Comments": ("comment_budget_guard.py",),
     "Reports are local HTML": ("deny:Artifact",),
 }
@@ -194,7 +196,7 @@ def critical_metric(files: list[Path], settings: dict, hooks_dir: Path) -> Resul
     wired, deny = hook_scripts(settings), (settings.get("permissions") or {}).get("deny") or []
     lines, unchecked = [], []
     for name, source in rules:
-        checks = next((c for key, c in RULE_CHECKS.items() if key in name), None)
+        checks = next((c for key, c in RULE_CHECKS.items() if key.lower() in name.lower()), None)
         gaps = ["no mapping in RULE_CHECKS"] if checks is None else check_gaps(checks, wired, deny, hooks_dir)
         via = ", ".join(c.replace("deny:", "permissions.deny ") for c in checks or ())
         lines.append(f"unchecked: {name} ({source}): {'; '.join(gaps)}" if gaps else f"checked: {name} ({source}) via {via}")
