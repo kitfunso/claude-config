@@ -27,7 +27,10 @@ CONTRACT = (
     "2. Do not wait on CI or a remote job: no `until ... sleep` loop, no `--watch`. Push, say what "
     "to watch and return. A wait over 5 minutes re-bills your whole context.\n"
     "3. One slice: when the check in your brief passes, stop. Commit what you changed and return "
-    "what is done, what remains and the next step with file:line."
+    "what is done, what remains and the next step with file:line.\n"
+    "4. Final report: 10 lines or fewer, short plain sentences. Say what is done, the commit and what "
+    "is still open. Leave out file lists, command logs and test output; the caller reads the diff. "
+    "This holds even when the brief asks for more."
 )
 # Reviews, planning, design and unknown-cause debugging stay on Opus under the routing rule.
 JUDGEMENT_TYPES = frozenset({"senior-code-reviewer", "debugger", "Plan", "Explore"})

@@ -36,7 +36,7 @@ RULE = (
     "summarising it; search a whole table family before calling data absent. A daily read with a "
     "ledger is the last stage of research, never 'shipping'. Never skip a check to save time. A "
     "pause between stages is not a check: approved work runs straight through, and the stage "
-    "report goes in the final message."
+    "report goes in the file or page, never a stage-by-stage list in chat."
 )
 
 

@@ -95,14 +95,17 @@ This rule is non-negotiable and applies to EVERY task regardless of phrasing. "J
 
 ### The mandatory framing pass (output artifact — required before fix-it / execution work)
 
-Before writing any code that fixes a bug, makes broken behavior work, or wires up a contract / schema / migration change, output a `<diagnosis>` block before the code, after any `<verification>` and `<cost-calculus>` blocks (the three never compete for first — order is verification, then cost-calculus, then diagnosis):
+Before writing any code that fixes a bug, makes broken behavior work, or wires up a contract / schema / migration change, output a `<diagnosis>` block before the code, after any `<verification>` block. The last line is the Lazy-Smart cost check:
 
     <diagnosis>
     Problem: <one sentence, no mention of the proposed fix>
     Root cause: <a specific component, contract, or upstream producer — not a restatement of the symptom>
     Proposed fix: <what you intend to change>
     At root or downstream? <root | downstream — if downstream, name the upstream thing being bypassed>
+    Cost if patched, across rounds: <estimate>  |  Cost if fixed at root, in one round: <estimate>
     </diagnosis>
+
+**One framing pass per task.** A task that needs a `<diagnosis>` block does not also need a plan preamble; a plan that gets Outside Voice does not also need a `<diagnosis>` per step.
 
 If **downstream** and the structural fix is in scope → take the structural fix and report it (ASK-FIRST item 4 in Decisiveness); a patch the user asked for by name still gets the root-cause framing first (see above). If it is out of scope → STOP. Reply: "this is a patch — root cause is X, structural fix is Y" and wait for explicit confirmation in a **separate user message**. You cannot confirm your own downstream framing in the same turn.
 
@@ -142,7 +145,7 @@ Genuine one-offs (a single bad row in prod from a one-time bug that's already be
 
 The "lazy paradox": if you were truly minimising effort you'd do it right the first time so you never had to redo it. Patching is MORE total work, not less. The fix is to front-load the cost calculation, not the code.
 
-### The cost-calculus reframe (run this BEFORE the framing pass)
+### The cost-calculus reframe (think it through; the output is the diagnosis cost line)
 
 Before any non-trivial task, answer in one line each:
 
@@ -176,19 +179,9 @@ If a project CLAUDE.md says "do X via Y" (e.g. "batch extraction runs via sub-ag
 
 A patch produces output (a fix script, a re-export, a new row count) and feels like progress. An architectural fix takes longer with no visible output until the end. The reward signal is misaligned. Trust the cost-calculus over the dopamine of visible output.
 
-### Mandatory output artifact — scoped to the patch-vs-structural fork (tightened 2026-06-10)
+### Mandatory output artifact (merged into `<diagnosis>` 2026-10-20)
 
-The `<cost-calculus>` block fires on any task with a genuine patch-vs-structural fork — fix-it / make-it-work / wire-it-up tasks, and ALWAYS when the `<diagnosis>` block would answer "downstream". It does NOT fire on tasks with no patch path (pure reads, reviews, prose, additive features with one obvious shape): a MUST-block emitted everywhere becomes noise that erodes the blocks that matter. When it fires, output before writing code:
-
-    <cost-calculus>
-    Patch path A: <one line>
-    Structural path B: <one line>
-    Total cost A across N rounds: <estimate>
-    Total cost B in 1 round: <estimate>
-    Pick: <A | B with reason>
-    </cost-calculus>
-
-Skipping the block on a task with a real patch-vs-structural fork = automatic Lazy-Smart violation. The block is the proof, not my self-report.
+The cost check is the last line of the `<diagnosis>` block (Root Cause above), not a block of its own. It fires on any task with a genuine patch-vs-structural fork, and ALWAYS when the diagnosis answers "downstream". It does NOT fire on tasks with no patch path (pure reads, reviews, prose, additive features with one obvious shape). Skipping the cost line on a task with a real fork = automatic Lazy-Smart violation.
 
 ## Verification (CRITICAL)
 
@@ -301,6 +294,7 @@ The chat is what you would say across a desk; the page or file is the report. Ne
 - **A code build from a complete brief runs on `sonnet`.** A brief that names the files, the change and the test check is mechanical under the rule above; keep `opus` only with an `Opus because: <what is still open>` line in the brief. One slice per agent, ending in a commit; point at `file:line`; the agent returns at push and never waits on CI. Name `worker` or a specialist type over `general-purpose`, which starts 14k to 18k tokens heavier. Backstop on the home box: the spawn guard (`subagent_contract.py`). Set 2026-10-08 (probation).
 - **On Fable the main thread reads, decides and briefs.** Browser driving, build or test loops, and any run past about 15 exec calls go to a Sonnet agent with the commands, the files and the pass/fail check.
 - Launch parallel agents in one message, split by non-overlapping files, and keep working while they run; merge and reconcile their results in the main thread. Take a sub-agent's findings as done. Single-fact lookups never get a sub-agent. A fan-out that costs money needs the cost and a yes first.
+- **Sub-agent reports are 10 lines or fewer**, in ASD-STE100: what is done, the commit, what is still open. No file lists, command logs or test output; the caller reads the diff. A brief never asks for more. Backstop: the sub-agent contract notice (`subagent_contract.py`). Keith 2026-10-20, after a 60-line slice report reached his screen. Set 2026-10-20 (probation).
 - Agent definitions in `.claude/agents/*.md` with a `model:` frontmatter keep their own setting; this rule covers the default/unspecified case.
 
 ## Plans use html-plan (CRITICAL)
