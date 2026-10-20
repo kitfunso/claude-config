@@ -72,7 +72,7 @@ RULE_CHECKS = {
     "Comments": ("comment_budget_guard.py",),
     "Reports are local HTML": ("deny:Artifact",),
 }
-PROBATION_FEEDS = {"Human Voice": r"long|table|bullets|banned:.+", "Do It Properly": r"sweeping"}
+PROBATION_FEEDS = {"Human Voice": r"long|long-sentence|table|bullets|banned:.+", "Do It Properly": r"sweeping"}
 RULE_LINE = re.compile(r"^(#+ |- \*\*)")
 PROBATION = re.compile(r"Set (\d{4}-\d{2}-\d{2}) \(probation\)")
 MANUAL_ONLY = re.compile(r"^disable-model-invocation:\s*true\b", re.M)

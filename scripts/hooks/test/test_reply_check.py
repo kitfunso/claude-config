@@ -109,6 +109,10 @@ class TestLength:
         assert "long" in flags(" ".join(["word"] * 221))
         assert "long" not in flags(" ".join(["word"] * 220))
 
+    def test_a_sentence_over_25_words_is_flagged(self) -> None:
+        assert "long-sentence" in flags(" ".join(["word"] * 26) + ".")
+        assert "long-sentence" not in flags(" ".join(["word"] * 25) + ". " + " ".join(["word"] * 25) + ".")
+
     def test_fenced_code_is_not_counted(self) -> None:
         fence = "```python\n" + "\n".join(f"x{i} = {i}" for i in range(30)) + "\n```"
         out = hook.measure(f"{lines(3)}\n{fence}\n{lines(2)}", WITH_TOOLS)

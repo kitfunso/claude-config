@@ -32,6 +32,7 @@ TRANSCRIPT_TAIL = 4 << 20
 LOG_TAIL = 64 << 10
 MAX_LINES = 8
 MAX_WORDS = 220
+MAX_SENTENCE_WORDS = 25
 BULLET_RUN = 6
 MIN_NUMBERS = 2
 EDIT_TOOLS = frozenset({"Edit", "Write", "NotebookEdit"})
@@ -41,6 +42,7 @@ TABLE_RULE = re.compile(r"^\s*\|?(?:\s*:?-{3,}:?\s*\|)+(?:\s*:?-{3,}:?\s*)?$")
 LIST_ITEM = re.compile(r"^\s*(?:[-*]|\d+[.)])\s+\S")
 LIST_MARKER = re.compile(r"^[ \t]*\d+[.)][ \t]+", re.M)
 WORD_TAIL = re.compile(r"\w*")
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 SWEEPING = re.compile(r"\b(?:tried everything|every table|all tables|all notebooks)\b", re.I)
 DEPTH = re.compile(r"\b(?:in detail|in[ -]depth|detailed|full report|walk me through|long[ -]form|go long)\b",
                    re.I)
@@ -65,6 +67,7 @@ NOT_A_QUANTITY = re.compile("|".join((
 NUMBER = re.compile(r"(?<![\w.:/#-])[-+~]?[$£€]?\d[\d,]*(?:\.\d+)?")
 
 FLAG_WORDS = {
+    "long-sentence": f"a sentence over {MAX_SENTENCE_WORDS} words (ASD-STE100)",
     "table": "a table",
     "bullets": f"a bullet wall ({BULLET_RUN}+ list lines in a row)",
     "sweeping": "a sweeping claim ('tried everything', 'every table') that needs the list of what was covered",
@@ -111,6 +114,15 @@ def longest_list_run(lines: list[str]) -> int:
     return best
 
 
+def count_words(text: str) -> int:
+    return sum(1 for token in text.split() if any(c.isalnum() for c in token))
+
+
+def longest_sentence(lines: list[str]) -> int:
+    """A line end also ends a sentence, so each list item counts on its own."""
+    return max((count_words(s) for line in lines for s in SENTENCE_END.split(line)), default=0)
+
+
 def banned(text: str) -> list[str]:
     """git_guard's list; a phrase cut mid-word ('unpack th') is completed to the word."""
     hits = {word.lower() for word in BANNED_WORDS.findall(text)}
@@ -128,11 +140,13 @@ def measure(reply: str, turn: Turn | None) -> dict:
     """Counts and flags for one reply; a None turn skips the checks that need the transcript."""
     lines = prose(reply)
     text = "\n".join(lines)
-    words = sum(1 for token in text.split() if any(c.isalnum() for c in token))
+    words = count_words(text)
     prompt = turn.prompt if turn else ""
     flags: list[str] = []
     if (len(lines) > MAX_LINES or words > MAX_WORDS) and not DEPTH.search(prompt):
         flags.append("long")
+    if longest_sentence(lines) > MAX_SENTENCE_WORDS:
+        flags.append("long-sentence")
     if has_table(lines):
         flags.append("table")
     if longest_list_run(lines) >= BULLET_RUN:
