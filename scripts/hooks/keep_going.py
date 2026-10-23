@@ -4,7 +4,8 @@
 When the last sentences of a reply ask for a go ("say go", "shall I", "want me to", "next is X",
 a bare "Go?") or wait for a schedule, the stop is blocked once and Claude carries on. It passes when
 that sentence or the next names an ASK-FIRST reason (deploy, push, delete, cost, an outside service,
-sign-off), waits on Keith's hands, or offers a choice between named options; and when his prompt
+sign-off), waits on Keith's hands or on a running job that wakes Claude when it ends (an agent, CI,
+a watcher), or offers a choice between named options; and when his prompt
 was a question, or a turn of a skill whose contract is to wait for him (all-done, grill-me).
 The second stop always passes (stop_hook_active), so a block cannot loop. Each block is logged to
 ~/.claude/state/keep_going.jsonl. Escape hatch: CLAUDE_KEEP_GOING=off. Always exits 0.
@@ -40,17 +41,22 @@ ASK = re.compile("|".join((
     r"(?:^|\s)(?:go|proceed|ok(?:ay)?|shall we)\?\W*$",
 )), re.I)
 ASK_FIRST = re.compile(
-    r"\b(?:deploy|promot|delet|overwrit|migrat|irreversib|destructiv|publi[sc]|credential|complian|approval|ruling)"
+    r"\b(?:(?:re)?deploy|promot|delet|overwrit|migrat|irreversib|destructiv|publi[sc]|credential|complian|approval|ruling)"
     r"|\b(?:push(?:ed|ing)?|force|schema|prod|production|live data|costs?(?! nothing)|paid|spend|money|billing|outside|external|"
-    r"third[- ]party|send|email|sign(?:ed)?[- ]?off|fork|taste|your call|password|secret|only you|yourself|"
-    r"needs? you to|new conversation|restart|sudo|log ?in|permission mode|submit|ship|upload|release)\b", re.I)
+    r"third[- ]party|send|sent|email|sign(?:ed)?[- ]?off|fork|taste|your call|password|secret|only you|yourself|"
+    r"needs? you to|new conversation|restart|sudo|log ?in|permission mode|submit(?:ted)?|ship(?:ped)?|"
+    r"upload(?:ed)?|release[sd]?)\b", re.I)
 HANDS = re.compile(
     r"\b(?:once|when|after) (?:it|that|this|you|the (?!next)\w+)\b[^.?!]{0,40}\b(?:done|run|ran|finished|finishes|"
     r"exits|lands|completes|pasted|switched|installed|on)\b|\bonce pasted\b"
     r"|\btell me (?:when )?(?:it's|it is|it has|you've|you have)\b"
     r"|\btell me (?:what|which|whether|how|the|once)\b|\bpaste (?:me|in|it)\b|\bsend me\b|\bplug\b|\bclick your\b"
     r"|\bwaiting on you\b|\bif\b[^.?!]*,\s*say so\b|\bask-first\b|\bsign[- ]?in\b|\bnext step is yours\b"
-    r"|\b(?:dollars?|pounds?)\b|[$£]\d", re.I)
+    r"|\byou (?:copy|paste|enter)\b|\ballow rules?\b|\b(?:dollars?|pounds?)\b|[$£]\d", re.I)
+JOB = re.compile(
+    r"\b(?:once|when|after|if|until|as) (?!the next\b)(?:(?!\bI\b)[^.?!]){0,40}?\b(?:(?:finish(?:es)?|passes|merges|"
+    r"pushes|publishes|lands?|arrives?)\b|reports?(?= back|,)|(?:is|are) (?:in|back|green)(?=[,.;]|\s+(?:and|I)\b|$))"
+    r"|\bstill (?:running|finishing)\b|\bwatcher\b|\bbackground (?:job|task|run)\b|\bwakes me\b", re.I)
 CHOICE = re.compile(
     r"\b(?:go )?(?:\d|[A-D])\b[\"”'`*]*\s+or\s+[\"“'`*]*(?:go )?(?:\d|[A-D]|both)\b|\bwhich (?:one|option)\b"
     r"|\b(?:should I|shall I|want me to)\b[^?]*,\s+or\s+[^?]*\?|\bshortlist\b|\byou meant\b"
@@ -75,7 +81,7 @@ def asking(reply: str) -> str:
         hit = ASK.search(sentence)
         near = " ".join(sentences[i:i + 2])
         wide = " ".join(sentences[max(i - 1, 0):i + 2])
-        if hit and not (ASK_FIRST.search(near) or HANDS.search(wide) or CHOICE.search(near)):
+        if hit and not (ASK_FIRST.search(near) or HANDS.search(wide) or JOB.search(wide) or CHOICE.search(near)):
             return hit.group(0).strip()
     return ""
 

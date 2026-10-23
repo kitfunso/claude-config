@@ -58,6 +58,14 @@ class TestAsking:
         ("The rows are fixed. The page shows them after the next scheduled run.", "next scheduled"),
         ("Tell me if you want the old folder kept.", "me if you want"),
         ("Tests pass.\nThen I'll write the amendment and the git commands.", "Then I'll"),
+        ("My pick is to merge both and skip the quiz. Then I'll start the SIEM export on top.", "Then I'll"),
+        ("I'll check the repo rules and how the rating code works today. Then I'll build it.", "Then I'll"),
+        ("With Chrome back, I'll pull the files. After that I'll start hunting for the second idea.", "After that I'll"),
+        ("Then I'll fix it when I'm done with the page.", "Then I'll"),
+        ("The draft is half written. After that I'll finish the write-up.", "After that I'll"),
+        ("I'd check the log after a week before calling it finished. Then I'll close the item.", "Then I'll"),
+        ("Then I'll fix it if the report shows a bug.", "Then I'll"),
+        ("Then I'll merge it if the fix is in the branch.", "Then I'll"),
     ])
     def test_a_reply_that_ends_on_an_ask_is_caught(self, reply: str, hit: str) -> None:
         assert hook.asking(reply) == hit
@@ -85,6 +93,20 @@ class TestAsking:
         "Done: 128 tests pass and the hook is wired.",
         "Paste this:\n```\nsay go\n```\nThat is the whole change.",
         "Should I fix it?\nThe fix is in.\nTests pass.",
+        "When the audit reports, I'll commit its page. Then I'll rebuild the report.",
+        "Once all 36 are in, I'll unblind the scores. Then I'll write the report.",
+        "When all 36 are back I'll work out the medians. Then I'll write the report.",
+        "Both snapshots stay masked until every score is in. After that I'll take the medians.",
+        "I'll merge #38 once its review is back and CI is green. Then I'll list the routes still on 501.",
+        "The Z0 test run is still finishing. After that, I'll rerun the slow test alone.",
+        "If the rerun passes, I'll merge #413. Then I'll run Lighthouse on the site.",
+        "Once both finish, I'll mark the lessons by hand. Then I'll fix whatever Codex finds.",
+        "Next, I'll review each slice's diff as it lands. Then I'll rerun the checks.",
+        "A background watcher is on that run. Then I'll update the global install.",
+        "You copy the token from Codemagic settings. After that, I'll check it against the API.",
+        "Add the allow rules `Write(C:/z0-runs/**)` with `/permissions`. Then I'll run the Codex probe.",
+        "Then I'll bring you the numbers. Nothing gets uploaded without your go.",
+        "Then I'll redeploy the site from master and run Lighthouse.",
     ])
     def test_a_plain_report_or_a_real_reason_to_stop_passes(self, reply: str) -> None:
         assert hook.asking(reply) == ""
