@@ -22,7 +22,8 @@ npm --prefix ~/boring-maths run seo:gsc-pull
 
 - OAuth token (`scripts/seo/.gsc-token.json`) expires ~7 days. On auth failure: `npm --prefix ~/boring-maths run seo:gsc-pull -- --reauth` + browser consent (sign in as the Google account that owns the property, `sc-domain:boring-math.com`; consent is clickable via Chrome automation when already signed in).
 - The pull prints the REAL totals ("Totals: N clicks / N impressions across N pages"). Use these, not the report summary.
-- Step complete when the printed Totals line is captured for the step-3 comparison.
+- The pull also prints the last 14 days and a `CLIFF:` line when a day drops below 25% of the prior 7-day median. A 28-day total hides a cliff (2026-10-16: the totals said -41%, the daily rows said the site was at ~10 impressions a day). On `CLIFF:`, first check whether every page fell the same day (site-level: Manual actions, Removals, URL inspection, the other properties as a control) before any lever hunt; page levers cannot move a site-level demotion.
+- Step complete when the printed Totals line and the 14-day block are captured for the step-3 comparison.
 
 ## 2. Analyze
 
