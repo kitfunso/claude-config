@@ -105,9 +105,9 @@ def main() -> None:
     src = [f for f in changed.splitlines() if f.endswith(".py") and not runner.is_test_file(f)]
     if src:
         raise SystemExit(f"base and slim differ in source files {src}; the replay needs identical source.")
-    failing = set(runner.read_json(a.profile_before)["failed"])
+    failing = set(runner.read_sandboxed(a.profile_before)["failed"])
     cover: dict = {}
-    for t, fs in runner.read_json(a.map)["tests"].items():
+    for t, fs in runner.read_sandboxed(a.map)["tests"].items():
         if t in failing:
             continue
         for f, ls in fs.items():
@@ -115,7 +115,7 @@ def main() -> None:
                 cover.setdefault((f, ln), []).append(t)
     ctx = {"base": base, "slim": slim, "python": a.python, "budget": a.budget, "cover": cover,
            "cut": {r["test"] for r in runner.read_json(a.plan)["cut"]},
-           "slim_ids": set(runner.collect_ids(a.python, slim)) - set(runner.read_json(a.profile_after)["failed"])}
+           "slim_ids": set(runner.collect_ids(a.python, slim)) - set(runner.read_sandboxed(a.profile_after)["failed"])}
     rows = []
     for sha, subject, files in fix_commits(base, a.n):
         row = {"sha": sha, "subject": subject, **replay_one(sha, files, ctx)}

@@ -160,9 +160,11 @@ def _sanity(root: Path, rel: str, tests: list[str], python: str) -> None:
                          "The tests are not running this worktree's code.")
 
 
-def _partial(out: Path) -> tuple[Path, dict]:
+def _partial(out: Path, inputs: list[str]) -> tuple[Path, dict]:
     """Results land in a JSON-lines file as they finish, so a crashed run resumes where it stopped."""
     partial = out.with_suffix(".partial.jsonl")
+    if partial.exists() and any(Path(p).stat().st_mtime > partial.stat().st_mtime for p in inputs):
+        raise SystemExit(f"{partial} is older than its inputs; delete it so this run starts fresh.")
     lines = partial.read_text(encoding="utf-8").splitlines() if partial.exists() else []
     return partial, {r["id"]: r for r in map(json.loads, lines)}
 
@@ -188,10 +190,10 @@ def _workers(base: Path, out: Path, n: int, prefix: str = "wt") -> list[Path]:
 def kill(a: argparse.Namespace) -> None:
     base = Path(a.repo).resolve()
     runner.require_scratch_worktree(base)
-    tests_map = runner.read_json(a.map)["tests"]
+    tests_map = runner.read_sandboxed(a.map)["tests"]
     cdoc = runner.read_json(a.candidates)
     cands = set(cdoc["candidates"])
-    dur = runner.read_json(a.profile)["tests"]
+    dur = runner.read_sandboxed(a.profile)["tests"]
     skip = set(cdoc["failing_at_baseline"])  # a test red before any bug would "catch" every bug
     for path in a.skip or ():  # a plan.json skips its cut tests; a text file lists node ids
         skip |= ({r["test"] for r in runner.read_json(path)["cut"]} if path.endswith(".json")
@@ -222,7 +224,7 @@ def kill(a: argparse.Namespace) -> None:
     _sanity(base, busiest, sorted({t for (f, _), ts in cover.items() if f == busiest for t in ts if t in cands}),
             a.python)
     out = Path(a.out).resolve()
-    partial, done = _partial(out)
+    partial, done = _partial(out, [a.map, a.profile, a.candidates])
     todo = [m for m in mutants if m.id not in done]
     roots = _workers(base, out.parent, a.workers)
     ctx = {"cover": cover, "cands": cands, "dur": dur, "python": a.python, "budget": a.budget}
@@ -245,8 +247,8 @@ def kill(a: argparse.Namespace) -> None:
         wt.parent.rmdir()
     rows = [done[m.id] for m in mutants]
     shas = {f: hashlib.sha256((base / f).read_bytes()).hexdigest() for f in files}
-    runner.write_json(out, {"mutants": rows, "total_mutants": total, "sampled": len(mutants) < total,
-                            "file_sha256": shas})
+    runner.write_json(out, {"sandbox": runner.SANDBOX, "mutants": rows, "total_mutants": total,
+                            "sampled": len(mutants) < total, "file_sha256": shas})
     by = {s: sum(r["status"] == s for r in rows) for s in ("candidate-only", "shared", "no-candidate-catch")}
     print(f"wrote {out}: {by}")
 
@@ -257,9 +259,9 @@ def verify(a: argparse.Namespace) -> None:
     ids = set(runner.collect_ids(a.python, slim))
     jobs = []
     for kpath, ppath in zip(a.kills, a.plan, strict=True):
-        jobs += _verify_jobs(slim, runner.read_json(kpath), runner.read_json(ppath), ids)
+        jobs += _verify_jobs(slim, runner.read_sandboxed(kpath), runner.read_json(ppath), ids)
     out = Path(a.out).resolve()
-    partial, done = _partial(out)
+    partial, done = _partial(out, [*a.kills, *a.plan])
     jobs = list({m.id: (m, sel) for m, sel in jobs}.values())  # a bug both passes caught is one bug
     todo = [(m, sel) for m, sel in jobs if m.id not in done]
     roots = _workers(slim, out.parent, a.workers, prefix="vw")

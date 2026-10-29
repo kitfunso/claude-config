@@ -6,6 +6,9 @@ import os
 import coverage
 import pytest
 
+import sandbox
+
+sandbox.lower_self()  # -p plugins load before conftest and test modules, so no test code runs above Low
 _LOG = os.environ.get("PRUNE_LOG")
 
 

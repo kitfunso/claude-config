@@ -3,16 +3,19 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import subprocess
-import tempfile
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import sandbox
+
 SCRIPTS = Path(__file__).resolve().parent
 OMIT = "*test_*.py,*_test.py,*conftest.py,*/tests/*,*/site-packages/*,.venv/*"
+SANDBOX = "low-integrity"  # profile, map and kills carry it; a test red only inside it must not count as a catch
 
 
 @dataclass(frozen=True)
@@ -29,8 +32,22 @@ class Run:
         return {t for t, o in self.outcomes.items() if o == "failed"}
 
 
+def require_collected(run: Run, what: str) -> None:
+    """A collection error stops pytest before any test runs, so a profile or map built on it is empty."""
+    if run.collect_errors:
+        raise SystemExit(f"{what}: pytest could not collect {', '.join(run.collect_errors[:5])}; "
+                         "run pytest by hand in the worktree to see the import error, fix the setup, rerun.")
+
+
 def read_json(path: str | Path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def read_sandboxed(path: str | Path) -> dict:
+    doc = read_json(path)
+    if doc.get("sandbox") != SANDBOX:
+        raise SystemExit(f"{path} was made outside the {SANDBOX} sandbox; rerun profile and map before this stage.")
+    return doc
 
 
 def write_json(path: str | Path, doc: dict) -> None:
@@ -59,17 +76,17 @@ def read_log(path: Path) -> tuple[dict, dict, tuple]:
 
 def run_pytest(python: str, repo: Path, args: list[str], *, timeout: float | None = None,
                stop_first: bool = False, coverage_file: Path | None = None) -> Run:
-    """Run pytest in repo with the plugin loaded; node ids go through an @argfile."""
-    with tempfile.TemporaryDirectory(prefix="prune-") as tmp:
+    """Run pytest in repo with the plugin loaded, at Low integrity; node ids go through an @argfile."""
+    sandbox.prove(python)
+    with sandbox.low_dir("run-") as tmp:
         log = Path(tmp) / "log.jsonl"
         argfile = Path(tmp) / "args.txt"
         argfile.write_text("\n".join(args), encoding="utf-8")
-        env = {**_env(), "PRUNE_LOG": str(log),
-               "PYTHONPATH": os.pathsep.join(filter(None, [str(SCRIPTS), os.environ.get("PYTHONPATH")]))}
+        cov = Path(tmp) / "coverage"  # the Low run cannot write the caller's folder; the data moves after
+        env = {**_env(tmp), "PRUNE_LOG": str(log)}
         head = [python, "-m"]
         if coverage_file:
-            head += ["coverage", "run", f"--data-file={coverage_file}", "--source=.",
-                     f"--omit={OMIT}", "-m"]
+            head += ["coverage", "run", f"--data-file={cov}", "--source=.", f"--omit={OMIT}", "-m"]
         cmd = head + ["pytest", "-q", "-p", "no:cacheprovider", "-p", "prune_plugin",
                       *(["-x"] if stop_first else []), *([f"@{argfile}"] if args else [])]
         start = time.monotonic()
@@ -81,6 +98,8 @@ def run_pytest(python: str, repo: Path, args: list[str], *, timeout: float | Non
             _kill_tree(proc)
             rc, timed_out = -1, True
         outcomes, durations, errors = read_log(log)
+        if coverage_file and cov.exists():
+            shutil.move(cov, coverage_file)
         return Run(rc, time.monotonic() - start, timed_out, outcomes, durations, errors)
 
 
@@ -109,15 +128,20 @@ def _kill_tree(proc: subprocess.Popen) -> None:
     proc.wait()
 
 
-def _env() -> dict:
-    env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
+def _env(tmp: str) -> dict:
+    env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "TEMP": tmp, "TMP": tmp, "TMPDIR": tmp,
+           "PYTHONPATH": os.pathsep.join(filter(None, [str(SCRIPTS), os.environ.get("PYTHONPATH")]))}
     env.pop("VIRTUAL_ENV", None)
     return env
 
 
 def collect_ids(python: str, repo: Path, args: list[str] = ()) -> list[str]:
-    out = subprocess.run([python, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", *args],
-                         cwd=repo, env=_env(), capture_output=True, text=True, encoding="utf-8", errors="replace")
+    """Collect in the same sandbox as the runs, so an import that fails only at Low fails here too."""
+    sandbox.prove(python)
+    with sandbox.low_dir("collect-") as tmp:
+        out = subprocess.run([python, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider",
+                              "-p", "prune_plugin", *args], cwd=repo, env=_env(tmp), capture_output=True,
+                             text=True, encoding="utf-8", errors="replace")
     return [line.strip() for line in out.stdout.splitlines() if "::" in line]
 
 

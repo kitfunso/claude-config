@@ -31,9 +31,11 @@ def profile(a: argparse.Namespace) -> None:
     ids = runner.collect_ids(a.python, repo, a.pytest_args)
     collect_s = time.monotonic() - start
     runs = [runner.run_pytest(a.python, repo, a.pytest_args) for _ in range(a.runs)]
+    runner.require_collected(runs[0], "profile")
     walls = [round(r.seconds, 1) for r in runs]
     first = runs[0]
-    runner.write_json(a.out, {"args": a.pytest_args, "collect_s": round(collect_s, 1), "n_collected": len(ids),
+    runner.write_json(a.out, {"sandbox": runner.SANDBOX, "args": a.pytest_args, "collect_s": round(collect_s, 1),
+                              "n_collected": len(ids),
                   "walls": walls, "median_wall": statistics.median(walls), "tests": first.durations,
                   "outcomes": first.outcomes, "failed": sorted(set().union(*(r.failed for r in runs)))})
     print(f"{len(ids)} tests, collect {collect_s:.0f}s, walls {walls}, failed {len(first.failed)}")
@@ -46,6 +48,7 @@ def map_(a: argparse.Namespace) -> None:
     data_file = Path(a.out).resolve().with_suffix(".coverage")
     data_file.unlink(missing_ok=True)
     run = runner.run_pytest(a.python, Path(repo), a.pytest_args, coverage_file=data_file)
+    runner.require_collected(run, "map")
     data = coverage.CoverageData(basename=str(data_file))
     data.read()
     tests: dict = {t: {} for t in run.outcomes}
@@ -58,7 +61,8 @@ def map_(a: argparse.Namespace) -> None:
                 if c:
                     tests.setdefault(c, {}).setdefault(rel, set()).add(line)
     tests = {t: {f: sorted(ls) for f, ls in fs.items()} for t, fs in tests.items()}
-    runner.write_json(a.out, {"tests": tests, "failed": sorted(run.failed), "seconds": round(run.seconds, 1)})
+    runner.write_json(a.out, {"sandbox": runner.SANDBOX, "tests": tests, "failed": sorted(run.failed),
+                              "seconds": round(run.seconds, 1)})
     print(f"mapped {len(tests)} tests in {run.seconds:.0f}s, {len(run.failed)} failed")
 
 
