@@ -14,7 +14,7 @@ The policy is prompts + memories — Claude's weights are frozen. This is experi
 All phases through Tier 8 are shipped and tested (real-DB suite under `tests/`).
 Full tier history, ship dates, and design detail live in `RL-PLAN.md` (v0.7) and
 `README.md` — this file holds only operating instructions. Running today: episode
-lifecycle + host locks (`episodes.db`), per-stage manifests, 7 verdict critics, 8
+lifecycle + host locks (`episodes.db`), per-stage manifests, 8 verdict critics, 8
 per-type reward rubrics, secret scrubbing on every DB write, per-episode +
 cross-episode learning, the batch ritual, critic-trust attribution
 (observation-only), and every command in the CLI table at the bottom.
@@ -97,6 +97,10 @@ PAST a concurrent merge. Full incidents: AUDIT-RULES.md "episode-start worktree
 isolation".
 
 **Probation-memory exposure (R9, 2026-06-09).** Right after `lock-acquire`, run `python scripts/devrl.py memory-list --status probation`. Carry the relevant memories into this episode's stage briefs tagged `[PROBATION]` — they are unconfirmed hints, not settled law — and record each one's id on the steps where it was in scope (`step-record ... --memory-ref <id>`). This is what lets a useful memory earn its 3 shipped-episode confirmations and a useless one earn its deprecation; a probation memory kept out of context can never do either.
+
+**Lessons from hippo (2026-10-09, no human step).** At the start of every stage, run `python scripts/devrl.py lesson-pull $EID <stage> --cwd <project path>` and paste the printed block into that stage's brief. The block holds warnings only (rows saved as errors, and feedback lessons). They are hints, not settled law, and an empty block is normal. Paste the same block into the brief of every critic that gets a briefing wrapper, with this line: "If a finding repeats a mistake one of these lessons warns about, end that finding's `message` with that one lesson id in square brackets, such as `[mem_ab12cd34ef56]`. One id per finding: a finding that names two lessons counts against neither." Keep the bracketed id in the `--must-fix` text you record: a verdict of bad needs it there. Exit 2 means hippo did not answer: carry on without the block and record `episode-friction $EID --note "lesson-pull failed at <stage>"`. `step-record` prints a reminder on stderr when its stage had no pull. `episode-finalize` judges every pulled lesson and sends the bad verdicts to hippo by itself once the gate is open: 10 judged episodes, and no more than 10% of pulled lessons blamed over the last 20. Never send a verdict by hand and never ask Keith to review them: `loop-health` carries the alarm in its `lessons` light. The file `lessons/SEND_DISABLED` is the kill switch, and `lesson-send --undo` offsets the marks already sent. `lesson-pull` also prints this project's repeated mistakes and, at `discover` and `plan`, its trial rules. Keep those lines in the brief.
+
+**Lessons at the failure (2026-11-04).** A critic fail saves its lesson at once. Pass the lesson that `critic-check` prints: `step-record ... --critic-status fail --lesson "Before X, check Y"`. If the finding applies to this task only, pass `--no-lesson`. `step-record` exits 2 on a fail with neither. The command logs every lesson. A near copy, a second lesson in the stage, or a lesson over 25 in a week stays out of hippo. One new lesson in 5 stays out on purpose as the control for `repeat-score`, so never send a lesson to hippo by hand.
 
 ### 1.5 Codex availability probe (recommended)
 
@@ -217,6 +221,9 @@ python scripts/devrl.py step-record $EID discover --skill /dev-framework --criti
 A deterministic audit pass between discover and the first plan invocation: greps are
 free; the same drifts cost a critic round each when found later. Run the applicable
 rules in ONE batch of parallel Grep calls before invoking `/dev-framework plan`.
+Run each trial rule that `lesson-pull` printed in the same batch, and record it with
+`audit-record $EID --rule SLUG` or `--caught SLUG`. The weekly job adds and retires
+trial rules, and it retires a rule on those records. They are not numbered audit rules.
 Each rule: TRIGGER → action. Full detail + incidents: `AUDIT-RULES.md` (read a rule's
 section when it fires or the plan matches its shape).
 
@@ -331,6 +338,15 @@ section when it fires or the plan matches its shape).
     marked "already guarded" says what the guard does on the bad input, not that one
     exists. (hippo 1.44.0 cycle: a "27 sites" count was 30; a hand-copied census lost
     four sites; `cli.ts:8197` sat in the safe bucket and was not safe.) → AUDIT-RULES.md #23
+24. **Test-row claim against its forcing mechanism.** TRIGGER: the plan adds a test
+    row whose title, or the doc line that cites it, claims an overlap ("while X still
+    runs"), an order ("before", "after") or a destination ("saved into A"). For an
+    overlap or an order the plan names the hold point that forces it (a fault knob, a
+    held lock, a marker file) and one assertion that the held party is still alive
+    when the other acts. For a destination the plan gives every wrong destination its
+    own store and a zero-count assertion on each. A sleep or a launch order is not a
+    hold point. (hippo S6: the plan passed its critic at 94, then codex failed two
+    review rounds on rows that proved less than their titles said.) → AUDIT-RULES.md #24
 
 Record the audit as a step:
 ```bash
@@ -344,7 +360,7 @@ python scripts/devrl.py audit-record $EID \
   --caught <slug>[:what-it-found]         # ran and found something (repeatable)
 ```
 A rule that runs every episode and never once catches anything costs tokens forever and scores highest on firing count alone, so `--rule` vs `--caught` is the whole measurement. Passing the same slug to both exits 2. Only the FIRST colon splits, so a note may contain `file.ts:42`.
-Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`, 20=`researched-dataset-verify`, 21=`per-value-state-matrix`, 22=`cross-process-race-drive`, 23=`census-regen-command`. `policy-compact-report` proposes two kinds of retirement, both propose-only, and absence alone never demotes: `demotion_candidates` never fire at all, `never_caught_candidates` fire but have never found anything across at least `--min-scored` scored firings. Firings recorded before migration 0017 carry no verdict and count as `unscored`, never as clean, so they can never retire a rule.
+Stable slugs (never renumbered; rule № → slug): 1=`todos-staleness`, 2=`parallel-allow-list`, 3=`version-bump-targets`, 4=`roadmap-evals-freshness`, 5=`public-api-callers`, 6=`functional-duplicate`, 7=`temporal-as-of`, 8=`sibling-clone`, 9=`cross-cap-consistency`, 10=`reserved-word-column`, 11=`bidirectional-guard`, 12=`fail-soft-post-commit`, 13=`bounded-neighbourhood`, 14=`fk-trigger-empirical`, 15=`dual-provenance-matrix`, 16=`already-shipped-origin`, 17=`per-site-plan-greps`, 18=`search-first-external`, 19=`dataset-invariant-audit`, 20=`researched-dataset-verify`, 21=`per-value-state-matrix`, 22=`cross-process-race-drive`, 23=`census-regen-command`, 24=`test-row-claim-mechanism`. `policy-compact-report` proposes two kinds of retirement, both propose-only, and absence alone never demotes: `demotion_candidates` never fire at all, `never_caught_candidates` fire but have never found anything across at least `--min-scored` scored firings. Firings recorded before migration 0017 carry no verdict and count as `unscored`, never as clean, so they can never retire a rule.
 
 If the audit surfaces a reproduce-check WIN, jump to finalize (skip plan/execute/verify/review/ship). The win IS the deliverable.
 
@@ -358,7 +374,7 @@ Iterate the `stages` list from `stage-plan.json` (NOT a hardcoded 9). For each s
    python scripts/validate_manifest.py manifest trajectories/$EID/<stage>.manifest.json
    ```
    Validation failure → record the step with `--critic-status error` and **escalate to the human**.
-3. If the stage has critic(s) — `critic_registry.STAGE_CRITICS` maps each gated stage to its critics (`plan` → `plan-eng-critic` + `plan-design-critic`, `execute` → `code-review-critic`, `review` → `independent-review-critic` + `codex-review-critic`, `ship` → `ship-readiness-critic`, `deploy` → `canary-monitor`). These are the exact names `critic-check` accepts — pass them verbatim (every critic carries the `-critic` suffix except `canary-monitor`). For each critic of this stage:
+3. If the stage has critic(s) — `critic_registry.STAGE_CRITICS` maps each gated stage to its critics (`plan` → `plan-eng-critic` + `plan-design-critic`, `execute` → `code-review-critic`, `verify` → `verify-critic` (see the `verify` bullet in §4a), `review` → `independent-review-critic` + `codex-review-critic`, `ship` → `ship-readiness-critic`, `deploy` → `canary-monitor`). These are the exact names `critic-check` accepts — pass them verbatim (every critic carries the `-critic` suffix except `canary-monitor`). For each critic of this stage:
    - Launch a `senior-code-reviewer` sub-agent. Brief it with the full contents of that critic's briefing (`prompts/critic-<role>.md`) plus the milestone goal and the stage's artifacts from the manifest. Pass the briefing's findings shape through verbatim — `{"severity", "message", "location"}` per finding, extra keys forbidden — and never restate the output contract in your own words: a brief that asked for `{severity, section, issue, fix}` made `critic-check` reject a real plan-eng verdict and cost a round (2026-09-02, boring-maths `01M1H905JWGMPA1GGC9PR24JBB`). (`plan-design-critic` runs only for UI projects.) **Exception: `independent-review-critic` gets NO critic-briefing wrapper** — one Sonnet coordinator runs the `/code-review` plugin protocol and the orchestrator grades its findings into the critic contract (see the `review` bullet in §4a); the zero-tool-calls check below applies to that coordinator too.
    - **If the plan artifact is an existing repo doc** (e.g. `docs/.../plans/<date>-<name>.md`) rather than an in-episode draft, brief the critic explicitly that any `Status: Draft` or `not yet reviewed` marker means the doc has NOT been engineering-reviewed yet; fresh-eyes scrutiny is the point. A pre-existing plan author's reasoning is not pre-vetted, and the orchestrator should not defer to its existing prose. (Incident 2026-05-23, resona Phase A: fresh-eyes briefing caught a cross-org schema leak in a 5-day-old draft.)
    - **For the `plan` stage specifically: pre-stage brainstorm concerns must be carried forward into the revised plan.** When entering `plan`, re-read the brainstorm step's `summary` field (via `episode-steps`). Each concern surfaced there must be either explicitly addressed in the revised plan artifact OR explicitly noted as out-of-scope in the plan manifest. Don't let brainstorm-stage framing dissolve before the plan-eng-critic runs — the critic only judges what's IN the revised plan, not what was flagged during brainstorm. (Incident 2026-05-23, resona Phase B: brainstorm-flagged rate-limiting never reached the revised plan; the gap surfaced at review and cost a retry.)
@@ -368,8 +384,8 @@ Iterate the `stages` list from `stage-plan.json` (NOT a hardcoded 9). For each s
      python scripts/devrl.py critic-check <critic-name> <temp-file> --tool-uses <N>
      ```
      `<N>` is the sub-agent's tool-call count as the harness reports it. Without the flag `critic-check` exits 2 with `missing_tool_uses` (re-run it with the count); on `0` it exits 2 with `zero_tool_uses` (discard the verdict and relaunch, per the bullet above). Neither is the parse-error exit 2 below.
-   - **Exit 0 (pass)** → `step-record ... --critic <critic-name> --critic-status pass --critic-score <n>`. **A pass is spot-checked like a fail:** if the brief singled out a question and the pass carries no finding on it, read the source for that question yourself before recording the pass. The zero-tool-call check catches a critic that read nothing; this catches one that read everything and missed what it was sent for (hippo `01M2ZSMFG8JXSM7PH10EVZNZBW`: pass 95 on 24 tool uses, then four plugin lanes found a verified HIGH on the brief's own focus item 3).
-   - **Exit 1 (fail)** → `step-record ... --critic <critic-name> --critic-status fail --critic-score <n> --must-fix "..."`. Re-run the stage with the must-fix fed back, up to the per-stage cap (plan 3, execute 2, review 1, ship 1; `--retry-count <n+1> --retry-strategy revise_with_feedback`). Cap hit → **escalate to the human**. **Root-cause pass before the final retry (added
+   - **Exit 0 (pass)** → `step-record ... --critic <critic-name> --critic-status pass --critic-score <n>`. At `verify` and `review` also pass `--repo <episode worktree> --head <sha>`, where `<sha>` is `git -C <worktree> rev-parse HEAD` captured when you launched the critic: the CLI pins the verdict to that commit's patch (`git patch-id --verbatim`, so whitespace counts), refuses a tree with uncommitted or untracked files, and exits 2 without `--repo` and `--head`. Only a stage's own critics count toward its pin (`verify-critic` at `verify`, the two review critics at `review`); any other critic recorded there needs no `--repo` and is advice the gate ignores. Leave `--base` off unless the episode is stacked or ships straight to the default branch; every pin in an episode shares its first pin's base, so a different `--base` later is refused, and `verdict-check` reuses that base. A fix after a pass makes that pass stale, and a critic that failed at a stage must itself pass the patch being shipped; `verdict-check` (CI gate below) finds both. **A pass is spot-checked like a fail:** if the brief singled out a question and the pass carries no finding on it, read the source for that question yourself before recording the pass. The zero-tool-call check catches a critic that read nothing; this catches one that read everything and missed what it was sent for (hippo `01M2ZSMFG8JXSM7PH10EVZNZBW`: pass 95 on 24 tool uses, then four plugin lanes found a verified HIGH on the brief's own focus item 3).
+   - **Exit 1 (fail)** → `step-record ... --critic <critic-name> --critic-status fail --critic-score <n> --must-fix "..." --lesson "<the lesson critic-check printed>"` (or `--no-lesson` when the finding applies to this task only). Re-run the stage with the must-fix fed back, up to the per-stage cap (plan 3, execute 2, verify 2, review 1, ship 1; `--retry-count <n+1> --retry-strategy revise_with_feedback`). Cap hit → **escalate to the human**. **Root-cause pass before the final retry (added
 2026-07-18):** when a stage's critic has failed twice consecutively AND the must-fix
 describes a DEFECT (failing test, wrong behavior, crash) rather than a plan/scope gap,
 run `/investigate` on the defect BEFORE the last permitted retry — the final attempt
@@ -397,6 +413,24 @@ investigation's one-line cause in the retry step's summary. **Cap-extension carv
    (0 clean, 1 conflicts). Never carry a plan-stage mergeability note forward (hippo
    `01M31TT9V02KG7STNABGYHEAA2`).
 
+   **Verdict check, right before every merge and after any rebase:**
+   `devrl.py verdict-check $EID --repo <worktree>`. Exit 0: every pinned stage has a
+   standing pass on this exact patch, and it prints the merge line every merge uses:
+   `gh pr merge <PR> --match-head-commit <head_sha>`, so GitHub refuses the merge if
+   anything was pushed after the check. Exit 1: a stage has no standing pass on this patch,
+   so re-run that stage's critic at this head and record its pass (the output prints the
+   lines), then check again. A fix after review usually means one more `verify-critic` run
+   and one review pass; codex may review just the fix with its own `--base <prior sha>`,
+   but record that pass without `--base`, because the pin always covers the whole branch.
+   A reworded or cleanly rebased commit keeps its patch id, but its head changed, so check
+   again. `episode-finalize --status shipped` and `batch-deploy` exit 2 unless the last
+   check matched, no verify or review verdict came after it, and it judged the head that
+   ships (the PR head read live through `gh`, or `merge_commit` for a no-PR ship, which must
+   be on record before finalize). `batch-deploy --decision shipped` also needs every PR
+   merged. With no pin at all, a stage whose latest verdict failed still blocks. A rebase
+   that moves context lines (CHANGELOG, version bumps) changes the patch id and costs a
+   critic re-run; that is the gate working.
+
    **Stacked PRs on a squash-merge repo (2026-09-02, boring-maths #25 → #26 → #27).**
    Squashing the base PR rewrites the commits the next PR still carries, so GitHub
    reports that PR CONFLICTING the moment it is retargeted. For each next PR, BEFORE
@@ -414,15 +448,23 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 - **`execute` stage — run `/self-review` as the tail step before manifest emit.** Same-session pass over the diff just produced. Catches missed requirements, regressions, and forgotten edge cases that `code-review-critic` would otherwise spend a sub-agent finding. Record the summary in the manifest's `self_review_summary` field — the schema enforces this at `stage: execute, status: completed`, so the validator will reject the manifest without it. If `/self-review` surfaces a must-fix, address it in-stage before emitting the manifest — do not advance. The self-review adds two checks of its own. **Before a second patch to the same function in one episode**, write the one line naming what the two attempts had in common; if that line names the approach, replace the mechanism instead of widening it (hippo `01M312K37C0262B66J70SM6PCQ`: line-based reasoning about block structure failed twice). **When a change widens what a guard, validator or check watches**, re-read every message it can emit and ask whether each is still true of the new set: a diagnostic that names a cause is an assertion (hippo `01M31DR9BAD95WQ5DJTX03Z1FC`: once the store guard watched every ancestor `.hippo`, "A test wrote a store without isolating it" could blame a test for a write made by ordinary session activity).
 
-- **`verify` stage: drive the affected flow end-to-end as the tail step before manifest emit.**
-  Re-running the test suite is necessary but not sufficient: exercise the AFFECTED
-  FLOW in the real app/CLI and observe behavior — the class of runtime
-  regression that green tests and `gh pr checks` both miss (the CI-red-merge incident's
-  root cause). For UI projects use `/qa-only` (browser QA, report-only) as the driver;
-  for CLIs/APIs run the real commands/requests against the built artifact. Record what was driven + observed in the verify manifest's
-  `verify_skill_summary` field (optional schema field today; may be promoted to required
-  once the workflow shape stabilises). A behavioral mismatch found here is fixed in-stage
-  before the manifest emits — do not advance. **An absence assertion needs one mutation:**
+- **`verify` stage: an agent that wrote none of the code proves it on the real artifact (`verify-critic`).**
+  The orchestrator runs the test suite, commits, and emits the manifest; it no longer
+  drives the flow itself, because it planned the change and reviewed every executor diff.
+  Green tests and `gh pr checks` both miss runtime regressions (the CI-red-merge incident's
+  root cause). Launch `verify-critic` with `prompts/critic-verify.md`, the acceptance
+  criteria, the worktree path, the base ref and `EVIDENCE_DIR=~/.claude/dev-framework/trajectories/$EID/verify/`
+  (absolute and outside the worktree: an untracked file in the worktree makes `step-record --repo` refuse the pin).
+  It runs the acceptance check on the base (a detached temp worktree) and on the head:
+  fail-then-pass for a behaviour change, identical output for a refactor. Then it drives
+  the changed flow as a user would, `/qa-only` for UI. When the repo has a verification
+  skill (`<repo>/.claude/skills/verify-*/` or `~/.claude/skills/verify-<repo>/`, such as
+  `verify-hippo`), name it in the brief: the critic follows its recipe, and that run is a
+  smoke test with literal expected output, so it runs on `model: "sonnet"`. With no such
+  skill the critic designs the drive itself, so it runs on `model: "opus"`. Record the pass with
+  `--repo`, `--head <the sha you briefed it on>` and `--artifact verify_evidence=<EVIDENCE_DIR>/evidence.md`, and copy what was
+  driven into the manifest's `verify_skill_summary`. A fail goes back to an executor
+  in-stage, then a fresh `verify-critic` run. **An absence assertion needs one mutation:**
   when a test's whole value is "this pattern is absent from the tree", verify is not done
   until one deliberate violation has been shown to turn it red (hippo
   `01M312K37C0262B66J70SM6PCQ`: the shape arm of `tests/rollback-guard.test.ts`).
@@ -431,9 +473,9 @@ Three Keith-validated release-chain skills are wired into the stage loop. They a
 
 - **`ship` stage — run `/ship-check` as the first step.** Pre-PR sanity pass: what shipped, is it worth shipping, did we do enough QA? Save the output to the manifest's `ship_check_summary` field — the schema enforces this at `stage: ship, status: completed`, so the validator will reject the manifest without it. Pass the summary to `ship-readiness-critic` as input. A blocker from `/ship-check` short-circuits the stage — escalate to the human rather than asking the critic to rubber-stamp it.
 
-- **`ship` stage: Opus final-review pass for the hardest changes (Keith directive, 2026-08-23; moved from Fable to Opus 2026-09-26 per the 2026-09-23 routing rule, Fable only on explicit ask).** TRIGGER (any): a schema migration; security- or tenant-isolation-touched code; a change to a core write-path / invariant primitive (the `upsertEntryRow` class); or a diff over ~500 changed lines. When it fires, after `/ship-check` but BEFORE `ship-readiness-critic`: spawn exactly ONE Agent sub-agent with `model: "opus"`, briefed with the full diff, the plan artifact, and all prior critic + codex verdicts. Its job is a fresh adversarial "would you ship this?" pass: surface what every earlier gate missed, not re-run their checklists. Real defects it finds are must-fix in-stage before `ship-readiness-critic` runs; append its one-line verdict to the ship step's `--summary`. Re-read the cited lines before applying a suggested fix, and record per finding whether the fix was taken, changed or passed over, with the reason. One pass per episode, at this point only, never a fan-out. Non-triggering episodes skip it silently: the stage critics and codex already cover routine diffs.
+- **`ship` stage: Opus final-review pass for the hardest changes (Keith directive, 2026-08-23; moved from Fable to Opus 2026-09-26 per the 2026-09-23 routing rule, Fable only on explicit ask).** TRIGGER (any): a schema migration; security- or tenant-isolation-touched code; a change to a core write-path / invariant primitive (the `upsertEntryRow` class); or a diff over ~500 changed lines. When it fires, after `/ship-check` but BEFORE `ship-readiness-critic`: spawn exactly ONE Agent sub-agent with `model: "opus"`, briefed with the full diff, the plan artifact, and all prior critic + codex verdicts. Its job is a blast-radius pass, not an essay and not a re-run of earlier checklists. It names the one fact the change is safe because of, then takes that fact as far down this ladder as is cheap and says where it stopped: (1) asserted, (2) pointed at `file:line`, (3) walked the failure step by step, (4) ran a script or test that calls the real code and fails loud if the fact is false, (5) reproduced it in the running app. It then lists what grep cannot show (consumers three hops out, wire formats, DB columns, flags, library internals at the pinned version) as risks with `file:line`, odds and cost, separate from what it checked and cleared. A fact that stops above step 4 is written `unproven` and named at the ship gate. Real defects it finds are must-fix in-stage before `ship-readiness-critic` runs; append its one-line verdict and the safety fact's ladder step to the ship step's `--summary`, and the proof script's path as `--artifact safety_proof=<path>`. Re-read the cited lines before applying a suggested fix, and record per finding whether the fix was taken, changed or passed over, with the reason. One pass per episode, at this point only, never a fan-out. Non-triggering episodes skip it silently: the stage critics and codex already cover routine diffs.
 
-- **`ship` stage — record deploy metadata right after the ship step is recorded.** `python ~/.claude/dev-framework/scripts/devrl.py episode-deploy-record $EID --pr-url <PR-URL>` (the ship manifest schema now REQUIRES a `pr_url` artifact at `status: completed`; a sanctioned no-PR ship — direct-commit / quant pipelines — records the literal `none`). It attaches to the latest `ship`/`deploy` step and never creates one, so it exits 2 until `step-record $EID ship ...` has run. The draft PR opens back at `review`, but its URL is recorded here, on its own line after the ship `step-record` (failure cluster `record-ship-step`: calling it first aborted a chained command). At the `deploy` stage after merge, re-run with `--merge-commit <SHA>`. This is the producer feeding `episode-deploy-meta`, the `devrl-post-deploy` cron, and every outcome-weighted learning leg — an episode that skips it can never resolve a post-deploy outcome (the 0/95 outcome-starvation root cause, fixed 2026-06-09, PLAN-continuous-loop Phase A).
+- **`ship` stage — record deploy metadata on the ship step.** `step-record $EID ship ... --critic-status pass --pr-url <PR-URL>` (the ship manifest schema now REQUIRES a `pr_url` artifact at `status: completed`; a sanctioned no-PR ship — direct-commit / quant pipelines — records the literal `none`). A ship pass exits 2 with no `--pr-url` and no PR on record, and it writes nothing. The draft PR opens back at `review`, so its URL is ready here. To correct a PR after the step, run `python ~/.claude/dev-framework/scripts/devrl.py episode-deploy-record $EID --pr-url <PR-URL>`; it attaches to the latest `ship`/`deploy` step and never creates one. At the `deploy` stage after merge, run it with `--merge-commit <SHA>`. This is the producer feeding `episode-deploy-meta`, the `devrl-post-deploy` cron, and every outcome-weighted learning leg — an episode that skips it can never resolve a post-deploy outcome (the 0/95 outcome-starvation root cause, fixed 2026-06-09, PLAN-continuous-loop Phase A). **Hard gate (2026-10-09):** `episode-finalize --status shipped` exits 2 until the `pr_url` on record is a GitHub PR URL or the literal `none`, and prints the commands to run. A `none` ship also needs `--merge-commit <sha on the default branch>`, or its outcome stays unknown for a person.
 
 - **`ship` stage — run `/quiz-me from-diff HEAD` after `/ship-check`, before `ship-readiness-critic`.** Operator-knowledge gate. Generates 5 MC + 1 explain-back from the episode's diff, quizzes the human operator interactively, grades honestly. Then runs `python ~/.claude/skills/quiz-me/scripts/quiz.py gate` — exit 1 blocks the ship stage until the operator clears any failed cards via a follow-up `/quiz-me` session. **Ask before the first card.** Wherever the quiz runs with the operator present (here, or at the loop-mode batch gate), ask one plain question first: run the quiz now, or skip it. When the same sitting carries a sign-off question (a Stage 6 promotion gate, a merge yes or no), ask the sign-off first and the quiz question after it, never mixed in (suiren `01M36PTD3Q6V89C7E6DAXPCJQA`: the cards arrived inside the Stage 6 sitting and the operator stopped after card 1, "are you quizing me now? skip the quiz-me part"). Save the quiz summary in the manifest's `quiz_me_summary` field. The schema requires it at `stage: ship, status: completed` (`schemas/stage-manifest.schema.json`), so the validator rejects the manifest without it; a waived quiz records `quiz_me_summary: "Waived by the operator: <their words>"`. This is what enforces "no new features until the operator understands the last one" — the orchestrator's other gates protect against bad code, this one protects against bad operator mental models. Skip this gate in headless / spawned-session mode (no human at the keyboard to quiz); record `quiz_me_summary: "skipped (headless)"` in the manifest so the gap is visible. **Loop mode: defer, don't skip** — record `quiz_me_summary: "deferred to batch gate (loop mode)"` and run the accumulated quizzes (plus `quiz.py gate`) at the batch deploy gate, one sitting with the human present, asked after the deploy decision; a failed gate holds `batch-deploy`.
 
@@ -462,6 +504,11 @@ inline — expensive session-model tokens, no author/reviewer separation.)
   public API, AGENTS.md rules), and what NOT to touch. Prefer one executor per
   coherent task (T1/T2/T3), parallel when files are disjoint, sequential when
   they overlap. The worktree-isolation rules above apply unchanged.
+  Fix rounds are executors too. The spawn guard (`subagent_contract.py`) moves
+  a build brief with `model: "opus"` to Sonnet unless the brief says
+  `Opus because: <reason>`.
+  An episode handed to a sub-agent delegates the same way: that sub-agent is
+  the orchestrator and does not code inline.
 - **The orchestrator reviews every executor diff before accepting it** (read
   the diff, check it against the plan and entry checks), runs `/self-review`
   itself, and owns all commits. Executor output is a proposal, not a merge.
@@ -477,7 +524,8 @@ inline — expensive session-model tokens, no author/reviewer separation.)
 - **Never spawn `model: "haiku"` for any role in this skill: executor, critic, scorer, eligibility check, summary or lookup.** Keith directive 2026-09-13; evidence in the `review` bullet above. Sonnet is the floor.
 - **Critic model routing: critics run `model: "opus"`.** A critic verdict is a
   review, and `~/.claude/CLAUDE.md` (Sub-agents, 2026-09-23) routes every review
-  to Opus with no per-task cap. The CLOSED A/B below (flat reward, 2026-08-02)
+  to Opus with no per-task cap. One exception: `verify-critic` following a repo
+  verification skill is a smoke test and runs on Sonnet (§4a `verify`). The CLOSED A/B below (flat reward, 2026-08-02)
   predates that rule. Mechanical roles (executors, discovery) stay on Sonnet.
 - Record each executor dispatch on the execute step via `step-record ...
   --prompt <executor-brief-summary>` so the trajectory shows who authored what.
@@ -511,7 +559,7 @@ python scripts/devrl.py lock-release $EID
 
 **"Ship it" includes the npm build (Keith standing directive, 2026-08-03).** For npm-package projects (hippo), the human's "ship it" covers merge AND refreshing the live binary: from a CLEAN checkout of merged master (temp worktree if the main checkout is dirty), `npm install` + `npm run build:all` + `npm pack` + `npm i -g ./<tarball>.tgz`. NEVER `npm i -g .` from a temp dir — folder installs SYMLINK to the folder, and tearing the worktree down guts the global (2026-08-03 incident: MODULE_NOT_FOUND an hour after "verified"). Verify AFTER teardown: `<cli> --version` works and the global package is a real dir, not a symlink. Registry publish stays a separate /publish-repo decision.
 
-Roughly 7 days after a shipped episode's deploy, record whether it held up: `python scripts/devrl.py episode-postdeploy $EID --clean` (or `--regressed`). This feeds the learn mode's `regression_rate` weighting.
+Roughly 7 days after a shipped episode's deploy, the daily post-deploy cron records whether it held up: `postdeploy-verify --record` decides by fixed rules and writes under source `verifier` (since 2026-10-09). A row it leaves unknown waits for a person: read the evidence in the slate, then `python scripts/devrl.py episode-postdeploy $EID --clean` (or `--regressed`, or `--unknown` to set it aside). This feeds the learn mode's `regression_rate` weighting.
 
 At the start of any orchestrator session, run `devrl.py status` — it surfaces pending satisfaction prompts; record them then (`satisfaction-pending` prints ready-to-run commands, `satisfaction-record-batch ID=SCORE ...` records several at once).
 
@@ -776,8 +824,9 @@ epilogue).
    `quiz_me_summary: "deferred to batch gate (loop mode)"` in the ship
    manifest and run the accumulated quizzes at the batch deploy gate (the
    human is present there anyway); N synchronous quiz interrupts between
-   gates would defeat back-to-back execution. (b) **Remove the episode
-   worktree right after the ship-stage PR push** (the branch survives;
+   gates would defeat back-to-back execution. (b) **After the ship-stage PR
+   push, run `verdict-check` in the worktree (finalize needs it), then remove
+   the worktree** (the branch survives;
    `rmdir` a junctioned `node_modules` first, per the worktree section) —
    do not accumulate N worktrees waiting for the batch gate. Ship stage
    stops before deploy; `batch-add` the episode (Tier 7); update the state
@@ -787,8 +836,16 @@ epilogue).
    or on operator request: `batch-finalize`, present the PRs together, ONE
    human deploy decision, then ask whether to run the deferred `/quiz-me`
    sessions (then `quiz.py gate`: a failed gate holds `batch-deploy` exactly
-   as it blocks a ship stage), `batch-deploy`, then `episode-deploy-record
-   --merge-commit` per merged PR. A project CLAUDE.md may set a standing
+   as it blocks a ship stage). A PR untouched since step 3 keeps its step-3
+   check. A PR rebased at the gate (earlier merges in the batch force rebases)
+   gets `verdict-check` in the rebase checkout right before its merge (CI gate
+   in §4), and a rebase that changed the patch needs fresh verdicts. Merge each
+   PR with `--match-head-commit <head_sha of its last check>`, and record
+   `episode-deploy-record --merge-commit` for any member that shipped without a PR. Then
+   `batch-deploy`, which refuses a shipped member whose last check did not judge
+   the head that shipped (`partial` skips only the head comparison for a member
+   whose PR is still open; its pins must still hold), then
+   `episode-deploy-record --merge-commit` per merged PR. A project CLAUDE.md may set a standing
    pre-authorization (e.g. "patch-level, all-gates-clean episodes
    auto-merge") — that standing rule IS the human decision, made once (the
    closed-list "Final ship gate" carve-out); without one, deploy always
@@ -989,9 +1046,10 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `episode-friction <id> --note S` | record an operator friction note (feeds learn-check) | 0 / 2 missing |
 | `episode-wait <id> --reason S [--since ISO] [--until ISO]` | declare idle time (human gate, usage limit) so budget-check leaves it off the wallclock; refuses a span with a recorded step inside | 0 / 2 bad span or missing |
 | `set-project-type <id> <type> <rubric>` | set type + rubric | 0 |
-| `episode-finalize <id> --status <s> [--user-satisfaction N\|deferred] [--redirects N] [--learn-emit] [--no-prompt]` | close episode; `--learn-emit` writes pending_apply blob (Tier 0.2 / Tier 3) | 0 / 2 |
+| `episode-finalize <id> --status <s> [--user-satisfaction N\|deferred] [--redirects N] [--learn-emit] [--no-prompt]` | close episode; `--learn-emit` writes pending_apply blob (Tier 0.2 / Tier 3); `shipped` is refused until the ship is on record and, when verdicts are pinned, the last `verdict-check` matched, no verify/review verdict came after it, and it judged the shipped head (a no-PR ship needs `merge_commit`); with no pin, a failing latest verify/review verdict also refuses | 0 / 2 |
 | `satisfaction-record <id> N` | fill in deferred user_satisfaction post-hoc (Tier 0.2) | 0 / 2 missing |
-| `episode-postdeploy <id> --clean/--regressed` | record 7-day post-deploy outcome | 0 / 2 missing |
+| `episode-postdeploy <id> --clean/--regressed/--unknown` | a person records, corrects or takes back a 7-day post-deploy outcome; a row taken back to unknown is never refilled by the verifier | 0 / 2 missing |
+| `postdeploy-verify [--record --receipts DIR] [--ids ID ...] [--json]` | check every due outcome against GitHub and git by fixed rules; `--record` writes the settled ones under source `verifier`, evidence first to `DIR/ledger.jsonl`; `--ids` shows what the rules say about named episodes and writes nothing | 0 / 2 bad flags |
 | `postdeploy-due` | list shipped episodes whose 7-day window has passed (Tier 0.1) | 0 |
 | `postdeploy-prompt [--within-days N] [--json]` | operator-facing pending summary (table or cron-friendly JSON) (Tier 0.4) | 0 |
 | `episode-deploy-meta <id>` | emit pr_url + merge_commit (+ `*_source` provenance) + ended_at (Tier 0.1 / Phase A) | 0 / 2 missing |
@@ -1002,8 +1060,9 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `lock-heartbeat <id>` | refresh lock | 0 ok / 1 vanished |
 | `lock-release <id>` | release lock | 0 |
 | `reap` | mark stale episodes stalled | 0 |
-| `step-record <id> <stage> [--prompt SKILL] [--memory-ref ID ...] [--artifact KIND=VALUE ...] [...]` | log a step + optional step_prompts row + value-artifacts (Tier 0.3 / Phase A) | 0 / 2 bad artifact spec |
+| `step-record <id> <stage> [--prompt SKILL] [--memory-ref ID ...] [--artifact KIND=VALUE ...] [--repo PATH --head SHA [--base REF]] [...]` | log a step + optional step_prompts row + value-artifacts (Tier 0.3 / Phase A); a passing `verify`/`review` verdict needs `--repo` and `--head` and is pinned to the patch of `--head` on the episode's base | 0 / 2 bad artifact spec, a pin kind written by hand, a critic outside its stage, missing `--repo` or `--head`, a `--base` other than the episode's, files outside the commit |
 | `critic-check <critic-name> <file> --tool-uses N` | parse critic response; `N` is the critic sub-agent's harness-reported tool-call count, required (missing or `0` exits 2) | 0 pass / 1 fail / 2 error |
+| `verdict-check <id> --repo PATH [--base REF]` | before merge: does the head's patch have a standing pass at every pinned stage? Records the result and head, which `episode-finalize --status shipped` and `batch-deploy` require; prints the `--match-head-commit` merge line; `--base` defaults to the episode's first pin base | 0 match or nothing pinned / 1 stale stage / 2 unknown episode, no steps, or git error |
 | `brainstorm-rank <id> <candidates.json> --judge <file>\|--select-idx N` | record candidates + ranking (Tier 2) | 0 / 2 |
 | `reward <id> [--automated-score N]` | compute + store episode reward | 0 / 2 missing |
 | `learn-check <id>` | per-episode learn-trigger check | 0 none / 1 triggered / 2 missing |
@@ -1023,7 +1082,7 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `batch-list [--open-only]` | list batches (Tier 7) | 0 |
 | `batch-get <batch_id>` | show batch + members (Tier 7) | 0 / 2 |
 | `batch-finalize <batch_id>` | finalize batch + auto-cluster (Tier 7) | 0 / 1 / 2 |
-| `batch-deploy <batch_id> --decision shipped\|aborted\|partial` | record deploy + set due_at for shipped members (Tier 7) | 0 / 1 / 2 |
+| `batch-deploy <batch_id> --decision shipped\|aborted\|partial` | record deploy + set due_at for shipped members (Tier 7); `shipped`/`partial` exits 2 while a pinned member's last `verdict-check` did not judge the head it shipped; `shipped` also needs every PR merged, and `partial` skips only the head comparison for an open PR | 0 / 1 / 2 |
 | `learn-attribute [--since DATE] [--include-backfill]` | recompute critic_trust_scores incl. v2 (Tier 8/9; backfill outcomes excluded by default per R4) | 0 |
 | `critic-trust [--critic NAME] [--json]` | read view over critic_trust_scores (Tier 8) | 0 |
 | `stage-gate <id> <stage> [--weighted]` | evaluate a stage's gate from recorded verdicts; trust-weighted when episode opted in (Tier 9c) | 0 pass / 1 fail / 2 error |
@@ -1035,6 +1094,15 @@ To pause every running episode: `touch ~/.claude/dev-framework/PAUSE` — remove
 | `memory-status <id>` | show memory lineage | 0 / 2 missing |
 | `memory-list [--status S]` | list memories by lineage status | 0 |
 | `memory-needs-pattern` | list probation memories missing `warning_pattern` (Tier 6) | 0 |
+| `lesson-pull <id> <stage> [--query Q] [--limit N] [--cwd P] [--json]` | ask hippo for the stage's warnings under the episode id as session id; logs the ids shown | 0 / 2 hippo did not answer or unknown episode |
+| `lesson-verdicts [--episodes N] [--json]` | verdicts on pulled lessons over the last N judged episodes | 0 |
+| `step-record ... [--lesson TEXT \| --no-lesson] [--pr-url URL\|none]` | a fail must name its lesson or say it has none; a ship pass must name its PR | 0 / 2 |
+| `episode-sweep [--record] [--receipts DIR] [--json]` | close merged or abandoned episodes through the finalize gates; a dry run without `--record` | 0 |
+| `repeat-score [--json] [--write]` | repeat rates for shown and withheld lessons, no verdict; `--write` feeds `lesson-pull` | 0 |
+| `trial-rule-add --slug S --origin-sha256 H --trigger T --check C` | add a trial rule for a shown lesson repeated in 2+ episodes, 3 a week at most | 0 / 2 |
+| `trial-rule-list [--project P] [--json]` | trial rules, active and retired | 0 |
+| `trial-rule-sweep [--json]` | retire trial rules that earned nothing; run `repeat-score --write` first | 0 |
+| `lesson-send [--episode E] [--dry-run] [--undo]` | retry or undo the bad marks `episode-finalize` sends to hippo; a normal episode never runs it | 0 / 1 gate closed / 2 error |
 
 All free-text fields are secret-scrubbed before they reach the DB.
 
@@ -1045,8 +1113,9 @@ Orchestrator infrastructure lives in `~/.claude/dev-framework/` (see its `README
 - `episodes.db` — SQLite trajectory store
 - `scripts/devrl.py` — the CLI this skill drives
 - `scripts/` — `episode_store`, `scrubber`, `critic_contract`, `critic_registry`, `rubric`, `reward`, `learn`, `clustering`, `ulid_gen`, `validate_manifest`, `migrate`
-- `adapters/critics.py` — the 7 verdict critics (data-driven)
-- `prompts/critic-*.md` — the 7 verdict-critic briefings + `critic-brainstorm-judge.md`
+- `adapters/critics.py` — the 8 verdict critics (data-driven)
+- `prompts/critic-*.md` — the 8 verdict-critic briefings + `critic-brainstorm-judge.md`
+- `scripts/patch_pin.py` — verdict pins (`git patch-id`) and the gate `verdict-check` feeds
 - `rubrics/REWARD.*.md` — 8 per-project-type reward rubrics
 - `schemas/` — stage-manifest + stage-plan JSON schemas
 - `tests/` — real-DB test suite (`python -m pytest tests/`)
