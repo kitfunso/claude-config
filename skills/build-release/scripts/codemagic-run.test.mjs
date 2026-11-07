@@ -1,6 +1,9 @@
 // node --test codemagic-run.test.mjs: runs the script against a stand-in Codemagic API.
 import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -14,6 +17,7 @@ const builtIn = (name, status, log) => ({ name, status, type: 'publishing', logU
 // Each build id answers its states in turn, then repeats the last one.
 async function release(states, logs, extra = []) {
   const started = [];
+  const hits = [];
   const server = createServer((req, res) => {
     if (req.headers['x-auth-token'] !== 'test-token') return res.writeHead(401).end('bad token');
     if (req.method === 'POST' && req.url === '/builds') {
@@ -21,7 +25,10 @@ async function release(states, logs, extra = []) {
       return res.end(JSON.stringify({ buildId: started.at(-1) }));
     }
     const id = req.url.match(/^\/builds\/(\w{24})$/)?.[1];
-    if (!id) return res.end(logs[req.url] ?? '');
+    if (!id) {
+      hits.push(req.url);
+      return res.end(logs[req.url] ?? '');
+    }
     const build = states[id].length > 1 ? states[id].shift() : states[id][0];
     res.end(JSON.stringify({ build }).replaceAll('HOST', req.headers.host));
   });
@@ -32,7 +39,20 @@ async function release(states, logs, extra = []) {
   child.stdout.on('data', (chunk) => { out += chunk; });
   const code = await new Promise((resolve) => child.on('close', resolve));
   server.close();
-  return { code, out, started };
+  return { code, out, started, hits };
+}
+
+// --wait reads only a log file, so no server; --seconds 1 turns "still running" into a quick exit 2.
+async function wait(text) {
+  const dir = mkdtempSync(join(tmpdir(), 'codemagic-run-test-'));
+  try {
+    const file = join(dir, 'run.log');
+    writeFileSync(file, text);
+    const child = spawn(process.execPath, [SCRIPT, '--wait', file, '--seconds', '1']);
+    return await new Promise((resolve) => child.on('close', resolve));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 test('reruns a font flake, waits through building, reports the submit step', { timeout: 90000 }, async () => {
@@ -62,4 +82,64 @@ test('stops on a failure a rerun would not fix', async () => {
   assert.match(out, new RegExp(`RESULT failed ${IDS[0]} at "Upload the IPA", log `));
   assert.equal(code, 1);
   assert.deepEqual(started, IDS.slice(0, 1));
+});
+
+const READ = 'Read the App Store numbers';
+const READ_ARGS = ['--report-step', READ, '--report-lines', '^(WEEK|RESULT) '];
+// The step's own RESULT line is what must never reach the start of an output line.
+const readLog = (result) => ['Fetching reports for app 123...', '  WEEK 2026-11-02 downloads 14\r', 'WEEKLY digest skipped',
+  'WEEK 2026-11-02 sessions 90', 'Done in 2.1s', result].join('\n');
+const failedRead = { [IDS[0]]: [{ status: 'failed', buildActions: [step('Build web', 'success', '/log/web'),
+  step(READ, 'failed', '/log/read')] }] };
+const lastLine = (out) => out.trim().split('\n').at(-1);
+
+test('--report-lines prints only the matching lines, indented, ahead of the script RESULT', async () => {
+  const { code, out } = await release({
+    [IDS[0]]: [{ status: 'finished', buildActions: [step('Build web', 'success', '/log/web'), step(READ, 'success', '/log/read')] }],
+  }, { '/log/read': readLog('RESULT ok 2 weeks') }, READ_ARGS);
+  assert.match(out, new RegExp(`${READ}:\\n  WEEK 2026-11-02 downloads 14\\n  WEEK 2026-11-02 sessions 90\\n  RESULT ok 2 weeks\\n`));
+  assert.doesNotMatch(out, /Fetching reports|WEEKLY|Done in/);
+  assert.equal(out.match(/^RESULT /gm).length, 1);
+  assert.equal(lastLine(out), `RESULT success ${IDS[0]}`);
+  assert.equal(code, 0);
+});
+
+test('--report-lines prints the failed report step lines once, and the script still ends RESULT failed', async () => {
+  const { code, out, hits } = await release(failedRead, { '/log/read': readLog('RESULT needs-role app 123') }, READ_ARGS);
+  assert.match(out, new RegExp(`${READ}:\\n  WEEK 2026-11-02 downloads 14\\n  WEEK 2026-11-02 sessions 90\\n  RESULT needs-role app 123\\n`));
+  assert.match(lastLine(out), new RegExp(`^RESULT failed ${IDS[0]} at "${READ}", log `));
+  assert.equal(hits.filter((url) => url === '/log/read').length, 1);
+  assert.equal(code, 1);
+});
+
+test('--report-lines with another step failed and the report step never run: no crash, a no-log line', async () => {
+  const { code, out } = await release({
+    [IDS[0]]: [{ status: 'failed', buildActions: [step('Build web', 'failed', '/log/web'),
+      { name: READ, status: 'skipped', type: null, logUrl: null, subactions: [] }] }],
+  }, { '/log/web': 'Error: the web build broke' }, READ_ARGS);
+  assert.match(out, new RegExp(`no log for step "${READ}" in ${IDS[0]}`));
+  assert.doesNotMatch(out, /RESULT error|TypeError/);
+  assert.match(lastLine(out), new RegExp(`^RESULT failed ${IDS[0]} at "Build web", log `));
+  assert.equal(code, 1);
+});
+
+test('--report-lines after a watch timeout: no step list to read, still RESULT failed', async () => {
+  const { code, out } = await release(failedRead, {}, [...READ_ARGS, '--max-minutes', '0']);
+  assert.match(out, new RegExp(`no step named "${READ}" in ${IDS[0]}`));
+  assert.match(lastLine(out), new RegExp(`^RESULT failed ${IDS[0]} at "watch timed out", log$`));
+  assert.equal(code, 1);
+});
+
+test('without --report-lines a failed build prints no step lines', async () => {
+  const { code, out } = await release(failedRead, { '/log/read': readLog('RESULT needs-role app 123') }, ['--report-step', READ]);
+  assert.doesNotMatch(out, /WEEK|needs-role|Fetching reports/);
+  assert.doesNotMatch(out, new RegExp(`${READ}:`));
+  assert.match(lastLine(out), new RegExp(`^RESULT failed ${IDS[0]} at "${READ}", log `));
+  assert.equal(code, 1);
+});
+
+test('--wait on the log of a --report-lines run returns the script RESULT, not the passed-through one', async () => {
+  const { out } = await release(failedRead, { '/log/read': readLog('RESULT success 2 weeks') }, READ_ARGS);
+  assert.match(out, /^ {2}RESULT success 2 weeks$/m);
+  assert.equal(await wait(out), 1);
 });

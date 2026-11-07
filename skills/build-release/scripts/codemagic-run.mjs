@@ -17,6 +17,8 @@ const TRANSIENT = [
 // Listing the end states, not the running ones: an unknown new state then reads as still running.
 const FINAL = new Set(['finished', 'failed', 'canceled', 'timeout', 'skipped', 'warning']);
 const GOOD = ['success', 'dry-run', 'checked'];
+// Compiled at start so a bad regex fails before a long build begins, not after it.
+const REPORT_LINES = args['report-lines'] ? new RegExp(args['report-lines']) : null;
 
 if (args.wait) await waitForResult(args.wait, Number(args.seconds ?? 570));
 if (args.detach) detach();
@@ -60,7 +62,7 @@ async function watch(id) {
     console.log(`${new Date().toISOString().slice(11, 19)} ${outcome.status}, ${outcome.done} steps done`);
     await new Promise((resolve) => setTimeout(resolve, 30000));
   }
-  return { state: 'failed', step: 'watch timed out', log: '' };
+  return { state: 'failed', step: 'watch timed out', log: '', steps: [] };
 }
 
 async function inspect(id) {
@@ -75,10 +77,10 @@ async function inspect(id) {
   if (!FINAL.has(build.status)) return { state: 'running', status: build.status, done };
   if (build.status === 'finished') return { state: 'success', steps, done };
   const failed = steps.find((step) => step.status === 'failed');
-  if (!failed) return { state: 'failed', step: `build ${build.status}`, log: '', done };
+  if (!failed) return { state: 'failed', step: `build ${build.status}`, log: '', done, steps };
   const log = await stepLog(id, failed);
   const transient = TRANSIENT.find((t) => t.re.test(readFileSync(log, 'utf8')))?.name;
-  return { state: 'failed', step: failed.name, log, transient, done };
+  return { state: 'failed', step: failed.name, log, transient, done, steps };
 }
 
 async function stepLog(id, step) {
@@ -91,12 +93,18 @@ async function stepLog(id, step) {
 async function report(id, outcome) {
   const where = outcome.step ? ` at "${outcome.step}"` : '';
   console.log(`${id}: ${outcome.state}${where}${outcome.transient ? ` (transient: ${outcome.transient})` : ''}`);
-  if (outcome.state !== 'success' || !args['report-step']) return;
-  const step = outcome.steps.find((s) => s.name === args['report-step']);
-  if (!step) return console.log(`no step named "${args['report-step']}" in ${id}`);
-  const lines = readFileSync(await stepLog(id, step), 'utf8').split('\n').map((line) => line.trim())
-    .filter((line) => /^(Version code|Version|State|Submitted date):|^Created Review Submission/.test(line));
-  console.log(`${args['report-step']}:\n  ${[...new Set(lines)].join('\n  ')}`);
+  const name = args['report-step'];
+  // The step's own lines matter most when the build failed, so --report-lines prints then too.
+  if (!name || (outcome.state !== 'success' && !REPORT_LINES)) return;
+  const step = outcome.steps.find((s) => s.name === name);
+  if (!step) return console.log(`no step named "${name}" in ${id}`);
+  const reuse = outcome.step === name && outcome.log;
+  if (!reuse && !step.logUrl && outcome.state !== 'success') return console.log(`no log for step "${name}" in ${id}`);
+  const keep = REPORT_LINES ?? /^(Version code|Version|State|Submitted date):|^Created Review Submission/;
+  const lines = readFileSync(reuse || await stepLog(id, step), 'utf8').split('\n').map((line) => line.trim())
+    .filter((line) => keep.test(line));
+  // Indented, so a passed-through RESULT line never matches waitForResult's line-start RESULT.
+  console.log(`${name}:\n  ${[...new Set(lines)].join('\n  ')}`);
 }
 
 async function api(path, { method = 'GET', body, text = false } = {}) {

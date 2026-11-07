@@ -297,6 +297,7 @@ its log:
   build (gone at root since Brain Gym 75af437 committed the font files), and Apple 500s on `CHANGE UPLOAD STATE TO
   COMPLETE`, where altool prints `UPLOAD SUCCEEDED` but cli-tools still exits 1. A rerun
   takes a new build number; the half-uploaded build sits unused in TestFlight, harmless.
+- `--report-lines <regex>` with `--report-step` prints that step's matching log lines, indented, on a failed build too.
 - `--dry-run` proves the token can read the app. `--check <id,id> --app <app id>` reads past
   builds and saves each one's JSON in the temp dir; add `--report-step "Publish to App Store
   Connect"` to print the iOS build number and review state after a tag-started release. Neither starts anything. `node --test
