@@ -218,6 +218,20 @@ class TestNumbers:
         assert out["tools"] is None and "unsourced-numbers" not in out["flags"]
 
 
+class TestDoubt:
+    @pytest.mark.parametrize("text", ["That won't work here.", "It is not possible.", "This can’t be done.",
+                                      "There is no edge in it.", "Infeasible on this data."])
+    def test_a_doubt_with_no_tool_call_is_flagged(self, text: str) -> None:
+        assert "untested-doubt" in flags(text, NO_TOOLS)
+
+    def test_a_doubt_after_a_tool_call_passes(self) -> None:
+        assert "untested-doubt" not in flags("The backtest shows no edge.", WITH_TOOLS)
+
+    @pytest.mark.parametrize("text", ["It is possible.", "No edge cases left.", "That will work."])
+    def test_plain_statements_are_not_doubts(self, text: str) -> None:
+        assert "untested-doubt" not in flags(text, NO_TOOLS)
+
+
 class TestDiagnosis:
     def test_edits_on_a_fix_prompt_without_a_diagnosis_are_flagged(self) -> None:
         assert "no-diagnosis" in flags("Done.", FIX)
@@ -347,7 +361,8 @@ class TestFeedback:
         assert hook.describe(record("s1", [])) == ""
 
     def test_every_flag_has_words(self) -> None:
-        for flag in ("table", "bullets", "sweeping", "unsourced-numbers", "no-diagnosis", "banned:delve"):
+        for flag in ("table", "bullets", "sweeping", "unsourced-numbers", "untested-doubt", "no-diagnosis",
+                     "banned:delve"):
             assert hook.describe(record("s1", [flag])).startswith("Your last reply was flagged: ")
 
     def test_a_flagged_reply_adds_one_sentence(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,

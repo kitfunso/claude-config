@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Stop hook: measures every reply against four CLAUDE.md rules and logs one JSON line.
+"""Stop hook: measures every reply against five CLAUDE.md rules and logs one JSON line.
 
 Flags: long, table, bullets and banned:<word> (Human Voice); sweeping (Do It Properly);
-unsourced-numbers (Sourcing); no-diagnosis (Root Cause). Text inside ``` fences and
+unsourced-numbers (Sourcing); no-diagnosis (Root Cause); untested-doubt (Can-Do Default). Text inside ``` fences and
 `inline code` is never scanned; each inline span counts as one word. Never blocks: a
 Stop block cannot un-show a reply, it only makes Claude print a second one, so the
 feedback reaches the next turn through human_voice.py, which imports feedback().
@@ -44,6 +44,8 @@ LIST_MARKER = re.compile(r"^[ \t]*\d+[.)][ \t]+", re.M)
 WORD_TAIL = re.compile(r"\w*")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 SWEEPING = re.compile(r"\b(?:tried everything|every table|all tables|all notebooks)\b", re.I)
+DOUBT = re.compile(r"\b(?:won['’]?t work|will not work|unlikely to work|can['’]?t be done|cannot be done"
+                   r"|(?:not|isn['’]?t) (?:possible|feasible)|impossible|infeasible|no edge(?! cases?\b))\b", re.I)
 DEPTH = re.compile(r"\b(?:in detail|in[ -]depth|detailed|full report|walk me through|long[ -]form|go long)\b",
                    re.I)
 # "fixture" is a freight term on this desk, not a fix-it ask.
@@ -72,6 +74,7 @@ FLAG_WORDS = {
     "bullets": f"a bullet wall ({BULLET_RUN}+ list lines in a row)",
     "sweeping": "a sweeping claim ('tried everything', 'every table') that needs the list of what was covered",
     "unsourced-numbers": "numbers with no tool call that turn",
+    "untested-doubt": "a 'won't work' or 'not possible' claim with no tool call that turn (Can-Do Default)",
     "no-diagnosis": "edits on a fix-it prompt with no <diagnosis> block",
 }
 
@@ -156,6 +159,8 @@ def measure(reply: str, turn: Turn | None) -> dict:
         flags.append("sweeping")
     if turn is not None and not turn.tools and count_numbers(text) >= MIN_NUMBERS:
         flags.append("unsourced-numbers")
+    if turn is not None and not turn.tools and DOUBT.search(text):
+        flags.append("untested-doubt")
     if (turn is not None and FIX_IT.search(prompt) and EDIT_TOOLS.intersection(turn.tools)
             and not (turn.diagnosed or "<diagnosis>" in reply)):
         flags.append("no-diagnosis")

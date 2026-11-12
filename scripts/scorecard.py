@@ -63,6 +63,7 @@ RULE_CHECKS = {
     "Capability Existence": ("check_skill_references.py",),
     "Sourcing": ("reply_check.py",),
     "No Fabrication": ("reply_check.py",),
+    "Can-Do": ("reply_check.py",),
     "Git Operations": ("git_guard.py",),
     "Hand-Maintained": ("claude_backup.py", "rewrite_gate.py"),
     "Root Cause": ("reply_check.py",),
