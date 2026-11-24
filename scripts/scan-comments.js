@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// Audits existing files against the comment budget the PreToolUse hook enforces.
 // Usage: node scan-comments.js <root> [<root>...] [--json out.json] [--top N]
 
 const fs = require('fs');
@@ -66,20 +65,9 @@ function grade(file) {
   const ext = path.extname(file).slice(1).toLowerCase();
   const token = budget.LINE_TOKENS[ext];
   const lines = text.split(/\r?\n/);
-  const comments = budget.countComments(lines, token);
-  const run = budget.longestRun(lines, token);
-  const density = lines.length ? comments / lines.length : 0;
-  const overRun = run > budget.MAX_RUN;
-  const overDensity = lines.length >= budget.DENSITY_FLOOR && density > budget.MAX_DENSITY;
-  if (!overRun && !overDensity) return null;
-  const allowed = Math.floor(lines.length * budget.MAX_DENSITY);
-  return {
-    file: file.split(path.sep).join('/'),
-    lines: lines.length, comments, run,
-    density: Math.round(density * 1000) / 10,
-    waste: Math.max(0, comments - allowed),
-    reason: overRun && overDensity ? 'run+density' : overRun ? 'run' : 'density',
-  };
+  const stray = budget.strayComments(lines, token).length;
+  if (!stray) return null;
+  return { file: file.split(path.sep).join('/'), lines: lines.length, stray };
 }
 
 const args = process.argv.slice(2);
@@ -90,28 +78,26 @@ const top = topIdx >= 0 ? Number(args[topIdx + 1]) : 40;
 
 const files = [];
 for (const r of roots) walk(path.resolve(r), files);
-const hits = files.map(grade).filter(Boolean).sort((a, b) => b.waste - a.waste || b.run - a.run);
+const hits = files.map(grade).filter(Boolean).sort((a, b) => b.stray - a.stray);
 
 const byRepo = new Map();
 for (const h of hits) {
-  const rel = h.file.replace(HOME_PREFIX, '');
-  const repo = rel.split('/')[0];
-  const cur = byRepo.get(repo) || { repo, files: 0, waste: 0, worstRun: 0 };
-  cur.files += 1; cur.waste += h.waste; cur.worstRun = Math.max(cur.worstRun, h.run);
+  const repo = h.file.replace(HOME_PREFIX, '').split('/')[0];
+  const cur = byRepo.get(repo) || { repo, files: 0, stray: 0 };
+  cur.files += 1; cur.stray += h.stray;
   byRepo.set(repo, cur);
 }
 
-console.log('scanned ' + files.length + ' source files, ' + hits.length + ' over budget');
-console.log('\nBY REPO (waste = comment lines above the 20% budget)');
-console.log('repo'.padEnd(24) + 'files'.padStart(6) + 'waste'.padStart(8) + 'worstRun'.padStart(10));
-for (const r of [...byRepo.values()].sort((a, b) => b.waste - a.waste)) {
-  console.log(r.repo.padEnd(24) + String(r.files).padStart(6) + String(r.waste).padStart(8) + String(r.worstRun).padStart(10));
+console.log('scanned ' + files.length + ' source files, ' + hits.length + ' with comments outside the keep list');
+console.log('\nBY REPO');
+console.log('repo'.padEnd(24) + 'files'.padStart(6) + 'stray'.padStart(8));
+for (const r of [...byRepo.values()].sort((a, b) => b.stray - a.stray)) {
+  console.log(r.repo.padEnd(24) + String(r.files).padStart(6) + String(r.stray).padStart(8));
 }
 console.log('\nTOP ' + top + ' FILES');
-console.log('cmt/lines'.padEnd(12) + 'dens'.padStart(6) + 'run'.padStart(5) + '  file');
+console.log('stray/lines'.padEnd(13) + '  file');
 for (const h of hits.slice(0, top)) {
-  console.log((h.comments + '/' + h.lines).padEnd(12) + (h.density + '%').padStart(6) +
-    String(h.run).padStart(5) + '  ' + h.file.replace(HOME_PREFIX, ''));
+  console.log((h.stray + '/' + h.lines).padEnd(13) + '  ' + h.file.replace(HOME_PREFIX, ''));
 }
 if (jsonIdx >= 0) {
   fs.writeFileSync(args[jsonIdx + 1], JSON.stringify(hits, null, 2));

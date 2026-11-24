@@ -6,14 +6,20 @@
 - Functions under 50 lines. Nesting under 4 levels.
 
 ## Comments (CRITICAL)
-- One line. Two at most. A file-header block may run to 3.
-- Say WHY a non-obvious choice was made. Never say WHAT the code does.
-- Measurements, dates, incident history and "we tried X first" stories go to
-  `docs/ARCHITECTURE.md` or `docs/incidents.md`; a comment nobody edits rots in place.
-- Mark a deliberate shortcut with one `SHORTCUT:` line naming its ceiling and the
-  upgrade path: `# SHORTCUT: global lock, per-account locks if throughput matters`.
-  Without it a knowing tradeoff reads as a bug to the next person.
-- Applies to every language and every project, including new files.
+No comments in code (Keith, 2026-11-24, the pstack `/no-comments` approach). Put the
+reason in a name, a type, a test or `docs/`; a comment nobody edits rots in place.
+- Keep only: license blocks; lint, type and tool directives (`eslint-disable`,
+  `@ts-expect-error`, `noqa`, `@vitest-environment`, pragmas); doc blocks on a
+  published API; a link to the issue, RFC or vendor doc behind a limit the code
+  cannot show; text that code reads at run time.
+- `SHORTCUT:` marks a deliberate shortcut, with its ceiling and upgrade path:
+  `# SHORTCUT: global lock, per-account locks if throughput matters`.
+  `SAFETY:` explains a cast or `unsafe` block that a lint rule requires a reason for.
+  One line each.
+- A comment on code you change gets deleted, never reworded. Strip a whole repo only
+  through `/no-comments`.
+- Applies to every language and every project, including new files. Backstop:
+  `scripts/hooks/comment-budget-guard.js` (home) and `comment_budget_guard.py` (work).
 
 ## Immutability
 - Python: use `@dataclass(frozen=True)`, `NamedTuple`, `tuple` over `list` for fixed collections.

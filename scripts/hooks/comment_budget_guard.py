@@ -1,20 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (Edit|Write): backstop for the Comments rule in
-rules/coding-standards.md. Python port of the home box's comment-budget-guard.js.
-
-Denies the write before the file is touched when the new content has:
-  - more than 3 comment lines in a row, or
-  - more than 20% comment density, once the content is 15+ lines.
-    On a file already over that density, only what the edit adds is graded.
-
-Skips markdown, JSON, config files, anything under docs/, Python docstrings
-(only `#` lines count), and JSDoc blocks carrying @param / @returns.
-Escape hatch: CLAUDE_COMMENT_BUDGET=off.
-
-Contract: reads hook JSON on stdin, writes hook JSON on stdout. Fails open —
-a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -22,130 +6,106 @@ import os
 import re
 import sys
 
-MAX_RUN = 3
-MAX_DENSITY = 0.20
-MIN_LINES_FOR_DENSITY = 15
-
-SKIP_EXTENSIONS = {
-    ".md", ".markdown", ".rst", ".txt", ".json", ".jsonl", ".yaml", ".yml",
-    ".toml", ".ini", ".cfg", ".conf", ".env", ".csv", ".html", ".xml", ".lock",
-}
 HASH_COMMENT = {".py", ".sh", ".bash", ".ps1", ".r", ".rb", ".pl", ".cmake"}
 SLASH_COMMENT = {
     ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".java", ".c", ".h", ".cpp",
     ".hpp", ".cs", ".go", ".rs", ".swift", ".kt", ".scala", ".css", ".scss",
 }
 DASH_COMMENT = {".sql"}
+TOKENS = {**{e: "#" for e in HASH_COMMENT}, **{e: "//" for e in SLASH_COMMENT}, **{e: "--" for e in DASH_COMMENT}}
+
+API_DOC = re.compile(r"@param|@returns|@return|@type(?![a-zA-Z])|@typedef|@property|@callback|@example|@throws")
+MARK = re.compile(r"\b(SHORTCUT|SAFETY):")
+LICENSE = re.compile(r"copyright|licen[cs]e\b|spdx-|all rights reserved|@license|@preserve", re.I)
+KEEP = re.compile("|".join([
+    r"https?://\S", r"\brfc\s?-?\d{3,}",
+    r"@(vitest|jest)-environment", r"swift-tools-version", r"webpack(Prefetch|Preload|Mode|Exclude|Include|Exports|ChunkName|Ignore)",
+    r"@deno-types", r"tslint:", r"oxlint-", r"stylelint-", r"yamllint", r"cspell", r"codespell", r"NOSONAR",
+    r"eslint-", r"^\W*eslint\s", r"^\W*global\s+\w", r"jshint", r"@ts-(ignore|expect-error|nocheck|check)",
+    r"prettier-ignore", r"biome-ignore", r"deno-lint", r"(istanbul|c8|v8)\s+ignore",
+    r"\bnoqa\b", r"^\W*type:\s", r"pyright:", r"mypy:", r"pylint:", r"ruff:", r"isort:", r"^\W*fmt:\s*(on|off|skip)",
+    r"\bpragma\b", r"\bnosec\b", r"noinspection", r"@jsx", r"@refresh\b", r"@vite-ignore", r"sourceMappingURL", r"@flow\b",
+    r"-\*-\s*coding", r"coding[:=]\s*utf", r"vim:", r"shellcheck", r"@generated", r"^\W*go:\w", r"\+build", r"nolint",
+    r"__PURE__", r"__NO_SIDE_EFFECTS__", r"^\W*/\s*<reference", r"^\W*#requires",
+]), re.I)
 
 
-def comment_flags(lines: list[str], ext: str) -> list[bool]:
-    flags = [False] * len(lines)
-    if ext in HASH_COMMENT:
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            flags[i] = stripped.startswith("#") and not stripped.startswith("#!")
-    elif ext in DASH_COMMENT:
-        for i, line in enumerate(lines):
-            flags[i] = line.strip().startswith("--")
-    elif ext in SLASH_COMMENT:
-        in_block = False
-        block_start = 0
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            if in_block:
-                flags[i] = True
-                if "*/" in stripped:
-                    in_block = False
-                    if any("@param" in lines[j] or "@returns" in lines[j] for j in range(block_start, i + 1)):
-                        for j in range(block_start, i + 1):
-                            flags[j] = False
-                continue
-            if stripped.startswith("//"):
-                flags[i] = True
-            elif stripped.startswith("/*"):
-                flags[i] = True
-                block_start = i
-                if "*/" in stripped:
-                    if "@param" in stripped or "@returns" in stripped:
-                        flags[i] = False
-                else:
-                    in_block = True
-    return flags
+API_TARGET = re.compile(r"^(export\b|declare\b|\s+((readonly|static|public|async|get|set)\s+)*[\w$#]+[?!]?\s*[:(<=])")
+
+
+def next_code(lines: list[str], start: int) -> str:
+    return next((l for l in lines[start:] if l.strip()), "")
+
+
+def classify(lines: list[str], token: str) -> list[str]:
+    kind = ["code"] * len(lines)
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if not line:
+            kind[i] = "blank"
+            i += 1
+            continue
+        if token == "#" and line[:3] in ('"""', "'''"):
+            q, j = line[:3], i
+            if q not in line[3:]:
+                j += 1
+                while j < len(lines) and q not in lines[j]:
+                    j += 1
+            for k in range(i, min(j, len(lines) - 1) + 1):
+                kind[k] = "doc"
+            i = j + 1
+            continue
+        if line.startswith("/*"):
+            j = i
+            while j < len(lines) and "*/" not in lines[j]:
+                j += 1
+            is_api = (line.startswith("/**") and (j == i or bool(API_TARGET.match(next_code(lines, j + 1))))) or any(
+                API_DOC.search(l) for l in lines[i:j + 1])
+            for k in range(i, min(j, len(lines) - 1) + 1):
+                kind[k] = "doc" if is_api else "comment"
+            i = j + 1
+            continue
+        if line.startswith(token) and not line.startswith("#!"):
+            kind[i] = "comment"
+        i += 1
+    return kind
+
+
+def stray_comments(lines: list[str], token: str) -> list[str]:
+    kind = classify(lines, token)
+    stray: list[str] = []
+    i = 0
+    while i < len(lines):
+        if kind[i] != "comment":
+            i += 1
+            continue
+        j = i
+        while j < len(lines) and kind[j] == "comment":
+            j += 1
+        if not any(LICENSE.search(l) for l in lines[i:j]):
+            stray += [l.strip() for l in lines[i:j] if l.strip() and not (MARK.search(l) or KEEP.search(l))]
+        i = j
+    return stray
+
+
+def added_stray(before: str, after: str, token: str) -> list[str]:
+    seen: dict[str, int] = {}
+    for l in stray_comments(re.split(r"\r?\n", before), token):
+        seen[l] = seen.get(l, 0) + 1
+    added = []
+    for l in stray_comments(re.split(r"\r?\n", after), token):
+        if seen.get(l, 0) > 0:
+            seen[l] -= 1
+        else:
+            added.append(l)
+    return added
 
 
 def apply_edit(content: str, old: str, new: str, replace_all: bool) -> str | None:
     if not old or old not in content:
         return None
     return content.replace(old, new) if replace_all else content.replace(old, new, 1)
-
-
-def header_end(lines: list[str], ext: str) -> int:
-    flags = comment_flags(lines, ext)
-    i = 0
-    while i < len(lines):
-        stripped = lines[i].strip()
-        if stripped == "" or stripped.startswith("#!") or flags[i]:
-            i += 1
-            continue
-        break
-    return i
-
-
-# A run survives blank lines so a block split by whitespace still counts as one.
-def check_run(content: str, ext: str) -> str | None:
-    lines = content.splitlines()
-    flags = comment_flags(lines, ext)
-    run = 0
-    for i, flag in enumerate(flags):
-        if flag:
-            run += 1
-        elif lines[i].strip() != "":
-            run = 0
-        if run > MAX_RUN:
-            return (
-                f"more than {MAX_RUN} comment lines in a row — the Comments rule "
-                "(rules/coding-standards.md) allows one line, two at most, WHY not "
-                "WHAT. Cut the block, then retry. Escape: CLAUDE_COMMENT_BUDGET=off."
-            )
-    return None
-
-
-def check_density(file_text: str, ext: str) -> str | None:
-    lines = file_text.splitlines()
-    body = lines[header_end(lines, ext):]
-    if not body:
-        return None
-    total = len(body)
-    count = sum(comment_flags(body, ext))
-    if total >= MIN_LINES_FOR_DENSITY and count / total > MAX_DENSITY:
-        return (
-            f"comment density {count}/{total} = {count / total:.0%} exceeds "
-            f"{MAX_DENSITY:.0%} in the resulting file — the Comments rule "
-            "(rules/coding-standards.md) says one line, two at most, WHY not WHAT. "
-            "Trim comments, then retry. Escape: CLAUDE_COMMENT_BUDGET=off."
-        )
-    return None
-
-
-def count_body(file_text: str, ext: str) -> tuple[int, int]:
-    lines = file_text.splitlines()
-    body = lines[header_end(lines, ext):]
-    return sum(comment_flags(body, ext)), len(body)
-
-
-# Debt the file already carried is not this edit's to pay; what the edit adds must meet the budget.
-def check_added(before: str, after: str, ext: str) -> str | None:
-    was_count, was_total = count_body(before, ext)
-    count, total = count_body(after, ext)
-    added, added_lines = count - was_count, total - was_total
-    if added > 0 and added > MAX_DENSITY * added_lines:
-        return (
-            f"the edit adds {added} comment lines in {added_lines} net new lines, on a file already "
-            f"at {was_count / was_total:.0%} comments (budget {MAX_DENSITY:.0%}). The Comments rule "
-            "(rules/coding-standards.md) says one line, two at most, WHY not WHAT. "
-            "Trim comments, then retry. Escape: CLAUDE_COMMENT_BUDGET=off."
-        )
-    return None
 
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
@@ -165,39 +125,41 @@ def main() -> None:
         return
     tool_input = payload.get("tool_input") or {}
     file_path = (tool_input.get("file_path") or "").replace("\\", "/")
-    ext = os.path.splitext(file_path)[1].lower()
-    if ext in SKIP_EXTENSIONS or ext not in (HASH_COMMENT | SLASH_COMMENT | DASH_COMMENT):
+    token = TOKENS.get(os.path.splitext(file_path)[1].lower())
+    if not token or re.search(r"(^|/)docs(/|$)", file_path, re.IGNORECASE):
         return
-    if re.search(r"(^|/)docs(/|$)", file_path, re.IGNORECASE):
+    text = tool_input.get("content") if tool_input.get("content") is not None else tool_input.get("new_string")
+    if not text:
         return
-    content = tool_input.get("content") or tool_input.get("new_string") or ""
-    reason = check_run(content, ext)
-    if not reason:
-        # Density is judged on the file the edit produces, not the snippet alone.
-        file_text = content if tool_name == "Write" else None
-        current = None
-        if tool_name == "Edit":
-            try:
-                with open(tool_input.get("file_path") or "", "r", encoding="utf-8") as fh:
-                    current = fh.read()
-                file_text = apply_edit(current, tool_input.get("old_string") or "",
-                                        tool_input.get("new_string") or "",
-                                        tool_input.get("replace_all") is True)
-            except Exception:
-                file_text = None
-        if file_text is not None:
-            legacy = current is not None and check_density(current, ext) is not None
-            reason = check_added(current, file_text, ext) if legacy else check_density(file_text, ext)
-    if reason:
-        record(kind="hook", name=os.path.basename(__file__), session_id=payload.get("session_id"),
-               cwd=payload.get("cwd"), blocked=True, notes=reason)
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason,
-            }
-        }))
+    try:
+        with open(tool_input.get("file_path") or "", "r", encoding="utf-8") as fh:
+            before = fh.read()
+    except (OSError, ValueError):
+        before = ""
+    after = text
+    if tool_name == "Edit":
+        after = apply_edit(before, tool_input.get("old_string") or "", text, tool_input.get("replace_all") is True)
+        if after is None:
+            before, after = tool_input.get("old_string") or "", text
+    added = added_stray(before, after, token)
+    if not added:
+        return
+    reason = (
+        f"comment-budget-guard: {file_path} gains {len(added)} comment line(s) outside the keep list, "
+        f'first: "{added[0][:100]}". Code carries no comments (rules/coding-standards.md): delete it, or put '
+        "the reason in a name, a type or a test. Kept: license blocks, lint/type/tool directives, SHORTCUT: and "
+        "SAFETY: lines, a link to the issue, RFC or vendor doc behind a limit, and API doc blocks. A stale comment "
+        "gets deleted, never reworded."
+    )
+    record(kind="hook", name=os.path.basename(__file__), session_id=payload.get("session_id"),
+           cwd=payload.get("cwd"), blocked=True, notes=reason)
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }))
 
 
 if __name__ == "__main__":

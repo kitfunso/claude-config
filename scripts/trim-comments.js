@@ -1,20 +1,10 @@
 #!/usr/bin/env node
-// Applies comment-block replacements and refuses any result that breaks the budget.
 // Bash edits skip the Edit|Write hook, so the check has to live in the writer itself.
 // Usage: node trim-comments.js <spec.json>   spec: { "<file>": [[start, end, ["line", ...]], ...] }
 
 const fs = require('fs');
 const path = require('path');
 const budget = require('./hooks/comment-budget-guard.js');
-
-function grade(lines, token) {
-  const comments = budget.countComments(lines, token);
-  const run = budget.longestRun(lines, token);
-  const density = lines.length ? comments / lines.length : 0;
-  const overRun = run > budget.MAX_RUN;
-  const overDensity = lines.length >= budget.DENSITY_FLOOR && density > budget.MAX_DENSITY;
-  return { comments, run, density, ok: !overRun && !overDensity };
-}
 
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const staged = [];
@@ -37,13 +27,12 @@ for (const [file, edits] of Object.entries(spec)) {
   for (const [start, end, repl] of [...edits].sort((a, b) => b[0] - a[0])) {
     out.splice(start - 1, end - start + 1, ...repl);
   }
-  const g = grade(out, token);
-  if (!g.ok) {
-    rejected.push(file + ' -> result still over budget: run=' + g.run +
-      ' ' + g.comments + '/' + out.length + ' (' + (g.density * 100).toFixed(1) + '%)');
+  const added = budget.addedStray(before, out.join('\n'), token);
+  if (added.length) {
+    rejected.push(file + ' -> replacement adds ' + added.length + ' comment line(s) outside the keep list, first: ' + added[0]);
     continue;
   }
-  staged.push([file, out.join('\n'), lines.length - out.length, g]);
+  staged.push([file, out.join('\n'), lines.length - out.length, budget.strayComments(out, token).length]);
 }
 
 if (rejected.length) {
@@ -53,10 +42,9 @@ if (rejected.length) {
 }
 
 let total = 0;
-for (const [file, text, removed, g] of staged) {
+for (const [file, text, removed, left] of staged) {
   fs.writeFileSync(file, text);
   total += removed;
-  console.log('-' + String(removed).padStart(3) + '  run=' + g.run +
-    ' dens=' + (g.density * 100).toFixed(1) + '%  ' + file);
+  console.log('-' + String(removed).padStart(3) + '  stray left=' + left + '  ' + file);
 }
-console.log('removed ' + total + ' lines across ' + staged.length + ' files, all within budget');
+console.log('removed ' + total + ' lines across ' + staged.length + ' files, no new comments');

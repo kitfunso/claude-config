@@ -1,13 +1,20 @@
 #!/usr/bin/env node
-// Denies an Edit/Write whose comments exceed the budget in rules/coding-standards.md.
-// Source files only. Set CLAUDE_COMMENT_BUDGET=off to disable.
 
 const fs = require('fs');
-const MAX_RUN = 3;
-const MAX_DENSITY = 0.2;
-const DENSITY_FLOOR = 15;
-// @type must not match "@types/x" or "@typescript". @typedef and friends are API docs too.
 const API_DOC = /@param|@returns|@return|@type(?![a-zA-Z])|@typedef|@property|@callback|@example|@throws/;
+const MARK = /\b(SHORTCUT|SAFETY):/;
+const LICENSE = /copyright|licen[cs]e\b|spdx-|all rights reserved|@license|@preserve/i;
+const KEEP = new RegExp([
+  'https?://\\S', '\\brfc\\s?-?\\d{3,}',
+  '@(vitest|jest)-environment', 'swift-tools-version', 'webpack(Prefetch|Preload|Mode|Exclude|Include|Exports|ChunkName|Ignore)',
+  '@deno-types', 'tslint:', 'oxlint-', 'stylelint-', 'yamllint', 'cspell', 'codespell', 'NOSONAR',
+  'eslint-', '^\\W*eslint\\s', '^\\W*global\\s+\\w', 'jshint', '@ts-(ignore|expect-error|nocheck|check)',
+  'prettier-ignore', 'biome-ignore', 'deno-lint', '(istanbul|c8|v8)\\s+ignore',
+  '\\bnoqa\\b', '^\\W*type:\\s', 'pyright:', 'mypy:', 'pylint:', 'ruff:', 'isort:', '^\\W*fmt:\\s*(on|off|skip)',
+  '\\bpragma\\b', '\\bnosec\\b', 'noinspection', '@jsx', '@refresh\\b', '@vite-ignore', 'sourceMappingURL', '@flow\\b',
+  '-\\*-\\s*coding', 'coding[:=]\\s*utf', 'vim:', 'shellcheck', '@generated', '^\\W*go:\\w', '\\+build', 'nolint',
+  '__PURE__', '__NO_SIDE_EFFECTS__', '^\\W*/\\s*<reference', '^\\W*#requires',
+].join('|'), 'i');
 
 const LINE_TOKENS = {
   js: '//', jsx: '//', ts: '//', tsx: '//', mjs: '//', cjs: '//',
@@ -18,9 +25,13 @@ const LINE_TOKENS = {
 };
 
 const isDocQuote = (s) => s.startsWith('"""') || s.startsWith("'''");
+const API_TARGET = /^(export\b|declare\b|\s+((readonly|static|public|async|get|set)\s+)*[\w$#]+[?!]?\s*[:(<=])/;
 
-// One pass labels every line, so run and density can never disagree.
-// A block is 'doc' if any line in it carries an API tag, not just the opener.
+function nextCode(lines, from) {
+  for (let k = from; k < lines.length; k += 1) if (lines[k].trim()) return lines[k];
+  return '';
+}
+
 function classify(lines, token) {
   const kind = new Array(lines.length).fill('code');
   let i = 0;
@@ -37,9 +48,7 @@ function classify(lines, token) {
     if (line.startsWith('/*')) {
       let j = i;
       while (j < lines.length && !lines[j].includes('*/')) j += 1;
-      // A one-line /** */ is a field's doc comment, the TSDoc editors show on hover.
-      // Narrative bloat is the multi-line untagged block, which still counts.
-      const isApi = (j === i && line.startsWith('/**')) ||
+      const isApi = (line.startsWith('/**') && (j === i || API_TARGET.test(nextCode(lines, j + 1)))) ||
         lines.slice(i, Math.min(j + 1, lines.length)).some((l) => API_DOC.test(l));
       for (let k = i; k <= Math.min(j, lines.length - 1); k += 1) kind[k] = isApi ? 'doc' : 'comment';
       i = j + 1; continue;
@@ -50,38 +59,48 @@ function classify(lines, token) {
   return kind;
 }
 
-// A run survives blank lines so a block split by whitespace still counts as one.
-function longestRun(lines, token) {
+const isKept = (line) => MARK.test(line) || KEEP.test(line);
+
+function strayComments(lines, token) {
   const kind = classify(lines, token);
-  let best = 0;
-  let run = 0;
-  for (const k of kind) {
-    if (k === 'comment') { run += 1; best = Math.max(best, run); continue; }
-    if (k === 'blank') continue;
-    run = 0;
+  const stray = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (kind[i] !== 'comment') { i += 1; continue; }
+    let j = i;
+    while (j < lines.length && kind[j] === 'comment') j += 1;
+    const block = lines.slice(i, j);
+    if (!block.some((l) => LICENSE.test(l))) {
+      for (let k = i; k < j; k += 1) if (lines[k].trim() && !isKept(lines[k])) stray.push(lines[k].trim());
+    }
+    i = j;
   }
-  return best;
+  return stray;
 }
 
-function countComments(lines, token) {
-  return classify(lines, token).filter((k) => k === 'comment').length;
+function addedStray(beforeText, afterText, token) {
+  const seen = new Map();
+  for (const l of strayComments(beforeText.split(/\r?\n/), token)) seen.set(l, (seen.get(l) || 0) + 1);
+  const added = [];
+  for (const l of strayComments(afterText.split(/\r?\n/), token)) {
+    const n = seen.get(l) || 0;
+    if (n > 0) seen.set(l, n - 1); else added.push(l);
+  }
+  return added;
 }
 
-// The single place that decides what is code, so no consumer can drift from the classifier.
 function codeOnly(text, token) {
   const lines = text.split(/\r?\n/);
   const kind = classify(lines, token);
   return lines.filter((l, i) => kind[i] === 'code').map((l) => l.trimEnd()).join('\n');
 }
 
-// Exported so scan-comments.js grades files with this exact logic, never a copy.
-module.exports = { LINE_TOKENS, MAX_RUN, MAX_DENSITY, DENSITY_FLOOR, classify, longestRun, countComments, codeOnly };
+module.exports = { LINE_TOKENS, classify, isKept, strayComments, addedStray, codeOnly };
 if (require.main !== module) return;
 
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
-// Manual slicing, never String#replace(old, new_string): new_string may contain "$&"/"$1".
 function applyEdit(content, oldStr, newStr, replaceAll) {
   if (!oldStr || content.indexOf(oldStr) === -1) return null;
   if (!replaceAll) {
@@ -96,26 +115,6 @@ function applyEdit(content, oldStr, newStr, replaceAll) {
     rest = rest.slice(pos + oldStr.length);
   }
   return result + rest;
-}
-
-// Shebang/blank/comment header lines are boilerplate, not the body the density budget grades.
-function headerEnd(lines, token) {
-  const kind = classify(lines, token);
-  let i = 0;
-  while (i < lines.length) {
-    const trimmed = lines[i].trim();
-    if (trimmed === '' || trimmed.startsWith('#!') || kind[i] === 'comment') { i += 1; continue; }
-    break;
-  }
-  return i;
-}
-
-function grade(fileText, token) {
-  const lines = fileText.split(/\r?\n/);
-  const body = lines.slice(headerEnd(lines, token));
-  const comments = countComments(body, token);
-  const density = body.length ? comments / body.length : 0;
-  return { comments, total: body.length, density, over: body.length >= DENSITY_FLOOR && density > MAX_DENSITY };
 }
 
 let raw = '';
@@ -135,48 +134,22 @@ process.stdin.on('end', () => {
 
   const text = String(ti.content != null ? ti.content : ti.new_string || '');
   if (!text) process.exit(0);
-  const lines = text.split(/\r?\n/);
-  const run = longestRun(lines, token);
 
-  // Density is judged on the file the edit produces, not the snippet alone, so a
-  // short why-comment dropped into a big file can't read as 100% comments.
-  let fileText = input.tool_name === 'Write' ? text : null;
-  let before = null;
+  let before = '';
+  try { before = fs.readFileSync(ti.file_path, 'utf8'); } catch (e) { before = ''; }
+  let after = input.tool_name === 'Write' ? text : null;
   if (input.tool_name === 'Edit') {
-    try {
-      before = fs.readFileSync(ti.file_path, 'utf8');
-      fileText = applyEdit(before, String(ti.old_string || ''), String(ti.new_string || ''), ti.replace_all === true);
-    } catch (e) {
-      fileText = null;
-    }
+    after = applyEdit(before, String(ti.old_string || ''), text, ti.replace_all === true);
+    if (after == null) { before = String(ti.old_string || ''); after = text; }
   }
-
-  const pct = (x) => Math.round(x * 100) + '%';
-  let why = null;
-  if (run > MAX_RUN) {
-    why = run + ' comment lines in a row (budget: ' + MAX_RUN + ')';
-  } else if (fileText != null) {
-    const now = grade(fileText, token);
-    const was = before != null ? grade(before, token) : null;
-    if (was && was.over) {
-      // Debt the file already carried is not this edit's to pay; what the edit adds must meet the budget.
-      const addedComments = now.comments - was.comments;
-      const addedLines = now.total - was.total;
-      if (addedComments > 0 && addedComments > MAX_DENSITY * addedLines) {
-        why = 'an edit adding ' + addedComments + ' comment lines in ' + addedLines + ' net new lines, on a file already at ' +
-          pct(was.density) + ' (budget: ' + pct(MAX_DENSITY) + ')';
-      }
-    } else if (now.over) {
-      why = now.comments + ' comment lines out of ' + now.total + ' in the resulting file (' +
-        pct(now.density) + ', budget: ' + pct(MAX_DENSITY) + ')';
-    }
-  }
-  if (!why) process.exit(0);
+  const added = addedStray(before, after, token);
+  if (!added.length) process.exit(0);
 
   const reason =
-    'comment-budget-guard: ' + filePath + ' has ' + why + '. Comments are one line, two at most. ' +
-    'Say WHY a non-obvious choice was made, never WHAT the code does. Measurement notes, dates and ' +
-    'incident history go in docs/ARCHITECTURE.md or CLAUDE.md, never in source. Cut the block, then retry.';
+    'comment-budget-guard: ' + filePath + ' gains ' + added.length + ' comment line(s) outside the keep list, first: "' +
+    added[0].slice(0, 100) + '". Code carries no comments (rules/coding-standards.md): delete it, or put the reason ' +
+    'in a name, a type or a test. Kept: license blocks, lint/type/tool directives, SHORTCUT: and SAFETY: lines, ' +
+    'a link to the issue, RFC or vendor doc behind a limit, and API doc blocks. A stale comment gets deleted, never reworded.';
   record({
     kind: 'hook',
     name: 'comment-budget-guard.js',

@@ -4,10 +4,27 @@ const assert = require('node:assert');
 const path = require('node:path');
 const os = require('node:os');
 const fs = require('node:fs');
+const { spawnSync } = require('node:child_process');
 const { runHook, isDeny } = require('./helpers');
 
 const HOOK = path.join(__dirname, '..', 'comment-budget-guard.js');
+const PY_HOOK = path.join(__dirname, '..', 'comment_budget_guard.py');
+const PY = spawnSync('python', ['--version']).status === 0 ? 'python' : null;
+const NO_DB = { DEVRL_DB: path.join(os.tmpdir(), 'hook-tests-no-devrl-db', 'episodes.db') };
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cbg-test-'));
+const NL = String.fromCharCode(10);
+
+function runPy(payload, env) {
+  const r = spawnSync(PY, [PY_HOOK], { input: JSON.stringify(payload), encoding: 'utf8', env: Object.assign({}, process.env, NO_DB, env || {}) });
+  const out = (r.stdout || '').trim();
+  return out ? JSON.parse(out) : null;
+}
+
+const RUNNERS = [['js', (p, env) => runHook(HOOK, p, env)]];
+if (PY) RUNNERS.push(['py', runPy]);
+function each(name, fn) {
+  for (const [tag, run] of RUNNERS) test(tag + ': ' + name, () => fn(run));
+}
 
 function writeTemp(name, content) {
   const p = path.join(tmpDir, name);
@@ -21,50 +38,71 @@ function codeLines(n, prefix) {
   return out;
 }
 
-test('editing in a 2-line comment on a 100-line file with 4 existing comments allows', () => {
-  const base = codeLines(100, 'v');
-  [9, 29, 49, 69].forEach((i) => { base[i] = '// existing note'; });
-  const filePath = writeTemp('case-a.js', base.join('\n') + '\n');
-  const oldStr = base[89];
-  const newStr = '// added context\n// second line\n' + oldStr;
-  const out = runHook(HOOK, { tool_name: 'Edit', tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr } });
-  assert.strictEqual(out, null);
-});
-
-test('an edit inserting a 4-comment-line run denies', () => {
-  const base = codeLines(50, 'w');
-  const filePath = writeTemp('case-b.js', base.join('\n') + '\n');
-  const oldStr = base[24];
-  const newStr = '// one\n// two\n// three\n// four\n' + oldStr;
-  const out = runHook(HOOK, { tool_name: 'Edit', tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr } });
-  assert.ok(isDeny(out));
-});
-
-test('a 20-line write with a 3-line header and 1 body comment allows', () => {
-  const lines = ['#!/usr/bin/env node', '// header note one', '// header note two'];
-  for (let i = 1; i <= 17; i += 1) lines.push(i === 8 ? '// body note' : `const b${i} = ${i};`);
-  const out = runHook(HOOK, { tool_name: 'Write', tool_input: { file_path: path.join(tmpDir, 'case-c.js'), content: lines.join('\n') + '\n' } });
-  assert.strictEqual(out, null);
-});
-
-test('a 20-line write with 8 comment lines denies', () => {
+function legacyFile(name) {
   const lines = [];
-  for (let i = 1; i <= 20; i += 1) lines.push(i % 2 === 0 && i <= 16 ? `// note ${i}` : `const c${i} = ${i};`);
-  const out = runHook(HOOK, { tool_name: 'Write', tool_input: { file_path: path.join(tmpDir, 'case-d.js'), content: lines.join('\n') + '\n' } });
-  assert.ok(isDeny(out));
+  for (let i = 0; i < 40; i += 1) lines.push(i % 3 === 1 ? `// legacy note ${i}` : `const l${i} = ${i};`);
+  return { lines, filePath: writeTemp(name, lines.join(NL) + NL) };
+}
+
+const edit = (filePath, oldStr, newStr) => ({ tool_name: 'Edit', tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr } });
+
+each('an edit adding one plain comment line denies', (run) => {
+  const base = codeLines(50, 'w');
+  const filePath = writeTemp('case-b.js', base.join(NL) + NL);
+  assert.ok(isDeny(run(edit(filePath, base[24], '// explains the next line' + NL + base[24]))));
 });
 
-test('an edit whose new_string holds a literal $& does not corrupt the density check', () => {
-  const base = codeLines(30, 'x');
-  const filePath = writeTemp('case-e.js', base.join('\n') + '\n');
-  const oldStr = base[14];
-  const newStr = '// note about x15\n// second note\nconst escaped = "literal $& stays literal";\n' + oldStr;
-  const out = runHook(HOOK, { tool_name: 'Edit', tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr } });
-  assert.strictEqual(out, null);
+each('an edit adding a SHORTCUT: line allows', (run) => {
+  const base = codeLines(20, 'k');
+  const filePath = writeTemp('case-k.js', base.join(NL) + NL);
+  const line = '// SHORTCUT: global lock, per-account locks if throughput matters';
+  assert.strictEqual(run(edit(filePath, base[4], line + NL + base[4])), null);
 });
 
-const NL = String.fromCharCode(10);
+each('a code-only edit in a file full of old comments allows', (run) => {
+  const { filePath } = legacyFile('legacy-a.js');
+  assert.strictEqual(run(edit(filePath, 'const l0 = 0;', 'const l0 = 100;')), null);
+});
+
+each('an edit that deletes a comment allows', (run) => {
+  const { lines, filePath } = legacyFile('legacy-b.js');
+  assert.strictEqual(run(edit(filePath, lines[1] + NL + lines[2], lines[2])), null);
+});
+
+each('an edit that rewords a comment denies', (run) => {
+  const { lines, filePath } = legacyFile('legacy-c.js');
+  assert.ok(isDeny(run(edit(filePath, lines[1], '// legacy note, now reworded'))));
+});
+
+each('an edit that moves a commented line allows', (run) => {
+  const { lines, filePath } = legacyFile('legacy-d.js');
+  assert.strictEqual(run(edit(filePath, [lines[0], lines[1], lines[2]].join(NL), [lines[2], lines[0], lines[1]].join(NL))), null);
+});
+
+each('an edit whose new_string holds a literal $` is not expanded', (run) => {
+  const { lines, filePath } = legacyFile('legacy-e.js');
+  assert.strictEqual(run(edit(filePath, lines[30], "const s = '$`';")), null);
+});
+
+each('CLAUDE_COMMENT_BUDGET=off allows', (run) => {
+  assert.strictEqual(run({ tool_name: 'Write', tool_input: { file_path: 'C:/p/src/off.js', content: '// x' + NL + 'const a = 1;' } },
+    { CLAUDE_COMMENT_BUDGET: 'off' }), null);
+});
+
+each('a Write over an existing file that keeps its comments allows', (run) => {
+  const { lines, filePath } = legacyFile('legacy-f.js');
+  assert.strictEqual(run({ tool_name: 'Write', tool_input: { file_path: filePath, content: lines.concat(['const z = 1;']).join(NL) } }), null);
+});
+
+each('a Write over an existing file that adds a comment denies', (run) => {
+  const { lines, filePath } = legacyFile('legacy-g.js');
+  assert.ok(isDeny(run({ tool_name: 'Write', tool_input: { file_path: filePath, content: lines.concat(['// fresh note', 'const z = 1;']).join(NL) } })));
+});
+
 const portedCases = [
+  ['plain one-line comment -> deny', 'deny', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/a.js',
+      content: ['// Windows revalidates the handle per write, so cache it.', 'let h = null;'].join(NL) } }],
   ['fat js block -> deny', 'deny', {
     tool_name: 'Write', tool_input: { file_path: 'C:/p/src/a.js',
       content: ['// Cache the handle so repeated calls skip the syscall.',
@@ -73,13 +111,36 @@ const portedCases = [
         '// the console handle on every write, which we do 40x a frame.',
         '// See ARCHITECTURE.md for the full measurement table.',
         'let h = null;'].join(NL) } }],
-  ['one-line comment -> allow', 'allow', {
-    tool_name: 'Edit', tool_input: { file_path: 'C:/p/src/a.js',
-      new_string: ['// Windows revalidates the handle per write, so cache it.', 'let h = null;'].join(NL) } }],
-  ['3-line header -> allow', 'allow', {
-    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/a.js',
-      content: ['// one', '// two', '// three', 'const x = 1;'].join(NL) } }],
-  // Dropped 'divider, blank, 3-line jsdoc -> allow': the blank-continuation fix below denies it now (4-line run).
+  ['SAFETY: line -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/r.ts',
+      content: ['// SAFETY: the SELECT names every key Row reads', 'const r = row as Row;'].join(NL) } }],
+  ['lint and type directives -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/l.ts',
+      content: ['// eslint-disable-next-line no-console', '// @ts-expect-error vendor type is wrong', '/* istanbul ignore next */',
+        'console.log(1);'].join(NL) } }],
+  ['python directives -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/d.py',
+      content: ['# -*- coding: utf-8 -*-', '# pylint: disable=invalid-name', '# type: ignore', 'import x  # noqa: F401'].join(NL) } }],
+  ['license block -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/lic.js',
+      content: ['// Copyright 2026 Example Ltd', '// Licensed under the Apache License, Version 2.0.',
+        '// Unless required by applicable law or agreed to in writing,', '// software is distributed on an AS IS BASIS.',
+        'const x = 1;'].join(NL) } }],
+  ['issue link -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/i.ts',
+      content: ['// Vendor bug: https://github.com/vercel/next.js/issues/12345', 'const x = 1;'].join(NL) } }],
+  ['test-runner directive -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/t.test.ts',
+      content: ['// @vitest-environment jsdom', 'import { test } from "vitest";'].join(NL) } }],
+  ['shellcheck directive -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/run.sh',
+      content: ['#!/usr/bin/env bash', '# shellcheck disable=SC2086', 'echo $x'].join(NL) } }],
+  ['sql -- note -> deny', 'deny', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/q.sql',
+      content: ['-- pick the newest row', 'SELECT 1;'].join(NL) } }],
+  ['comment, code, comment -> deny', 'deny', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/f.ts',
+      content: ['// one', 'const a = 1;', '// two', 'const b = 2;'].join(NL) } }],
   ['typedef block -> allow', 'allow', {
     tool_name: 'Write', tool_input: { file_path: 'C:/p/src/c.js',
       content: ['/**', ' * @typedef {{ a: string }} Thing', ' * @typedef {Thing} Other', ' */',
@@ -91,6 +152,14 @@ const portedCases = [
         '  value: string;', '  /** Bytes changed. */', '  n: number;', '}',
         'export const X = 1;', 'export const Y = 2;', 'export const Z = 3;',
         'export const W = 4;', 'export const V = 5;'].join(NL) } }],
+  ['multi-line jsdoc on an export -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/api.ts',
+      content: ['/** Opens the store at a path.', ' * Throws when the schema is newer than this build. */',
+        'export function open(p: string): Store { return load(p); }'].join(NL) } }],
+  ['multi-line jsdoc on an interface member -> allow', 'allow', {
+    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/types.ts',
+      content: ['export interface Bearer {', '  /** Role the resolver vouches for.', '   * Any other value reads as viewer. */',
+        '  role?: Role;', '}'].join(NL) } }],
   ['multi-line untagged jsdoc still denied', 'deny', {
     tool_name: 'Write', tool_input: { file_path: 'C:/p/src/e.ts',
       content: ['/**', ' * We tried three approaches here.', ' * The first was too slow.',
@@ -109,9 +178,6 @@ const portedCases = [
   ['docs/ dir -> allow', 'allow', {
     tool_name: 'Write', tool_input: { file_path: 'C:/p/docs/notes.js',
       content: ['// a', '// b', '// c', '// d', '// e'].join(NL) } }],
-  ['20 code lines 5 comments -> deny on density', 'deny', {
-    tool_name: 'Write', tool_input: { file_path: 'C:/p/src/b.js',
-      content: Array.from({ length: 20 }, (_, i) => (i % 4 === 0 ? '// note ' + i : 'const v' + i + ' = ' + i + ';')).join(NL) } }],
   ['bash shebang only -> allow', 'allow', {
     tool_name: 'Write', tool_input: { file_path: 'C:/p/go.sh',
       content: ['#!/usr/bin/env bash', 'set -euo pipefail', 'echo hi'].join(NL) } }],
@@ -126,73 +192,18 @@ const portedCases = [
 ];
 
 for (const [name, want, payload] of portedCases) {
-  test(name, () => {
-    const out = runHook(HOOK, payload);
+  each(name, (run) => {
+    const out = run(payload);
     if (want === 'deny') assert.ok(isDeny(out));
     else assert.strictEqual(out, null);
   });
 }
 
-test('dogfood: hook passes its own rule', () => {
-  const out = runHook(HOOK, { tool_name: 'Write', tool_input: { file_path: HOOK, content: fs.readFileSync(HOOK, 'utf8') } });
-  assert.strictEqual(out, null);
-});
-
-test('blank-split narration still denied by density', () => {
-  const out = runHook(HOOK, { tool_name: 'Write', tool_input: { file_path: 'C:/p/src/b.ts',
-    content: ['// one', '// two', '// three', '', '// four', '// five', '// six',
-      'const a = 1;', 'const b = 2;', 'const c = 3;', 'const d = 4;', 'const e = 5;',
-      'const f = 6;', 'const g = 7;', 'const h = 8;', 'const i = 9;'].join(NL) } });
-  assert.ok(isDeny(out));
-});
-
-test('comment, code, comment, code, comment, code is allowed', () => {
-  const out = runHook(HOOK, { tool_name: 'Write', tool_input: { file_path: 'C:/p/src/f.ts',
-    content: ['// one', 'const a = 1;', '// two', 'const b = 2;', '// three', 'const c = 3;'].join(NL) } });
-  assert.strictEqual(out, null);
-});
-
-function legacyFile(name) {
-  const lines = [];
-  for (let i = 0; i < 40; i += 1) lines.push(i % 3 === 1 ? `// legacy note ${i}` : `const l${i} = ${i};`);
-  return { lines, filePath: writeTemp(name, lines.join(NL) + NL) };
-}
-
-function editOut(filePath, oldStr, newStr) {
-  return runHook(HOOK, { tool_name: 'Edit', tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr } });
-}
-
-test('over-budget file: a code-only edit allows', () => {
-  const { filePath } = legacyFile('legacy-a.js');
-  assert.strictEqual(editOut(filePath, 'const l0 = 0;', 'const l0 = 100;'), null);
-});
-
-test('over-budget file: an edit that removes a comment allows', () => {
-  const { lines, filePath } = legacyFile('legacy-b.js');
-  assert.strictEqual(editOut(filePath, lines[1] + NL + lines[2], lines[2]), null);
-});
-
-test('over-budget file: one new comment with one new code line denies', () => {
-  const { lines, filePath } = legacyFile('legacy-c.js');
-  assert.ok(isDeny(editOut(filePath, lines[0], lines[0] + NL + '// fresh note' + NL + 'const fresh = 1;')));
-});
-
-test('over-budget file: one new comment with four new code lines allows', () => {
-  const { lines, filePath } = legacyFile('legacy-d.js');
-  const added = [lines[0], '// fresh note'].concat(codeLines(4, 'n'));
-  assert.strictEqual(editOut(filePath, lines[0], added.join(NL)), null);
-});
-
-test('over-budget file: a code line swapped for a comment denies', () => {
-  const { lines, filePath } = legacyFile('legacy-e.js');
-  assert.ok(isDeny(editOut(filePath, lines[6], '// swapped in for the code')));
-});
-
-test('healthy file pushed over budget by an edit still denies', () => {
-  const base = codeLines(20, 'h');
-  [3, 9, 15].forEach((i) => { base[i] = '// existing note'; });
-  const filePath = writeTemp('healthy.js', base.join(NL) + NL);
-  assert.ok(isDeny(editOut(filePath, base[18], '// extra one' + NL + '// extra two' + NL + base[18])));
+each('dogfood: both hook sources carry no stray comments', (run) => {
+  for (const [src, ext] of [[HOOK, 'js'], [PY_HOOK, 'py']]) {
+    const content = fs.readFileSync(src, 'utf8');
+    assert.strictEqual(run({ tool_name: 'Write', tool_input: { file_path: path.join(tmpDir, 'dogfood-new.' + ext), content } }), null, src);
+  }
 });
 
 after(() => {
