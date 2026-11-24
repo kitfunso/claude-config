@@ -1,4 +1,3 @@
-"""Tests for the replay harness's transcript audit and scoring."""
 from __future__ import annotations
 
 import json
@@ -26,7 +25,6 @@ def test_own_folder_is_allowed() -> None:
 
 def test_own_folder_in_git_bash_and_relative_spellings_is_allowed() -> None:
     lines = [use("Bash", command="ls -la /c/qmp-replays/runs/r1/"), use("Bash", command="cd ../r1 && ls")]
-    # A forbidden fragment inside the run's own id (a case named after its source) must not void the run.
     assert audit(lines, "with", ("r1",), WORK).void == ""
 
 

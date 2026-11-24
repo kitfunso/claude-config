@@ -12,7 +12,6 @@ const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pwg-test-'));
 const tempClaudeMd = path.join(tmpDir, 'CLAUDE.md');
 fs.writeFileSync(tempClaudeMd, 'test content for backup mapping\n');
 
-// Reproduces backup()'s own formula since the hook has no exports to import.
 function expectedBackupPath(filePath) {
   const mapped = path.resolve(filePath).replace(':', '');
   return path.join(BACKUP_ROOT, mapped) + '.old';

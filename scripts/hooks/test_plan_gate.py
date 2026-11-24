@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""Self-check for the plan gate: `python test_plan_gate.py`."""
-
 from __future__ import annotations
 
 import importlib.util

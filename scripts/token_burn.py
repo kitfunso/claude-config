@@ -1,4 +1,3 @@
-"""Where the tokens went: aggregate usage from Claude Code transcripts, deduped by API request."""
 from __future__ import annotations
 
 import json
@@ -11,7 +10,6 @@ from pathlib import Path
 ROOT = Path.home() / ".claude" / "projects"
 DAYS = int(sys.argv[1]) if len(sys.argv) > 1 else 14
 CUTOFF = datetime.now(timezone.utc) - timedelta(days=DAYS)
-# Relative weights: input=1, per the price ratios stated in ~/.claude/CLAUDE.md Model Routing.
 W_TYPE = {"in": 1.0, "cw5m": 1.25, "cw1h": 2.0, "cr": 0.1, "out": 5.0}
 W_MODEL = {"fable": 1.0, "opus": 0.4, "sonnet": 0.2, "haiku": 0.07}
 

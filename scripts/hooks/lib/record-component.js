@@ -1,7 +1,3 @@
-// Shared writer for component_outcomes: the PostToolUse recorder and every
-// guard's deny path go through here. Never throws, because recording must never
-// change what the caller was going to do.
-
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

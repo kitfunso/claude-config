@@ -14,7 +14,6 @@ from pathlib import Path
 
 SKILLS = Path.home() / ".claude" / "skills"
 SPLITS = {"train": "evals", "test": "evals-test"}
-# Everything a run must not see: the rubrics of both splits, backups, test files and caches.
 HIDDEN = ("evals", "evals-test", "replays", "*.old-*", "__pycache__", ".pytest_cache", "test_*.py")
 
 
@@ -54,7 +53,6 @@ def build(skill: str, root: Path, runs: int, without: set[str], without_splits: 
         for case in sorted((skill_dir / folder).glob("*/case.yaml"))
     ]
     cases = []
-    # Sorted by name across both splits, so a message number says nothing about its split.
     for i, (split, case) in enumerate(sorted(found, key=lambda sc: sc[1].parent.name), 1):
         info = read_case(case)
         msg = f"msg-{i:02d}"

@@ -5,7 +5,6 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 
-// Pin the paid-Jev path and a temp counter so tests never touch the live Clef budget.
 process.env.JEV_PROVIDER = 'jev';
 process.env.CLEF_STATE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'clef-test-'));
 const { ask, lint, provider, neuronsUsed } = require('../lib/jev');

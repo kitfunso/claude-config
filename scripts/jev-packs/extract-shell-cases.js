@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 'use strict';
-// usage: node extract-shell-cases.js --out <file.json> [--days 14] [--max 300]
-// Prints counts only. The output holds command text, so write it outside this git repo.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -12,7 +10,6 @@ const arg = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
   return i > 0 ? process.argv[i + 1] : fallback;
 };
-// Anything that looks like a credential is dropped whole; a lost sample is cheaper than a leaked key.
 const SECRET = /sk-[A-Za-z0-9]|Bearer\s+[A-Za-z0-9._-]{16,}|api[_-]?key\s*[=:]|password\s*[=:]|secret\s*[=:]|token\s*[=:]\s*\S{12,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|[A-Za-z0-9_-]{40,}/i;
 const SHELLS = { Bash: 'bash', PowerShell: 'powershell' };
 

@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (Bash|PowerShell): backstop for two Git rules in CLAUDE.md.
-
-1. Branch pre-check — before any state-changing git command, inject the current
-   branch of the target repo into context, so "always run git branch first"
-   holds even when the model forgets.
-2. Commit-message lint — on `git commit`, scan the command text for banned
-   AI-isms (Stop Slop list) and warn so the model rewrites before committing.
-
-Contract: reads hook JSON on stdin, writes hook JSON on stdout, always exits 0.
-Warn-only — this hook never blocks a command; a broken guard must not break
-the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -28,8 +15,6 @@ MUTATING = re.compile(
 DASH_C = re.compile(r"\bgit\s+(?:[^\s]+\s+)*?-C\s+\"?([^\s\"]+)\"?")
 CD_PREFIX = re.compile(r"^\s*cd\s+\"?([^\s\"&;|]+)\"?\s*(?:&&|;)")
 
-# High-precision subset of the CLAUDE.md Banned AI-isms list. Whole words only.
-# "harness" and "enhance" are omitted: too many legitimate technical uses.
 BANNED_WORDS = re.compile(
     r"\b(canonical|delve|leverage|robust|seamless|holistic|crucial|pivotal|"
     r"foster|unlock|empower|elevate|streamline|meticulous|intricate|nuanced|"
@@ -46,7 +31,6 @@ MSYS_DRIVE = re.compile(r"^/([a-zA-Z])/")
 
 
 def resolve_dir(raw: str | None, cwd: str | None) -> str:
-    # The command text is Git Bash syntax: expand ~, translate /c/... and skip $VAR paths.
     if not raw or raw.startswith("$"):
         return cwd or "."
     return MSYS_DRIVE.sub(lambda m: f"{m.group(1).upper()}:/", os.path.expanduser(raw))

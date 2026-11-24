@@ -1,5 +1,3 @@
-// Start, watch and rerun a Codemagic build through its REST API, so no release needs a browser.
-// Flags and examples: ../SKILL.md, "Starting a Codemagic build".
 import { execFileSync, spawn } from 'node:child_process';
 import { openSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -7,17 +5,13 @@ import { join } from 'node:path';
 
 const args = parseArgs(process.argv.slice(2));
 const LOG_DIR = tmpdir();
-// CODEMAGIC_API points the script at the stand-in server in codemagic-run.test.mjs.
 const API = process.env.CODEMAGIC_API ?? 'https://api.codemagic.io';
-// Failures a plain rerun clears; anything else stops for a human look.
 const TRANSIENT = [
   { name: 'Google Fonts fetch at build time', re: /next\/font\/google queries have exactly one entry|Failed to fetch font/ },
   { name: 'App Store Connect 5xx during upload', re: /received status code 5\d\d; internal server error/ },
 ];
-// Listing the end states, not the running ones: an unknown new state then reads as still running.
 const FINAL = new Set(['finished', 'failed', 'canceled', 'timeout', 'skipped', 'warning']);
 const GOOD = ['success', 'dry-run', 'checked'];
-// Compiled at start so a bad regex fails before a long build begins, not after it.
 const REPORT_LINES = args['report-lines'] ? new RegExp(args['report-lines']) : null;
 
 if (args.wait) await waitForResult(args.wait, Number(args.seconds ?? 570));
@@ -94,7 +88,6 @@ async function report(id, outcome) {
   const where = outcome.step ? ` at "${outcome.step}"` : '';
   console.log(`${id}: ${outcome.state}${where}${outcome.transient ? ` (transient: ${outcome.transient})` : ''}`);
   const name = args['report-step'];
-  // The step's own lines matter most when the build failed, so --report-lines prints then too.
   if (!name || (outcome.state !== 'success' && !REPORT_LINES)) return;
   const step = outcome.steps.find((s) => s.name === name);
   if (!step) return console.log(`no step named "${name}" in ${id}`);
@@ -103,7 +96,6 @@ async function report(id, outcome) {
   const keep = REPORT_LINES ?? /^(Version code|Version|State|Submitted date):|^Created Review Submission/;
   const lines = readFileSync(reuse || await stepLog(id, step), 'utf8').split('\n').map((line) => line.trim())
     .filter((line) => keep.test(line));
-  // Indented, so a passed-through RESULT line never matches waitForResult's line-start RESULT.
   console.log(`${name}:\n  ${[...new Set(lines)].join('\n  ')}`);
 }
 
@@ -138,7 +130,6 @@ function detach() {
   process.exit(0);
 }
 
-// Reads only the log file; exit 0 success, 1 failure, 2 still running (wait again).
 async function waitForResult(file, seconds) {
   let shown = 0;
   for (const end = Date.now() + seconds * 1000; Date.now() < end; await new Promise((r) => setTimeout(r, 5000))) {

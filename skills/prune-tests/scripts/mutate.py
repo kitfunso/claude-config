@@ -45,7 +45,6 @@ def _stringy(node: ast.BinOp) -> bool:
 
 
 def _variants(node: ast.AST):
-    """Yield (span node, replacement source, description) for each plausible bug at node."""
     if isinstance(node, ast.Compare):
         for i, op in enumerate(node.ops):
             swap = CMP.get(type(op))
@@ -100,8 +99,6 @@ def _drop_pyc(path: Path) -> None:
 
 
 class Planted:
-    """Context manager: the mutant is on disk inside the block, the original after it."""
-
     def __init__(self, root: Path, m: Mutant):
         self.path, self.m = root / m.file, m
 
@@ -118,7 +115,7 @@ class Planted:
 def _batch_killers(run: runner.Run, tests: list[str], root: Path, ctx: dict) -> set[str]:
     # kill checks every node id collects first, so rc 4 here is a bug that broke conftest loading
     if run.rc == 4 or run.collect_errors or (run.rc in (2, 3) and not run.failed):
-        return set(tests)  # the bug broke import or collection: the whole batch goes red
+        return set(tests)
     return set(runner.red_tests(ctx["python"], root, run, tests, lambda t: _timeout([t], ctx["dur"])))
 
 
@@ -145,7 +142,6 @@ def run_mutant(m: Mutant, root: Path, ctx: dict) -> dict:
 
 
 def _sanity(root: Path, rel: str, tests: list[str], python: str) -> None:
-    """Break the target file outright; its covering tests must go red or the run is blind."""
     path = root / rel
     original = path.read_bytes()
     try:
@@ -161,7 +157,6 @@ def _sanity(root: Path, rel: str, tests: list[str], python: str) -> None:
 
 
 def _partial(out: Path, inputs: list[str]) -> tuple[Path, dict]:
-    """Results land in a JSON-lines file as they finish, so a crashed run resumes where it stopped."""
     partial = out.with_suffix(".partial.jsonl")
     if partial.exists() and any(Path(p).stat().st_mtime > partial.stat().st_mtime for p in inputs):
         raise SystemExit(f"{partial} is older than its inputs; delete it so this run starts fresh.")
@@ -175,13 +170,12 @@ def _workers(base: Path, out: Path, n: int, prefix: str = "wt") -> list[Path]:
     for k in range(1, n):
         wt = out / f"{prefix}-{k}" / base.name  # same folder name: a root __init__.py imports through it
         if wt.exists():
-            runner.git(wt, "checkout", "--", ".")  # a crashed run can leave a mutant planted
+            runner.git(wt, "checkout", "--", ".")
         else:
             runner.git(base, "worktree", "add", "--detach", str(wt), "HEAD")
         for rel in extra:
             (wt / rel).parent.mkdir(parents=True, exist_ok=True)
             (wt / rel).unlink(missing_ok=True)
-            # a hardlinked secret stays one file on disk; anything the code may write stays a copy
             (os.link if (base / rel).stat().st_nlink > 1 else shutil.copy2)(base / rel, wt / rel)
         roots.append(wt)
     return roots
@@ -194,8 +188,8 @@ def kill(a: argparse.Namespace) -> None:
     cdoc = runner.read_json(a.candidates)
     cands = set(cdoc["candidates"])
     dur = runner.read_sandboxed(a.profile)["tests"]
-    skip = set(cdoc["failing_at_baseline"])  # a test red before any bug would "catch" every bug
-    for path in a.skip or ():  # a plan.json skips its cut tests; a text file lists node ids
+    skip = set(cdoc["failing_at_baseline"])
+    for path in a.skip or ():
         skip |= ({r["test"] for r in runner.read_json(path)["cut"]} if path.endswith(".json")
                  else set(filter(None, Path(path).read_text(encoding="utf-8").splitlines())))
     stale = sorted(set(tests_map) - skip - set(runner.collect_ids(a.python, base)))
@@ -262,7 +256,7 @@ def verify(a: argparse.Namespace) -> None:
         jobs += _verify_jobs(slim, runner.read_sandboxed(kpath), runner.read_json(ppath), ids)
     out = Path(a.out).resolve()
     partial, done = _partial(out, [*a.kills, *a.plan])
-    jobs = list({m.id: (m, sel) for m, sel in jobs}.values())  # a bug both passes caught is one bug
+    jobs = list({m.id: (m, sel) for m, sel in jobs}.values())
     todo = [(m, sel) for m, sel in jobs if m.id not in done]
     roots = _workers(slim, out.parent, a.workers, prefix="vw")
     lock = threading.Lock()
@@ -298,7 +292,7 @@ def _verify_jobs(slim: Path, kdoc: dict, plan: dict, ids: set) -> list[tuple[Mut
     for m in kdoc["mutants"]:
         claimed = plan["catchers"].get(m["id"])
         if claimed is None:
-            continue  # no cut test caught it: the slim suite is unchanged for this bug
+            continue
         if hashlib.sha256((slim / m["file"]).read_bytes()).hexdigest() != kdoc["file_sha256"][m["file"]]:
             raise SystemExit(f"{m['file']} differs from the analysed source; a cut must only touch tests.")
         sel = [t for t in claimed if t in ids] or sorted(

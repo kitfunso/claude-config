@@ -1,9 +1,3 @@
-"""Every SKILL.md front matter must parse as YAML with a string description.
-
-A stray ": " in a plain description makes the YAML invalid, and the skill then loads with a fallback
-description that never matches the user's words (improve-codebase-architecture and ugc-factory, 2026-09-24).
-"""
-
 from __future__ import annotations
 
 from pathlib import Path

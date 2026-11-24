@@ -1,6 +1,5 @@
 // SHORTCUT: quote-aware split on && || ; | and newlines; no subshells or variable expansion. A full sh parser if real commands slip past.
 const SEPARATORS = ['&&', '||', ';', '|', '\n']
-// Redirections are not arguments: unparsed, `git push origin x 2>&1` claimed a branch named 2>&1.
 const REDIRECT = /^&?(>\||>>?|<{1,3})(&(\d+|-))?/
 
 export function segments(command) {
@@ -58,7 +57,6 @@ const joinPath = (base, dir) =>
 
 const TOOLS = { git: /(^|[\\/])git(\.exe)?$/i, gh: /(^|[\\/])gh(\.exe)?$/i, npm: /(^|[\\/])npm(\.cmd)?$/i }
 
-// Each git, gh or npm call with the directory it runs in, as far as cd, -C and --prefix say.
 export function toolCalls(command, home) {
   const expand = p => (home !== undefined && /^~([\\/]|$)/.test(p) ? home + p.slice(1) : p)
   const calls = []
@@ -159,6 +157,5 @@ function npmActions(args) {
 
 const BY_TOOL = { git: gitActions, gh: ghActions, npm: npmActions }
 
-// What the command would take (claim) or touch (check), before branch names are resolved.
 export const actions = (command, home) =>
   toolCalls(command, home).flatMap(c => BY_TOOL[c.tool](c.args).map(a => ({ ...a, cwd: c.cwd, repo: c.repo })))

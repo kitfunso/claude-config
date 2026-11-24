@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// PreToolUse hook: shows the fast browser command on the first browser tool call per session.
-// Notice only, never permissionDecision; fails open on any error.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

@@ -1,4 +1,3 @@
-"""Freeze the cross-sectional signal replay: the hourly panel up to 12 monthly releases before the end is public."""
 from __future__ import annotations
 
 import json
@@ -14,7 +13,6 @@ from grade import EMBARGO, relabel
 SRC = Path("C:/Users/skf_s/alphanova/comp6_scientist_release/data/train")
 # Release files are cumulative and calendar-monthly: 031 holds the whole history, 019 ends exactly 365 days earlier.
 LATEST, CUT_AT = "031", "019"
-# Lives here, never in grade.py, because grade.py ships to the run as evaluate.py.
 GRADE_SEED = 20260630
 BASE_CLASS = '''"""Base class for submissions: subclass it and implement train() and predict()."""
 from abc import ABC, abstractmethod

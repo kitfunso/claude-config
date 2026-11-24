@@ -1,4 +1,3 @@
-"""Sub-agent burn: per agent file, joined to its .meta.json, plus cwd-based project attribution."""
 from __future__ import annotations
 
 import json

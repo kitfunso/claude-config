@@ -1,8 +1,3 @@
-"""Fast browser launcher: TypeSafe Jev driving a dedicated Chrome via Browser Harness.
-
-Run: uv run --project C:/Users/skf_s/tools/jev-ultrafast python C:/Users/skf_s/.claude/scripts/fast_browser.py \
-    --url URL --goal "TEXT" [--say "exact text"]... [--max-steps 25] [--check] [--selftest]
-"""
 import argparse
 import json
 import os
@@ -31,15 +26,12 @@ SCROLL_RULE = (
 
 
 class NeedsSay(Exception):
-    """A TYPE_TEXT step needed a --say value this run does not have."""
-
     def __init__(self, reason: str) -> None:
         super().__init__(reason)
         self.reason = reason
 
 
 def read_key(name: str) -> bool:
-    """Load one key into os.environ from the process env or HKCU\\Environment. Never prints it."""
     if os.environ.get(name):
         return True
     try:
@@ -54,7 +46,6 @@ def read_key(name: str) -> bool:
 
 
 def cdp_alive(timeout: float = 1.0) -> bool:
-    """True when the dedicated Chrome's CDP endpoint answers."""
     try:
         urllib.request.urlopen(f"{CDP_URL}/json/version", timeout=timeout).read()
         return True
@@ -63,7 +54,6 @@ def cdp_alive(timeout: float = 1.0) -> bool:
 
 
 def start_chrome() -> bool:
-    """Launch the dedicated automation Chrome and wait up to 10s for its CDP port."""
     subprocess.Popen(
         [
             CHROME_EXE,
@@ -99,7 +89,6 @@ def emit(payload: dict) -> None:
 
 
 def pick_say_value(candidates: list[str], context: dict) -> str | None:
-    """One TypeSafe choice request: which remaining --say value fits this field."""
     from jev_ultrafast.model import post_json, validate_choice
 
     options = {str(i + 1): {"text": v} for i, v in enumerate(candidates)}
@@ -130,7 +119,6 @@ def pick_say_value(candidates: list[str], context: dict) -> str | None:
 def make_writer(
     say_values: list[str], chooser: Callable[[list[str], dict], str | None] = pick_say_value
 ) -> Callable[[dict], tuple[str, dict]]:
-    """Drop-in replacement for jev_ultrafast.model.field_text: no second model, caller supplies text."""
     remaining = list(say_values)
 
     def writer(context: dict) -> tuple[str, dict]:
@@ -148,7 +136,6 @@ def make_writer(
 
 
 def run_check() -> int:
-    """Free self-check: no TypeSafe call, no Agent run."""
     key_ok = read_key(KEY_NAME)
     chrome_found = os.path.isfile(CHROME_EXE)
     cdp_up = ensure_chrome()
@@ -238,7 +225,6 @@ def run_agent(url: str, goals: list[str], max_steps: int, say_values: list[str])
 
 
 def run_selftest() -> int:
-    """Free logic check of make_writer with a fake chooser. No network, no Agent."""
     calls = []
 
     def fake_chooser(candidates: list[str], context: dict) -> str | None:

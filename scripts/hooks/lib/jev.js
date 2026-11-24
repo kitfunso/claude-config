@@ -1,5 +1,4 @@
 'use strict';
-// Fail-open Jev client: ask() never throws, it returns { error } so callers keep their pre-Jev path.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -18,12 +17,10 @@ const LOCAL_URL = 'http://127.0.0.1:8787/ai/run/clef-flash';
 const STATE_DIR = process.env.CLEF_STATE_DIR || path.join(os.homedir(), '.claude', 'state');
 const WRANGLER_TOML = path.join(os.homedir(), '.wrangler', 'config', 'default.toml');
 
-// Clef-flash on the free allocation is the default once CLOUDFLARE_ACCOUNT_ID is set; JEV_PROVIDER=jev picks paid Jev.
 function provider(env = process.env) {
   const account = (env.CLOUDFLARE_ACCOUNT_ID || '').trim();
   const name = (env.JEV_PROVIDER || (account ? 'clef-flash' : 'jev')).trim();
   if (!name.startsWith('clef')) return { endpoint: ENDPOINT, model: MODEL, key: env.TYPESAFE_API_KEY };
-  // The local server takes no auth; the placeholder key only gets past ask()'s 'no key' guard.
   if (name === 'clef-local') return { endpoint: env.CLEF_LOCAL_URL || LOCAL_URL, model: 'clef-local', key: 'local', billed: false };
   return {
     endpoint: `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/@cf/cloudflare/${name}`,
@@ -158,7 +155,6 @@ async function ask(state, questions, opts = {}) {
       const raw = await res.json();
       const data = raw.result || raw; // Workers AI wraps the System One reply in its { result } envelope
       const usage = data.usage || {};
-      // Unknown usage is not zero: fall back to a 4-chars-per-token estimate of the request.
       if (billed) recordNeurons(model, usage.input_tokens || usage.prompt_tokens || body.length / 4);
       return { answers: data.answers || {}, usage, ms: Date.now() - started, model };
     } catch (e) {

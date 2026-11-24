@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""Self-check for the reuse guard: `python test_reuse_guard.py`."""
-
 from __future__ import annotations
 
 import importlib.util
@@ -33,7 +31,6 @@ def reminded(out: dict | None) -> str:
 
 
 def repo(tmp: Path) -> Path:
-    """Today's case: spread-carry with sc/book.py and strat_page.py, no .git."""
     root = tmp / "spread-carry"
     (root / "sc").mkdir(parents=True)
     (root / "seasonal").mkdir()

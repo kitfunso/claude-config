@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (Edit|Write): backstop for the Hand-Maintained Files rule.
-
-Before Claude edits or overwrites a hand-maintained file — anything under
-~/.claude (config, rules, skills, scripts, voice) or any CLAUDE.md anywhere —
-save a dated `.old-YYYYMMDD` backup next to it. One backup per file per day.
-The repo .gitignore already excludes `*.old*`, so backups never get committed.
-
-Excluded: machine-managed state under ~/.claude (projects/ memory, todos,
-shell-snapshots, statsig, plugins, history) and scratch dirs (*-workspace).
-
-Contract: reads hook JSON on stdin, silent on success, always exits 0.
-Never blocks an edit — a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json

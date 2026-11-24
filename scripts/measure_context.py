@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Measure the per-prompt context tax of Keith-controlled text, in cl100k_base tokens.
-
-Skill and agent listings are rebuilt from frontmatter as "- /name: description" lines,
-so they approximate what Claude Code injects: deltas are exact, levels are close.
-"""
-
 from __future__ import annotations
 
 import json

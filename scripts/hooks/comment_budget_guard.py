@@ -111,7 +111,7 @@ def apply_edit(content: str, old: str, new: str, replace_all: bool) -> str | Non
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 try:
     from record_component import record
-except Exception:  # the recorder is optional, the deny is not
+except Exception:
     def record(**_: object) -> None:
         return None
 

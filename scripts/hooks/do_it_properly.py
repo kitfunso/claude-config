@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: backstop for the Do It Properly rule in ~/.claude/CLAUDE.md.
-
-A bare go or continue (time_ledger's approval-only prompt) means the last turn stopped early,
-so it injects the staged-work rule and the keep-going sentence; any other prompt gets nothing.
-Escape hatch: CLAUDE_DO_IT_PROPERLY=off. Always exits 0; a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -41,7 +34,6 @@ RULE = (
 
 
 def context(raw: str) -> str:
-    """The rule and the keep-going sentence when the prompt is a bare go, else nothing."""
     try:
         prompt = str(json.loads(raw).get("prompt") or "").strip()
     except (ValueError, AttributeError):

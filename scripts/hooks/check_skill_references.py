@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: backstop for the Capability Existence Check rule.
-
-Scans the submitted prompt for /slash-command style references and, for any that
-match a skill or command actually installed on disk, injects a [CAPABILITY EXISTS]
-notice into the model's context. This makes "that skill doesn't exist" a harder
-mistake to make.
-
-Contract: reads hook JSON on stdin, writes hook JSON on stdout, always exits 0.
-Never blocks a prompt - a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -19,12 +8,10 @@ from pathlib import Path
 
 CLAUDE_DIR = Path.home() / ".claude"
 
-# A slash reference at a word boundary: /skill-name, not a/path/fragment.
 SLASH_REF = re.compile(r"(?:^|[\s(\[`\"'])/([a-zA-Z][a-zA-Z0-9_-]{1,63})")
 
 
 def installed_capabilities() -> dict[str, str]:
-    """Map capability name -> where it lives. Directory names are authoritative."""
     found: dict[str, str] = {}
 
     for root in (CLAUDE_DIR / "skills", CLAUDE_DIR / "plugins"):
@@ -50,7 +37,7 @@ def main() -> int:
 
     prompt = payload.get("prompt")
     if not isinstance(prompt, str) or not prompt:
-        prompt = raw  # fall back to scanning the whole payload
+        prompt = raw
 
     referenced = {m.group(1) for m in SLASH_REF.finditer(prompt)}
     if not referenced:

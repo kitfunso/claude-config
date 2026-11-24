@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 'use strict';
-// File walk mirrors extract-shell-cases.js's recentTranscripts; SECRET extends its pattern.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -8,7 +7,6 @@ const readline = require('readline');
 const crypto = require('crypto');
 
 const PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
-// Outputs hold command text, so they go to the temp dir, never into this git repo.
 const OUT_DIR = path.join(os.tmpdir(), 'claude-token-map');
 const DAYS = 14;
 const REPLAY_MIN_CHARS = 4000;
@@ -45,7 +43,6 @@ function shellFamily(cmd) {
   return base;
 }
 
-// Uses the inline transcript size, not the true size behind a persisted-output pointer.
 function contentChars(content) {
   if (typeof content === 'string') return content.length;
   if (Array.isArray(content)) {
@@ -247,7 +244,6 @@ async function processFile(file) {
     arr.sort((a, b) => sha1(a.command + a.output.slice(0, 200)).localeCompare(sha1(b.command + b.output.slice(0, 200))));
     arr.length = Math.min(arr.length, REPLAY_CAP_PER_FAMILY);
   }
-  // Pass 1 takes one sample per family for breadth; pass 2 fills the big families toward the cap.
   const familyKeys = [...byFamily.keys()].sort((a, b) => byFamily.get(b).length - byFamily.get(a).length || a.localeCompare(b));
   const taken = new Map(familyKeys.map((fk) => [fk, 0]));
   const replaySet = [];

@@ -1,12 +1,9 @@
 #!/usr/bin/env node
-// PostToolUse recorder: one component_outcomes row per Skill or Agent call.
-// Never blocks; a recorder that breaks a tool call is worse than no recorder.
 
 const { record } = require('./lib/record-component');
 
 const KINDS = {
   Skill: (ti) => ['skill', ti.skill],
-  // No subagent_type means the tool ran general-purpose; 14% of live calls omit it.
   Agent: (ti) => ['agent', ti.subagent_type || 'general-purpose'],
 };
 

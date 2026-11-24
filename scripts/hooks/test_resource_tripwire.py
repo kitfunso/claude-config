@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Self-check for the tripwire's deadline scan: `python test_resource_tripwire.py`.
-
-The break must never report more bytes than it parsed, or the cached offset skips
-un-scanned transcript lines and the counters silently undercount forever.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -37,7 +31,7 @@ def main() -> None:
     assert used == len(data), f"full scan consumed {used} of {len(data)}"
     assert len(blocks) == 20000, len(blocks)
 
-    m = load("-1")  # already past the deadline: break on the first check
+    m = load("-1")
     blocks = []
     used = m.scan(data, blocks)
     assert used == 0, f"expired budget consumed {used} bytes"
@@ -59,8 +53,7 @@ def asst(model: str, tool: str) -> bytes:
 
 
 def fable_guard(m: object) -> None:
-    """Markers land in the scan; the deny fires at budget+1, resets on a human turn or Agent."""
-    m = load("60")  # the caller's module is past its deadline
+    m = load("60")
     m.FABLE_EXEC_BUDGET = "3"
     data = b"\n".join([user("go"), asst("claude-fable-5-1", "Bash"), asst("claude-fable-5-1", "Edit"),
                        user([{"type": "text", "text": "<task-notification>x"}]),
@@ -69,22 +62,22 @@ def fable_guard(m: object) -> None:
     m.scan(data, blocks)
     assert m.current_model(blocks) == "claude-fable-5-1", blocks
     assert m.count_tools(blocks) == {"Bash": 1, "Edit": 1, "Read": 1}, blocks
-    assert m.exec_calls_this_leg(blocks) == 2, blocks  # task notifications never reset
+    assert m.exec_calls_this_leg(blocks) == 2, blocks
 
     main = {"tool_name": "Bash"}
-    assert m.fable_guard(main, blocks) is None  # call 3 of 3
+    assert m.fable_guard(main, blocks) is None
     blocks.append({"name": "mcp__claude-in-chrome__computer"})
     denied = m.fable_guard(main, blocks)
     assert denied and "FABLE ORCHESTRATOR" in denied["hookSpecificOutput"]["permissionDecisionReason"]
-    assert m.fable_guard({"tool_name": "Bash", "agent_id": "a1"}, blocks) is None  # sub-agent
+    assert m.fable_guard({"tool_name": "Bash", "agent_id": "a1"}, blocks) is None
     blocks.append({"name": "Agent"})
-    assert m.fable_guard(main, blocks) is None  # a delegation resets the leg
+    assert m.fable_guard(main, blocks) is None
     blocks.append({"name": "__user__"})
     assert m.exec_calls_this_leg(blocks) == 0
 
     sonnet: list[dict] = []
     m.scan(b"\n".join([user("go")] + [asst("claude-sonnet-5", "Bash")] * 9) + b"\n", sonnet)
-    assert m.fable_guard(main, sonnet) is None  # only Fable is budgeted
+    assert m.fable_guard(main, sonnet) is None
     m.FABLE_EXEC_BUDGET = "off"
     assert m.fable_guard(main, blocks + [{"name": "Bash"}] * 9) is None
 

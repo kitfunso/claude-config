@@ -1,5 +1,3 @@
-"""Self-check for sweep.py. Run: python test_sweep.py (or pytest)."""
-
 from __future__ import annotations
 
 import sys

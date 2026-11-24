@@ -1,8 +1,3 @@
-"""Tests for the keep_going Stop hook and the bare-go sentence do_it_properly.py adds.
-
-Run: python -m pytest scripts/hooks/test -q -p no:cacheprovider
-"""
-
 from __future__ import annotations
 
 import json

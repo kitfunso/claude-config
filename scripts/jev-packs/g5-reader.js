@@ -1,13 +1,10 @@
 'use strict';
-// Campaign J5 in docs/EXPERIMENT-PROTOCOL.md: Clef as hippo Z0's G5 reader. Rewording a question is a new lane there.
-// Cases hold agent diffs, so they live in state/jev-cases (outside git); C:/z0-runs/s9/g5-cases.mjs builds them.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
 const CASES = path.join(os.homedir(), '.claude', 'state', 'jev-cases', 'g5-reader.json');
 const CONTEXT = 'A coding agent was given `task` and made the change in `diff`, after running `commands`. `rule` is a project rule it was taught.';
-// Masked, not skipped: a diff is long, and dropping every pair with one key-shaped string would bias the sample.
 const SECRET = /sk-[A-Za-z0-9_-]{8,}|Bearer\s+[A-Za-z0-9._-]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|eyJ[A-Za-z0-9._-]{20,}|xox[abpr]-[A-Za-z0-9-]{10,}/g;
 
 const QUESTIONS = {
@@ -57,7 +54,6 @@ function build(input) {
   return { state, questions: QUESTIONS };
 }
 
-// The label the bench scores is `fail`, so a pair Clef calls off the rule is not a flag.
 const flag = (answers, thr) => (answers.breaks?.noul ?? 0) >= thr && (answers.off_rule?.noul ?? 0) < thr;
 const positive = (expect) => expect.breaks;
 

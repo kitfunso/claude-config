@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// Moves each live Claude Code session to its own Gemini 4 Neon tab (agy) when Claude hits its usage limit.
-// Modes: --on-stop | --on-failure | --guard (Claude hooks, stdin JSON) · --worker | --all [--dry] | --reclaim <id>
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -46,7 +44,6 @@ export function isAlive(pid) {
 export const isMovable = (s) => MOVE_KINDS.includes(s?.kind) && Number.isInteger(s.pid) && isAlive(s.pid);
 export const isCorporate = (paths) => paths.some((p) => CORPORATE.some((c) => String(p).toLowerCase().includes(c)));
 
-/** Minutes until a "resets 4pm" / "resets Nov 28, 4am" time, in local time; null if no time is in the text. */
 export function resetMinutes(text, now = new Date()) {
   const m = /resets (?:([A-Z][a-z]{2}) (\d{1,2}), )?(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i.exec(text || '');
   if (!m) return null;
@@ -82,7 +79,6 @@ export function tabArgs({ session, cwd, brief, mode, repos }) {
     '--prompt-interactive', wtSafe(`Read the handoff brief at ${brief} and follow it.`)];
 }
 
-/** One worker at a time. A second worker waits, then sees the first one's markers. Returns a release function. */
 export function acquireLock(waitMs = 90_000) {
   fs.mkdirSync(CFG.handoffDir, { recursive: true });
   const lock = path.join(CFG.handoffDir, '.lock');
@@ -171,7 +167,7 @@ export function shouldMoveOnFailure(p, now = new Date()) {
 function hookEntry(mode) {
   const p = readStdin();
   if (!p.session_id || fs.existsSync(markerFile(p.session_id))) return;
-  if (!MOVE_KINDS.includes(registryEntry(p.session_id)?.kind)) return;   // headless runs (Z0, claude -p) never move
+  if (!MOVE_KINDS.includes(registryEntry(p.session_id)?.kind)) return;
   const go = mode === 'stop' ? shouldMoveOnStop(p) : shouldMoveOnFailure(p);
   if (go) spawnWorker(`${mode} in ${p.session_id}`);
 }

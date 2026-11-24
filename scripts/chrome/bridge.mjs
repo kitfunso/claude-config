@@ -4,7 +4,6 @@ import http from 'node:http';
 import { readFileSync } from 'node:fs';
 
 const PORT = Number(process.env.BRIDGE_PORT ?? 9557);
-// Replies hide long strings so a secret on the page never reaches a transcript.
 const redact = (s) => String(s).replace(/[A-Za-z0-9_\-.]{24,}/g, '[long]');
 const portFile = `${process.env.LOCALAPPDATA}/Google/Chrome/User Data/DevToolsActivePort`;
 const [port, path] = readFileSync(portFile, 'utf8').trim().split(/\r?\n/);

@@ -1,6 +1,4 @@
 'use strict';
-// Campaign J3 in docs/EXPERIMENT-PROTOCOL.md. Rewording a question is a new lane there.
-// Cases hold transcript text, so they live in state/jev-cases (outside git); the builder is named in J3.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -70,12 +68,10 @@ const QUESTIONS = {
 
 const cases = JSON.parse(fs.readFileSync(CASES, 'utf8'));
 
-// The hook's job: block a stop that hands work back when no real blocker exists and the user asked for work.
 const flag = (a, thr) => a.hands_back.noul >= thr && a.blocker.noul < thr && a.asked_only.noul < thr;
 const positive = (e) => e.hands_back && !e.blocker && !e.asked_only;
 
 const baselines = {
-  // keep_going.verdict() and the lazy upgrade, both precomputed by the builder from the real hook module.
   A0_hook: (input) => input.a0,
   A1_lazy: (input) => input.a1,
 };

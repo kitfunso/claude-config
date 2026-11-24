@@ -1,4 +1,3 @@
-"""Who the sub-agents are: orchestrator, critic or leaf, by model; batching; tools each type really uses."""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,3 @@
-// Search Console reads beyond the 28-day pull: true totals, query split, same-page windows, index state, sitemaps.
 import { flags, getAccessToken, pool, sitemapUrls } from './lib.mjs'
 
 const API = 'https://searchconsole.googleapis.com/webmasters/v3'
@@ -84,7 +83,6 @@ async function pages(win) {
   return new Map((await query({ startDate, endDate, dimensions: ['page'] })).map(r => [r.keys[0], r]))
 }
 
-// Same pages in both windows, so a shift in which pages get shown cannot pass for a rank change.
 async function windows() {
   const min = Number(f.min ?? 30)
   const [a, b] = await Promise.all([pages(f.a), pages(f.b)])

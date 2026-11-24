@@ -1,4 +1,3 @@
-"""Backtest the spawn guard on real Agent calls: what it would have moved, and what it would have let through."""
 from __future__ import annotations
 
 import json

@@ -1,8 +1,3 @@
-"""Tests for the sub-agent contract hook: the SubagentStart notice and the Opus spawn guard.
-
-Run: python -m pytest scripts/hooks/test/test_subagent_contract.py -q -p no:cacheprovider
-"""
-
 from __future__ import annotations
 
 import json
@@ -91,7 +86,6 @@ def test_needs_both_tests_and_workspace(prompt: str) -> None:
 
 
 def test_pre_tool_use_moves_agent_build_to_sonnet(monkeypatch: pytest.MonkeyPatch) -> None:
-    # The real recorder writes telemetry, so it is stubbed out.
     monkeypatch.setattr(sc, "record", lambda **kw: None)
     out = sc.pre_tool_use({"tool_name": "Agent", "tool_input": brief()})
     assert out is not None

@@ -1,4 +1,3 @@
-"""Freeze the taxi-out replay: April to August 2025 labelled, September and October with departure labels hidden."""
 from __future__ import annotations
 
 import sys

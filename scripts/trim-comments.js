@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 // Bash edits skip the Edit|Write hook, so the check has to live in the writer itself.
-// Usage: node trim-comments.js <spec.json>   spec: { "<file>": [[start, end, ["line", ...]], ...] }
 
 const fs = require('fs');
 const path = require('path');

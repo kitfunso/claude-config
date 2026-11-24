@@ -1,5 +1,3 @@
-# Verifies required documentation artifacts are present
-# Usage: powershell -File artifact-check.ps1 [-UI]
 param([switch]$UI)
 
 $required = @('PRD.md', 'ARCHITECTURE.md', 'CLAUDE.md', 'PLAN.md', 'README.md')

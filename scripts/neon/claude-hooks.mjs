@@ -1,4 +1,3 @@
-// Runs Claude Code's own hooks from settings.json for a non-Claude caller (the agy bridge), with Claude's matching and output rules.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,7 +5,6 @@ import { spawn } from 'node:child_process';
 
 const CLAUDE = process.env.NEON_CLAUDE_DIR || path.join(os.homedir(), '.claude');
 
-/** Claude hook groups for one event, read live so agy never runs a stale copy. */
 export function claudeGroups(event, settingsFile = path.join(CLAUDE, 'settings.json')) {
   try { return JSON.parse(fs.readFileSync(settingsFile, 'utf8')).hooks?.[event] || []; } catch { return []; }
 }
@@ -28,7 +26,6 @@ function globRegex(glob) {
   return new RegExp(`${re}$`, 'i');
 }
 
-/** Claude's `if` rule, e.g. Write(//**\/memory/*.md) or Bash(git commit:*). */
 export function ifOk(rule, toolName, input = {}) {
   if (!rule) return true;
   const m = /^([\w|]+)(?:\((.*)\))?$/.exec(rule.trim());
@@ -39,7 +36,6 @@ export function ifOk(rule, toolName, input = {}) {
   return globRegex(m[2].replace(/^\/\//, '')).test(target);
 }
 
-/** Handlers to run for one event; scripts/neon handlers are Claude-session plumbing and stay out of agy. */
 export function handlersFor(event, { matchValue, toolName, toolInput } = {}) {
   const out = [];
   for (const g of claudeGroups(event)) {
@@ -54,7 +50,6 @@ export function handlersFor(event, { matchValue, toolName, toolInput } = {}) {
   return out;
 }
 
-/** Env for a hook: the caller's, minus the ids of the Claude session that started agy, so no hook mistakes agy for it. */
 export function hookEnv(cwd) {
   const env = { ...process.env, CLAUDE_PROJECT_DIR: cwd, NEON_BRIDGE: '1' };
   for (const k of Object.keys(env)) if (/^CLAUDE_CODE_|^CLAUDECODE$|^CLAUDE_PID$/.test(k)) delete env[k];
@@ -78,7 +73,6 @@ export function runHandler(h, payload, { cwd, capMs = 25_000 } = {}) {
   });
 }
 
-/** Claude's output contract folded into one verdict: deny/ask/block reasons, extra context, rewritten input. */
 export function merge(results, event) {
   const v = { deny: [], ask: [], block: [], context: [], updatedInput: null };
   const plainIsContext = event === 'SessionStart' || event === 'UserPromptSubmit';

@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (Edit/Write): backstop for the reuse rule (karpathy-guidelines rung 2).
-
-A Write or Edit that adds a function or class whose name the repo already defines in another
-file of the same language is denied once per session, naming each existing definition; the
-same write again passes. A new code file with no clash gets a one-line reuse reminder, and a
-new .html report gets the report rule, each once per session. Logs to
-~/.claude/state/reuse_guard.jsonl. Escape hatch: CLAUDE_REUSE_GUARD=off. On any error the
-call is allowed and one stderr line names the error; a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -24,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 try:
     from record_component import record
-except Exception:  # the recorder is optional, the deny is not
+except Exception:
     def record(**_: object) -> None:
         return None
 
@@ -39,7 +29,6 @@ FAMILY = {".py": PY, ".js": JS, ".mjs": JS, ".cjs": JS, ".jsx": JS, ".ts": JS, "
 MARKERS = (".git", "pyproject.toml", "package.json", "setup.py", "setup.cfg", "go.mod", "Cargo.toml")
 SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "env", "__pycache__", "dist", "build", ".next",
              ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox", "site-packages", "coverage", "target"}
-# Entry points and plumbing every script has; a clash on these says nothing about reuse.
 STOP = {"main", "run", "decide", "setup", "teardown", "handler", "handle", "wrapper", "inner",
         "callback", "default", "init", "start", "stop", "close", "open", "index", "cli", "app",
         "parse_args", "configure", "register", "Config", "Settings", "Meta", "render", "build",
@@ -78,7 +67,6 @@ def names_in(text: str, pattern: re.Pattern) -> set[str]:
 
 
 def added_names(payload: dict, target: Path, pattern: re.Pattern) -> set[str]:
-    """Names this call adds: all of a new file, else those absent from the text it replaces."""
     inp = payload.get("tool_input") or {}
     if payload.get("tool_name") == "Write":
         before = target.read_text(encoding="utf-8", errors="replace") if target.is_file() else ""
@@ -103,7 +91,6 @@ def repo_root(target: Path, cwd: str | None) -> Path:
 
 
 def candidates(root: Path, exts: set[str]):
-    """Code files under root: git's list where there is one, so ignored data stays out."""
     if (root / ".git").exists():
         out = subprocess.run(["git", "-C", str(root), "ls-files", "-co", "--exclude-standard"],
                              capture_output=True, text=True, encoding="utf-8", timeout=5)
@@ -121,8 +108,6 @@ def is_test(path: str) -> bool:
 
 
 def existing(root: Path, target: Path, names: set[str], pattern: re.Pattern) -> list[str]:
-    """`name (file:line)` for each name another non-test file of the same family defines; a
-    name defined in CONVENTION or more files is a convention and passes."""
     exts = {e for e, p in FAMILY.items() if p is pattern}
     where: dict[str, dict[str, int]] = {}
     until = time.monotonic() + BUDGET_S
@@ -173,7 +158,6 @@ def note(session: str | None, key: str, text: str) -> dict | None:
 
 
 def decide(payload: dict) -> dict | None:
-    """A deny for a clashing write, a reminder for a new file, else None."""
     if payload.get("tool_name") not in ("Write", "Edit", "MultiEdit"):
         return None
     file_path = (payload.get("tool_input") or {}).get("file_path")

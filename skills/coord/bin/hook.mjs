@@ -6,7 +6,6 @@ import { HOW, board, guard } from '../lib/core.mjs'
 import { repoOf } from '../lib/repo.mjs'
 import { endSession, list, sessionInfo, touch } from '../lib/store.mjs'
 
-// Only commands that can create, push, tag, merge or publish pay for the git lookups.
 const RELEVANT = /\b(git|gh|npm)\b[\s\S]*\b(push|checkout|switch|branch|worktree|tag|create|merge|version|publish)\b/
 const TOUCH_EVERY_MS = 5 * 60_000
 

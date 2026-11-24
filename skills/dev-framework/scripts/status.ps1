@@ -1,5 +1,3 @@
-# Compact one-liner status: phase, types, sensitivity, next gate
-# Usage: powershell -File status.ps1 [-Path <dir>]
 param([string]$Path = (Get-Location).Path)
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -23,7 +21,6 @@ $nextGate = switch ($scan.phase) {
     default    { 'unknown phase' }
 }
 
-# Artifact summary
 $artPresent = @()
 $artMissing = @()
 foreach ($prop in $scan.artifacts.PSObject.Properties) {

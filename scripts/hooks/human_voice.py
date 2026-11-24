@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: backstop for the Human Voice rule in ~/.claude/CLAUDE.md.
-
-When reply_check.py flagged this session's last reply, injects the reply-shape rule and one
-sentence naming the flags; a clean reply injects nothing. Escape hatch: CLAUDE_HUMAN_VOICE=off. Always exits 0; a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json

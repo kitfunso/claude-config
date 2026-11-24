@@ -26,7 +26,6 @@ HOME = Path(os.environ.get("QUIZ_HOME", Path.home() / ".claude" / "quiz-me"))
 DECK = HOME / "deck.jsonl"
 RESULTS = HOME / "results.jsonl"
 
-# spaced-rep intervals in days; index advances on correct, resets on wrong
 INTERVALS = [1, 3, 7, 14, 30, 60, 120]
 
 
@@ -64,8 +63,6 @@ def append_jsonl(path: Path, row: dict) -> None:
 def card_id() -> str:
     return uuid.uuid4().hex[:12]
 
-
-# ----- card creation -----
 
 def cmd_add_mc(args: argparse.Namespace) -> int:
     cid = args.id or card_id()
@@ -110,8 +107,6 @@ def cmd_add_explain(args: argparse.Namespace) -> int:
     return 0
 
 
-# ----- attempts -----
-
 def cmd_record(args: argparse.Namespace) -> int:
     if not 0.0 <= args.score <= 1.0:
         print("error: score must be 0.0..1.0", file=sys.stderr)
@@ -129,8 +124,6 @@ def cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
-# ----- scheduling -----
-
 def _last_result_per_card(results: list[dict]) -> dict[str, list[dict]]:
     by_card: dict[str, list[dict]] = {}
     for r in results:
@@ -141,7 +134,6 @@ def _last_result_per_card(results: list[dict]) -> dict[str, list[dict]]:
 
 
 def _interval_for_card(history: list[dict], min_pass: float) -> int:
-    """Return days until next due based on streak of correct attempts."""
     streak = 0
     for r in history:
         if r["score"] >= min_pass:
@@ -149,20 +141,19 @@ def _interval_for_card(history: list[dict], min_pass: float) -> int:
         else:
             streak = 0
     if streak == 0:
-        return 0  # due immediately on next pass attempt? No — see _due_at
+        return 0
     idx = min(streak - 1, len(INTERVALS) - 1)
     return INTERVALS[idx]
 
 
 def _due_at(card: dict, history: list[dict], min_pass: float) -> datetime:
-    """When is this card next due?"""
     created = datetime.fromisoformat(card["created_at"])
     if not history:
-        return created  # due now
+        return created
     last = history[-1]
     last_ts = datetime.fromisoformat(last["ts"])
     if last["score"] < min_pass:
-        return last_ts  # due immediately (failed)
+        return last_ts
     days = _interval_for_card(history, min_pass)
     return last_ts + timedelta(days=days)
 
@@ -200,8 +191,6 @@ def cmd_due(args: argparse.Namespace) -> int:
     return 0
 
 
-# ----- gate -----
-
 def cmd_gate(args: argparse.Namespace) -> int:
     cards = read_jsonl(DECK)
     results = read_jsonl(RESULTS)
@@ -216,7 +205,6 @@ def cmd_gate(args: argparse.Namespace) -> int:
 
     reasons = []
 
-    # rule 1: any card whose latest attempt failed in window -> block
     failed_recently = []
     for c in cards:
         hist = by_card.get(c["id"], [])
@@ -232,7 +220,6 @@ def cmd_gate(args: argparse.Namespace) -> int:
             + ", ".join(f"{c['id']}({s:.0%})" for c, s in failed_recently[:5])
         )
 
-    # rule 2: cards added in last 14d must have been attempted in last 7d
     if require_recent:
         unattempted_new = []
         for c in cards:
@@ -251,7 +238,6 @@ def cmd_gate(args: argparse.Namespace) -> int:
                 + ", ".join(f"{c['id']}({c.get('feature','?')})" for c in unattempted_new[:5])
             )
 
-    # rule 3: any card whose latest attempt is overdue and failed
     overdue_failed = []
     for c in cards:
         hist = by_card.get(c["id"], [])
@@ -260,7 +246,6 @@ def cmd_gate(args: argparse.Namespace) -> int:
         if hist[-1]["score"] < min_pass:
             overdue_failed.append(c)
     if overdue_failed and not failed_recently:
-        # subset already in rule 1; only report if not covered
         pass
 
     if reasons:
@@ -274,8 +259,6 @@ def cmd_gate(args: argparse.Namespace) -> int:
           f"GATE: PASS ({len(cards)} cards, {len(results)} attempts)")
     return 0
 
-
-# ----- stats -----
 
 def cmd_stats(args: argparse.Namespace) -> int:
     cards = read_jsonl(DECK)
@@ -316,8 +299,6 @@ def cmd_stats(args: argparse.Namespace) -> int:
     return 0
 
 
-# ----- get card by id -----
-
 def cmd_get(args: argparse.Namespace) -> int:
     cards = read_jsonl(DECK)
     for c in cards:
@@ -327,8 +308,6 @@ def cmd_get(args: argparse.Namespace) -> int:
     print(f"not found: {args.id}", file=sys.stderr)
     return 2
 
-
-# ----- main -----
 
 def main() -> int:
     ensure_files()

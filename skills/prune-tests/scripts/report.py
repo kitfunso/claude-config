@@ -1,4 +1,3 @@
-"""One self-contained HTML page from a prune-tests run folder; missing stages show as not run."""
 from __future__ import annotations
 
 import html

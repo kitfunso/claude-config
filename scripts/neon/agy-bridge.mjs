@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// agy hook entry: maps each Antigravity event to its Claude Code event and runs Claude's own hooks from settings.json.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -37,7 +36,6 @@ const BACK = {
   read_file: { file_path: 'Path' },
 };
 
-/** A Claude hook's updatedInput as agy `overwrite` args; keys with no agy twin (such as a sub-agent model) drop out. */
 export function toAgyArgs(name, before, updated) {
   if (name === 'call_mcp_tool') return { Arguments: { ...before, ...updated } };
   const out = {};
@@ -51,7 +49,6 @@ const readSteps = (file) => {
 const isUser = (s) => s.type === 'USER_INPUT' && s.source === 'USER_EXPLICIT';
 const userText = (s) => String(s.content || '').replace(/^\s*<USER_REQUEST>\s*/, '').replace(/\s*<\/USER_REQUEST>[\s\S]*$/, '');
 
-/** agy steps as Claude transcript rows, so hooks that read transcript_path run unchanged. */
 export function claudeRows(steps, sessionId, cwd) {
   const rows = [];
   for (const s of steps) {

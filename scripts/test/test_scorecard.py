@@ -1,5 +1,3 @@
-"""Tests for scorecard.py: scoring math, CRITICAL and probation parsing, the reply-check log and the eval JSON reader."""
-
 from __future__ import annotations
 
 import io
@@ -47,7 +45,6 @@ def reply(ts: str, flags: list[str]) -> str:
 
 
 def write_eval(skills: Path, skill: str, started: str, passed: int, total: int, case: str = "c1") -> Path:
-    """One case whose with-skill arm passes `passed` of `total` runs; the without arm always passes and must be ignored."""
     (skills / skill / "evals" / case).mkdir(parents=True, exist_ok=True)
     path = skills / skill / "evals" / "results" / started / "aggregate-result.json"
     path.parent.mkdir(parents=True)

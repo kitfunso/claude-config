@@ -1,11 +1,4 @@
 #!/usr/bin/env node
-/**
- * Stop hook.
- * After the assistant finishes a turn, scan the last assistant message in the
- * transcript. If it contains markers that should have triggered a source
- * citation or a <diagnosis> artifact and it is missing, append to a session violation log and emit a system message
- * that the next turn will see.
- */
 const fs = require('fs');
 const path = require('path');
 
@@ -39,16 +32,13 @@ function main() {
 
       const violations = [];
 
-      // Verification artifact required
       const namedEntityRe = /\b(Marshall Wace|Tudor Investment|Millennium|Valent Asset Management|Blenheim Capital|Brevan Howard|Soros Fund|Graham Capital|Citadel|DE Shaw|Bridgewater|Two Sigma|Renaissance|Point72|Balyasny)\b/i;
       const firmStructureRe = /\b[A-Z][a-z]+ (Asset Management|Capital|Fund|Holdings|Partners|Advisors)\b/;
-      // CLAUDE.md Sourcing: an inline file:line or URL citation counts as much as a <verification> block.
       const citedRe = /<verification>|https?:\/\/|\b[\w\-./]+\.\w+:\d+/;
       if ((namedEntityRe.test(assistantText) || firmStructureRe.test(assistantText)) && !citedRe.test(assistantText)) {
         violations.push('Named financial entity referenced with no inline citation or <verification> block');
       }
 
-      // Diagnosis artifact required for fix-it tasks
       const fixItRe = /\b(I'll fix|let me fix|wiring up|hooking up|making it work)\b/i;
       if (fixItRe.test(assistantText) && /\.(py|ts|js|tsx|jsx)\b/.test(assistantText) && !assistantText.includes('<diagnosis>')) {
         violations.push('Fix-it language with code refs but no <diagnosis> block');

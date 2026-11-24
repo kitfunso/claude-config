@@ -1,18 +1,8 @@
 #!/usr/bin/env node
-// PreToolUse guard for git commit commands (Bash + PowerShell tools).
-// Denies when:
-//   1. the command text contains an em dash (U+2014): banned in commit
-//      messages per Stop Slop; recurred across E2/E3/E4 ship episodes.
-//   2. (PowerShell only) the command pipes stdin into git commit: PowerShell
-//      pipes prepend a UTF-8 BOM to the message subject. Use the Write tool
-//      to create a message file and pass `git commit -F <file>` instead.
-// Scope: inline command text only; cannot inspect -F file contents.
-// Emits modern PreToolUse permissionDecision JSON; silent exit 0 = allow.
 
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 
-// Same match as git_guard.py: git's own options may sit before the subcommand (`git -C <repo> commit`).
 const GIT_COMMIT = /\bgit\b[^|&;]*\bcommit\b/;
 const PIPED_COMMIT = /\|\s*git\b[^|&;]*\bcommit\b/;
 

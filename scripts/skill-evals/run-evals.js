@@ -7,7 +7,6 @@ export const meta = {
   ],
 }
 
-// args come from build_run.py's args.json: root, skill, desc, runs, without, regrade_splits, cases.
 const ROOT = args.root
 const SKILL = args.skill
 const COPY = `${ROOT}\\skill\\${SKILL}`
@@ -179,7 +178,6 @@ const rows = CASES.map(c => {
   }
 })
 
-// Test-split failures name criterion numbers only, so the session that edits the skill never reads the rubric.
 const failures = scored.filter(x => !x.s.ok).map(x => ({
   name: x.r.name, split: x.r.split, arm: x.r.arm, run: x.r.run,
   failed: !x.r.g ? ['no grade']

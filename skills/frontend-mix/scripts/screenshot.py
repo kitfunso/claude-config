@@ -1,5 +1,3 @@
-"""Eyes-on QA for frontend-mix variants: headless Chromium screenshots at desktop and
-mobile sizes, console-error capture, and a stitched contact sheet."""
 from __future__ import annotations
 
 import argparse

@@ -33,7 +33,6 @@ def fix_commits(repo: Path, n: int) -> list[tuple[str, str, list[str]]]:
 
 
 def head_side_lines(repo: Path) -> dict[str, set[int]]:
-    """Lines of HEAD the working-tree change rewrote: the fixed code the bug now replaces."""
     out: dict = {}
     cur = None
     for line in runner.git(repo, "diff", "-U0").splitlines():

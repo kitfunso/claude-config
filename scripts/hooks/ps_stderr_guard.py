@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (PowerShell): backstop for the PS 5.1 stderr rule.
-
-Denies a PowerShell command containing `2>&1`: PS 5.1 wraps each stderr line from a
-native exe in a NativeCommandError and reports failure even on exit 0. stderr is
-already captured by the harness. Python port of the home box's ps-stderr-guard.js.
-
-Contract: hook JSON on stdin, hook JSON on stdout, always exits 0. Fails open.
-"""
-
 from __future__ import annotations
 
 import json

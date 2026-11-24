@@ -1,4 +1,3 @@
-"""Was the model of each sub-agent named in the Agent call, or did it fall to the type's default?"""
 from __future__ import annotations
 
 import json
@@ -12,7 +11,6 @@ from token_burn import CUTOFF, ROOT, weight  # noqa: E402
 
 
 def spawn_index(paths: list[Path]) -> dict[str, dict]:
-    """Agent tool_use inputs keyed by tool_use id."""
     index: dict[str, dict] = {}
     for path in paths:
         with path.open(encoding="utf-8", errors="replace") as fh:

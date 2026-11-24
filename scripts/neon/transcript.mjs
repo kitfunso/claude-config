@@ -1,4 +1,3 @@
-// Reads a Claude Code transcript (JSONL, can be 500 MB) in one streamed pass and keeps only what a handoff brief needs.
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
@@ -20,7 +19,6 @@ export function findTranscript(claudeDir, sessionId) {
   return null;
 }
 
-/** Last `bytes` of the file as parsed lines; the first partial line is dropped. */
 export function readTail(file, bytes = 256 * 1024) {
   const { size } = fs.statSync(file);
   const start = Math.max(0, size - bytes);
@@ -48,7 +46,6 @@ export function keithPromptText(o) {
   return NOT_KEITH.some((p) => t.startsWith(p)) ? null : c;
 }
 
-/** Limit state from parsed lines in order: is there a limit signal after Keith's last prompt? */
 export function limitState(lines) {
   let lastPrompt = -1, lastLimit = -1, lastReset = -1, limitText = '';
   lines.forEach((o, i) => {
@@ -70,7 +67,6 @@ function textOf(o) {
 
 const push = (arr, item, max) => { arr.push(item); if (arr.length > max) arr.shift(); };
 
-/** One streamed pass. Cheap substring checks gate every JSON.parse. */
 export async function scanTranscript(file) {
   const s = {
     prompts: [], texts: [], edits: [], commands: [], cwds: [], todos: null,

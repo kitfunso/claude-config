@@ -1,9 +1,7 @@
-// One file per claim, created with link() so two sessions racing for one key cannot both win.
 import { linkSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
-// A session silent this long has its claims shown as stale and free to take.
 export const TTL_MS = 3 * 3600_000
 
 export const stateHome = () => process.env.COORD_HOME ?? join(homedir(), '.claude', 'coord-state')
@@ -55,7 +53,6 @@ export const isLive = (claim, now = Date.now()) =>
 
 export const owner = (repo, key) => readJson(claimFile(repo, key))
 
-// ok:false carries the live owner's claim; fresh says the session did not hold it before.
 export function claim(repo, key, sid, fields = {}, { force = false, now = Date.now() } = {}) {
   const path = claimFile(repo, key)
   const given = Object.entries({ repo, key, session: sid, at: now, ...fields }).filter(([, v]) => v !== undefined)

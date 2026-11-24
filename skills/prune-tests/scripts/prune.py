@@ -21,8 +21,8 @@ from pathlib import Path
 import runner
 from report import write_report
 
-HEAVY_SHARE = 0.5  # heavy = the slowest tests that together take half the test time...
-HEAVY_RATIO = 10   # ...and each run at least this many times the median test
+HEAVY_SHARE = 0.5
+HEAVY_RATIO = 10
 
 
 def profile(a: argparse.Namespace) -> None:
@@ -108,8 +108,6 @@ def _set_cover(universe: dict, dur: dict) -> list[str]:
     kept, left = [], dict(universe)
     while left:
         counts = Counter(t for ks in left.values() for t in ks)
-        # most bugs, then fastest in whole seconds, then first name: the first test's import time
-        # must not flip the pick between two equal sub-second tests
         best = max(sorted(counts), key=lambda t: (counts[t], -round(dur.get(t, 0.0))))
         kept.append(best)
         left = {mid: ks for mid, ks in left.items() if best not in ks}
@@ -152,7 +150,6 @@ def plan(a: argparse.Namespace) -> None:
 
 
 def split(a: argparse.Namespace) -> None:
-    """Heavy candidates dominate a kill run; score light ones first, heavy ones second."""
     cd, dur = runner.read_json(a.candidates), runner.read_json(a.profile)["tests"]
     heavy = {t: s for t, s in cd["candidates"].items() if dur.get(t, 0.0) > a.seconds}
     light = {t: s for t, s in cd["candidates"].items() if t not in heavy}
@@ -166,7 +163,6 @@ def split(a: argparse.Namespace) -> None:
 
 def merge_plans(a: argparse.Namespace) -> None:
     plans = [runner.read_json(p) for p in a.plans]
-    # a test one pass names as a catcher stays, even when the other pass would cut it
     relied = {t for p in plans for ts in p["catchers"].values() for t in ts}
     cut = {r["test"]: r for p in plans for r in p["cut"] if r["test"] not in relied}
     runner.write_json(a.out, {
@@ -177,7 +173,6 @@ def merge_plans(a: argparse.Namespace) -> None:
 
 
 def grade(a: argparse.Namespace) -> None:
-    """Grade a cut that already landed: what it removed, and the lines no remaining test runs."""
     m, prof = runner.read_json(a.map)["tests"], runner.read_json(a.profile)
     failing = set(prof["failed"])
     slim_ids = set(runner.collect_ids(a.python, Path(a.slim).resolve()))

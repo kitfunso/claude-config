@@ -1,5 +1,3 @@
-"""pytest plugin for prune-tests: per-test coverage contexts and a JSON-lines test log.
-Load with `-p prune_plugin` and this folder on PYTHONPATH; PRUNE_LOG names the log."""
 import json
 import os
 

@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// UserPromptSubmit + PreToolUse(Edit|Write) hook: tells the model to load /jev when Jev work starts.
-// Notice only, never blocks; once per session per trigger; fails open on any error.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -9,7 +7,6 @@ const JEV_WORDS = /\bjev\b|typesafe|\bnoul\b|system[ -]?one|TYPESAFE_API_KEY|jev
 const LLM_CALL = /messages\.create|chat\.completions|responses\.create|generateText|generateObject|anthropic\s*\(|new\s+(Anthropic|OpenAI)\b|claude\s+-p\b|\/v1\/messages|ollama\.(chat|generate)/;
 const DECISION = /\b(classif\w*|route|routing|relevan\w*|grade|grading|judge|is_\w+|yes\/no|true\/false|pick\w*|filter\w*|triage|gate|should_\w+|label\w*)\b/i;
 const CODE_EXT = /\.(js|mjs|cjs|ts|tsx|py|go|rs|rb|java|kt|cs|sh|ps1)$/i;
-// A pasted hook error, or a script that lists the hooks, names this hook's own file; that is not Jev work.
 const dropOwnName = (s) => s.replace(/jev-trigger(\.js)?/gi, '');
 
 const LOAD = 'Load the /jev skill with the Skill tool now (and /typesafe-ai for API shape) before writing or changing this.';
@@ -48,7 +45,6 @@ function decide(input, opts) {
   }
 
   const file = String(((input && input.tool_input) || {}).file_path || '');
-  // The skill's own files and its scripts discuss Jev by design.
   if (/[\\/]\.claude[\\/](skills[\\/](jev|typesafe-ai)|scripts[\\/]([\w-]+[\\/])*jev-)/i.test(file)) return null;
   const text = dropOwnName(editedText(input));
   if (!text || !CODE_EXT.test(file)) return null;

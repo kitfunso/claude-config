@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 'use strict';
-// usage: node jev-bench.js <pack.js> [--cases file.json] [--repeat 2] [--thr 0.5] [--limit N] [--show 60] [--out file.jsonl]
-// Results hold command text, so --out defaults to the temp dir and never to this git repo.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -28,7 +26,6 @@ async function pool(items, limit, fn) {
   return out;
 }
 
-// A flip between repeats counts against Jev both ways: `all` scores recall, `any` scores false flags.
 function decide(runs, thr, flag) {
   const decisions = runs.filter((r) => !r.error).map((r) => flag(r.answers, thr));
   return { all: decisions.length > 0 && decisions.every(Boolean), any: decisions.some(Boolean) };
@@ -44,7 +41,6 @@ function nouls(runs) {
   return byQuestion;
 }
 
-// A baseline may return one boolean, or an object of booleans keyed like `expect` for per-question rates.
 const baseFlag = (v) => (v && typeof v === 'object' ? Object.values(v).some(Boolean) : Boolean(v));
 const label = (c) => c.input.command || c.id;
 

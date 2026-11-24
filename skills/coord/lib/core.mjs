@@ -3,7 +3,6 @@ import { keysFor, repoOf } from './repo.mjs'
 import { claim, isLive, lastActive, owner, sessionInfo } from './store.mjs'
 
 export const CLI = 'node ~/.claude/skills/coord/bin/coord.mjs'
-// A release claim lapses on its own, so a long session that shipped once does not block the next release.
 const RELEASE_HOLD_MS = 2 * 3600_000
 export const HOW =
   `Parallel sessions share this board. Before starting a named work item (roadmap item, PR, release), run \`${CLI} claim <item> --note "<what>"\`; ` +
@@ -47,7 +46,6 @@ function plan(command, cwd) {
   return steps
 }
 
-// allow:false carries the refusal; allow:true carries the claims this call just took, if any.
 export function guard(command, sid, cwd) {
   const steps = plan(command, cwd)
   const now = Date.now()

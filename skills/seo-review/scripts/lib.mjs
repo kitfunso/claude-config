@@ -2,7 +2,6 @@ import os from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-// boring-maths holds the one GSC OAuth token for every property Keith owns, so reuse its auth instead of a second login.
 const TOOLS = process.env.SEO_TOOLS_DIR ?? path.join(os.homedir(), 'boring-maths', 'scripts', 'seo')
 const load = name => import(pathToFileURL(path.join(TOOLS, name)).href)
 export const { getAccessToken } = await load('gsc-auth.mjs')
@@ -33,7 +32,6 @@ export async function pool(items, n, fn) {
   return out
 }
 
-// Sitemaps named in robots.txt, else the two usual roots; an index is followed two levels down.
 export async function sitemapUrls(origin, robotsTxt = '') {
   const named = [...robotsTxt.matchAll(/^\s*sitemap:\s*(\S+)/gim)].map(m => m[1])
   const roots = named.length > 0 ? named : [`${origin}/sitemap-index.xml`, `${origin}/sitemap.xml`]
@@ -63,7 +61,6 @@ export async function sitemapUrls(origin, robotsTxt = '') {
   return { sitemaps, urls: [...lastmod.keys()], lastmod }
 }
 
-// The value most entries share, so a date typed once by hand shows up as one value on most pages.
 export function mode(values) {
   const counts = new Map()
   for (const v of values) if (v) counts.set(v, (counts.get(v) ?? 0) + 1)

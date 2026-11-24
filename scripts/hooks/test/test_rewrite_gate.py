@@ -1,8 +1,3 @@
-"""Tests for the rewrite gate: a full Write over a hand-maintained file waits for "apply".
-
-Run: python -m pytest scripts/hooks/test -q -p no:cacheprovider
-"""
-
 from __future__ import annotations
 
 import json
@@ -51,7 +46,6 @@ def run(payload: object, script: Path = HOOKS / "rewrite_gate.py", **env: str) -
 
 @pytest.fixture
 def claude_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A git checkout standing in for ~/.claude: rules/tracked.md is tracked, notes.md is not."""
     repo = tmp_path / "claude"
     (repo / "rules").mkdir(parents=True)
     for name in ("rules/tracked.md", "notes.md"):

@@ -1,13 +1,4 @@
 #!/usr/bin/env node
-// PreToolUse guard for the PowerShell tool.
-// Denies commands containing `2>&1`: PowerShell 5.1 wraps each stderr line
-// from a native executable in a NativeCommandError ErrorRecord and reports
-// failure even when the exe exited 0 (git prints progress to stderr, so git
-// flows are the classic victim). Measured 2026-07-18 via Mirror: 21 incidents,
-// 9.1% of all PowerShell tool errors, despite a prose warning in the tool docs.
-// stderr is already captured by the harness; run the command bare, or use the
-// Bash tool when stream routing is genuinely needed.
-// Emits modern PreToolUse permissionDecision JSON; silent exit 0 = allow.
 
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }

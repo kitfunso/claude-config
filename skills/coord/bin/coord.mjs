@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// Claims board so parallel Claude Code sessions on one repo see and respect each other's work.
 import { parseArgs } from 'node:util'
 
 import { CLI, board, guard, heldBy, quoted } from '../lib/core.mjs'

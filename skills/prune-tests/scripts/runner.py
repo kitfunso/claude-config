@@ -1,4 +1,3 @@
-"""Shared helpers for prune-tests: run pytest with the plugin, read its log, guard worktrees."""
 from __future__ import annotations
 
 import json
@@ -15,7 +14,7 @@ import sandbox
 
 SCRIPTS = Path(__file__).resolve().parent
 OMIT = "*test_*.py,*_test.py,*conftest.py,*/tests/*,*/site-packages/*,.venv/*"
-SANDBOX = "low-integrity"  # profile, map and kills carry it; a test red only inside it must not count as a catch
+SANDBOX = "low-integrity"
 
 
 @dataclass(frozen=True)
@@ -23,8 +22,8 @@ class Run:
     rc: int
     seconds: float
     timed_out: bool
-    outcomes: dict = field(default_factory=dict)  # nodeid -> passed|failed|skipped
-    durations: dict = field(default_factory=dict)  # nodeid -> seconds, all phases
+    outcomes: dict = field(default_factory=dict)
+    durations: dict = field(default_factory=dict)
     collect_errors: tuple = ()
 
     @property
@@ -33,7 +32,6 @@ class Run:
 
 
 def require_collected(run: Run, what: str) -> None:
-    """A collection error stops pytest before any test runs, so a profile or map built on it is empty."""
     if run.collect_errors:
         raise SystemExit(f"{what}: pytest could not collect {', '.join(run.collect_errors[:5])}; "
                          "run pytest by hand in the worktree to see the import error, fix the setup, rerun.")
@@ -76,7 +74,6 @@ def read_log(path: Path) -> tuple[dict, dict, tuple]:
 
 def run_pytest(python: str, repo: Path, args: list[str], *, timeout: float | None = None,
                stop_first: bool = False, coverage_file: Path | None = None) -> Run:
-    """Run pytest in repo with the plugin loaded, at Low integrity; node ids go through an @argfile."""
     sandbox.prove(python)
     with sandbox.low_dir("run-") as tmp:
         log = Path(tmp) / "log.jsonl"
@@ -104,12 +101,10 @@ def run_pytest(python: str, repo: Path, args: list[str], *, timeout: float | Non
 
 
 def is_red(run: Run) -> bool:
-    """A failure, or a bug that broke collection. A timeout alone proves nothing."""
     return bool(run.failed or run.collect_errors or run.rc in (2, 3, 4))
 
 
 def red_tests(python: str, repo: Path, run: Run, tests: list[str], timeout_for) -> Iterator[str]:
-    """Tests the run shows red. A busy box times batches out too, so an unfinished test counts only alone."""
     yield from sorted(run.failed)
     if run.timed_out:
         for t in tests:
@@ -136,7 +131,6 @@ def _env(tmp: str) -> dict:
 
 
 def collect_ids(python: str, repo: Path, args: list[str] = ()) -> list[str]:
-    """Collect in the same sandbox as the runs, so an import that fails only at Low fails here too."""
     sandbox.prove(python)
     with sandbox.low_dir("collect-") as tmp:
         out = subprocess.run([python, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider",
@@ -154,7 +148,6 @@ def git(repo: Path, *args: str, check: bool = True) -> str:
 
 
 def require_scratch_worktree(repo: Path) -> None:
-    """Mutation and replay rewrite files; refuse anything but a linked worktree."""
     common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
     own = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-dir").strip())
     if common == own:

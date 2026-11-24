@@ -1,17 +1,10 @@
 #!/usr/bin/env node
-/**
- * PreToolUse hook for Bash commands.
- * - Blocks `npm run dev` / `npm start` outside tmux (hangs the session)
- * - Warns before `git push --force` to main/master
- * - Warns before destructive commands (rm -rf, git reset --hard)
- */
 const fs = require('fs');
 let record = () => {};
 try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
 let devrlDenial = () => null;
 try { ({ devrlDenial } = require('./lib/devrl-episode-guard')); } catch (e) { process.stderr.write(`devrl episode guard off: ${e.message}\n`); }
 
-// A sleep poll with no deadline outlives the job it waits on; 17 of them starved every hook on 2026-10-11.
 function unboundedPoll(cmd) {
   if (!/\b(until|while)\s+(?!(IFS=\S*\s+)?read\b)[^]*?\bdo\b[^]*?\bsleep\b/.test(cmd)) return false;
   return !/\btimeout\s+(-\S+\s+)*\d|\bSECONDS\b|\bdeadline\b|\s-(lt|le|gt|ge)\s/.test(cmd);
@@ -22,8 +15,6 @@ function main() {
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', chunk => { input += chunk; });
   process.stdin.on('end', () => {
-    // Modern PreToolUse output shape (same as commit-msg-guard.js):
-    // silent exit 0 = allow; hookSpecificOutput.permissionDecision for deny/ask.
     // The old {decision:"allow"} shape fails hook schema validation on every call.
     let payload = {};
     const emit = (permissionDecision, reason) => {
@@ -51,7 +42,6 @@ function main() {
       payload = data;
       const cmd = (data.tool_input?.command || '').trim();
 
-      // Block dev servers outside tmux (they hang the session)
       if (/\b(npm run dev|npm start|yarn dev|pnpm dev|next dev|uvicorn .* --reload)\b/.test(cmd)) {
         const backgrounded = data.tool_input && data.tool_input.run_in_background === true;
         if (!process.env.TMUX && !backgrounded) {
@@ -64,7 +54,6 @@ function main() {
           + "Bound it: `timeout 3600 bash -c 'until ...; do sleep 5; done'`, or add `[ $SECONDS -lt 3600 ]` to the condition.");
       }
 
-      // Warn on force push to main/master
       if (/git push.*--force.*\b(main|master)\b/.test(cmd) || /git push.*\b(main|master)\b.*--force/.test(cmd)) {
         emit('deny', 'Force pushing to main/master is dangerous. Use a feature branch instead.');
       }
@@ -76,15 +65,12 @@ function main() {
         process.stderr.write(`devrl episode guard skipped: ${e.message}\n`);
       }
 
-      // Warn on destructive commands
       if (/\brm\s+-rf\s+[\/~]/.test(cmd) || /git reset --hard/.test(cmd) || /git clean -fd/.test(cmd)) {
         emit('ask', `Destructive command detected: "${cmd.substring(0, 80)}". Confirm before proceeding.`);
       }
 
-      // Allow everything else: silent exit 0, no output
       process.exit(0);
     } catch (e) {
-      // On error, don't block
       process.exit(0);
     }
   });

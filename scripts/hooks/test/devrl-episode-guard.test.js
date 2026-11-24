@@ -65,8 +65,6 @@ test('reads, branch moves and index-only git are not flagged', () => {
   }
 });
 
-// One temp episodes.db built by the real migrations and CLI, so a schema or
-// lock-acquire change breaks these tests instead of silently disarming the guard.
 let episode;
 function heldEpisode() {
   if (episode) return episode;

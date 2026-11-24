@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Stop hook: backstop for the Decisiveness rule in ~/.claude/CLAUDE.md ("a go covers the whole plan").
-
-When the last sentences of a reply ask for a go ("say go", "shall I", "want me to", "next is X",
-a bare "Go?") or wait for a schedule, the stop is blocked once and Claude carries on. It passes when
-that sentence or the next names an ASK-FIRST reason (deploy, push, delete, cost, an outside service,
-sign-off), waits on Keith's hands or on a running job that wakes Claude when it ends (an agent, CI,
-a watcher), or offers a choice between named options; and when his prompt
-was a question, or a turn of a skill whose contract is to wait for him (all-done, grill-me).
-The second stop always passes (stop_hook_active), so a block cannot loop. Each block is logged to
-~/.claude/state/keep_going.jsonl. Escape hatch: CLAUDE_KEEP_GOING=off. Always exits 0.
-"""
-
 from __future__ import annotations
 
 import json
@@ -72,10 +60,6 @@ REASON = ("keep_going: your reply stops on {hit!r}, handing the next step back t
           "stop. Don't repeat the question.")
 
 def asking(reply: str) -> str:
-    """The first go-seeking phrase in the reply's last lines with no reason to stop in its sentence or the next.
-
-    A wait on Keith's hands or a cost also counts from the sentence before: "Paste me X. Say go after that."
-    """
     sentences = SENTENCE.split(" ".join(prose(reply)[-TAIL_LINES:]))
     for i, sentence in enumerate(sentences):
         hit = ASK.search(sentence)
@@ -87,7 +71,6 @@ def asking(reply: str) -> str:
 
 
 def verdict(payload: dict, prompt: str) -> str:
-    """The go-seeking phrase that blocks this stop, or empty when it passes."""
     if payload.get("stop_hook_active") or WAITING_SKILL.search(prompt) or QUESTION.search(prompt.strip()):
         return ""
     return asking(str(payload.get("last_assistant_message") or ""))

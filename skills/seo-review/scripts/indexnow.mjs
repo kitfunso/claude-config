@@ -1,4 +1,3 @@
-// Submits every sitemap URL of a site to IndexNow (Bing, Yandex, Seznam, Naver) once its key file is live.
 // Run after a deploy that adds or changes pages, not on a schedule: repeat posts of unchanged URLs read as spam.
 import { UA, buildPayload, flags, sitemapUrls } from './lib.mjs'
 

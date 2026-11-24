@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// Mirrors Claude Code's skills, plugin skills, agents and MCP servers into Antigravity CLI (agy). Claude's files stay the only source.
 // Junction safety: remove a junction with fs.rmdirSync or `cmd /c rmdir`, never a recursive delete (it follows into ~/.claude).
 import fs from 'node:fs';
 import os from 'node:os';
@@ -25,13 +24,11 @@ const SKILL_BODY_CAP = 24000; // agy loads only this many bytes of a SKILL.md bo
 
 const isLink = (p) => { try { return fs.lstatSync(p).isSymbolicLink(); } catch { return false; } };
 
-/** Removes one entry this script made: a junction (the link only) or a stub folder. Never recursive. */
 function removeEntry(p) {
   if (isLink(p)) fs.rmdirSync(p);
   else if (fs.existsSync(p)) { fs.rmSync(path.join(p, 'SKILL.md'), { force: true }); fs.rmdirSync(p); }
 }
 
-/** Enabled Claude plugins with their install folders. */
 export function enabledPlugins() {
   const enabled = readJson(path.join(CLAUDE, 'settings.json'), {}).enabledPlugins || {};
   const installed = readJson(path.join(CLAUDE, 'plugins', 'installed_plugins.json'), {}).plugins || {};
@@ -41,7 +38,6 @@ export function enabledPlugins() {
     .filter((p) => p.dir && fs.existsSync(p.dir));
 }
 
-/** Claude's own skills, then enabled plugin skills; Claude's own wins a name clash. */
 function skillSources() {
   const found = new Map();
   const add = (dir) => {
@@ -55,7 +51,6 @@ function skillSources() {
   return [...found.values()];
 }
 
-/** agy's copy of one skill: Claude's frontmatter, its base folder, then the body, or a pointer when the body is too long for agy. */
 export function agySkill(dir) {
   const file = path.join(dir, 'SKILL.md');
   const text = fs.readFileSync(file, 'utf8');

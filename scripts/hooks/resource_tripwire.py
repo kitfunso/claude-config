@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""Resource tripwire: UserPromptSubmit + PreToolUse (Bash|PowerShell).
-
-Backstop for the pinned campaign rule (alphanova cycle 2: 47 serial shell calls of
-the full runner, 0 skills, 0 agents). Reads the transcript and counts tool calls.
-- UserPromptSubmit: warns once TOOL_CALL_FLOOR calls pass with no Skill, Agent
-  or Workflow call, and reports per-repo tripwire counts and the next audit due.
-- PreToolUse: for a command matching a rule in the nearest `.claude/tripwires.json`,
-  denies when the protocol file is missing, and denies run N*every (and every run
-  after it) until `AUDIT <sid8> #N` exists in the rule's audit file.
-- PreToolUse, Fable orchestrator: on a Fable main thread, denies exec tools (shell,
-  edits, browser) past FABLE_EXEC_BUDGET calls since the last human message or the
-  last Agent spawn. Sub-agents (payload carries agent_id) are never counted.
-  Measured 2026-09-12: 1,656 Fable requests in a day, all main thread, 0 delegated.
-`--count <transcript> [pattern]` prints the counters, for evidence files.
-Contract: hook JSON on stdin, hook JSON on stdout, always exits 0.
-"""
-
 from __future__ import annotations
 
 import json
@@ -28,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 try:
     from record_component import record
-except Exception:  # the recorder is optional, the deny is not
+except Exception:
     def record(**_: object) -> None:
         return None
 
@@ -40,7 +23,7 @@ EXEC_PREFIXES = ("mcp__claude-in-chrome__", "mcp__playwright__")
 FABLE_EXEC_BUDGET = os.environ.get("CLAUDE_FABLE_EXEC_BUDGET") or "25"
 MODEL_RE = re.compile(rb'"model"\s*:\s*"([^"]+)"')
 TYPE_RE = re.compile(rb'"type"\s*:\s*"(user|assistant)"')
-CACHE_VERSION = 2  # v2 caches carry __user__ and __model__ marker blocks
+CACHE_VERSION = 2
 MAX_WALK_UP = 6
 ABS_PATH = re.compile(r"(?:[A-Za-z]:[/\\]|/[a-z]/)[^\s\"'|;&]+")
 CACHE_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude") / "cache" / "tripwire"
@@ -51,7 +34,6 @@ DEADLINE = time.monotonic() + float(os.environ.get("TRIPWIRE_BUDGET_S") or 6.0)
 
 
 def prune(cache_dir: Path) -> None:
-    """One cache file per session accumulates forever otherwise."""
     cutoff = time.time() - CACHE_TTL_DAYS * 86400
     for stale in cache_dir.glob("*.json"):
         try:
@@ -62,7 +44,6 @@ def prune(cache_dir: Path) -> None:
 
 
 def slim(block: dict) -> dict:
-    """Only the fields the counters read; the transcript stays the source of truth."""
     name = block.get("name")
     out: dict = {"name": name, "id": block.get("id")}
     cmd = (block.get("input") or {}).get("command")
@@ -72,7 +53,6 @@ def slim(block: dict) -> dict:
 
 
 def human_turn(raw: bytes) -> bool:
-    """A user line that is not a tool result and not a background task notification."""
     try:
         content = ((json.loads(raw).get("message") or {}).get("content"))
     except ValueError:
@@ -93,7 +73,6 @@ def current_model(blocks: list[dict]) -> str:
 
 
 def scan(data: bytes, blocks: list[dict]) -> int:
-    """Parse whole lines until the deadline; returns the bytes actually consumed."""
     used = 0
     model = current_model(blocks)
     for i, raw in enumerate(data.split(b"\n")):
@@ -126,11 +105,6 @@ def scan(data: bytes, blocks: list[dict]) -> int:
 
 
 def load_tool_uses(transcript: Path) -> list[dict]:
-    """Parse only the bytes appended since the last call, keyed on a byte offset.
-
-    A full re-parse ran on every prompt and every shell call and scaled with the
-    transcript, which reaches 200MB+ here. See docs/incidents.md (2026-09-06).
-    """
     try:
         size = transcript.stat().st_size
     except OSError:
@@ -142,7 +116,7 @@ def load_tool_uses(transcript: Path) -> list[dict]:
         state = json.loads(cache.read_text(encoding="utf-8"))
         if isinstance(state["blocks"], list) and 0 <= state["offset"] <= size:
             blocks, offset = state["blocks"], state["offset"]
-            if state.get("v") != CACHE_VERSION:  # pre-marker cache: the exec budget starts now
+            if state.get("v") != CACHE_VERSION:
                 blocks.append({"name": "__user__"})
     except (OSError, ValueError, KeyError, TypeError):
         pass
@@ -154,7 +128,7 @@ def load_tool_uses(transcript: Path) -> list[dict]:
             data = fh.read()
     except OSError:
         return blocks
-    cut = data.rfind(b"\n") + 1  # a half-written trailing line is re-read next call
+    cut = data.rfind(b"\n") + 1
     offset += scan(data[:cut], blocks)
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -182,7 +156,6 @@ def is_exec(name: object) -> bool:
 
 
 def exec_calls_this_leg(blocks: list[dict]) -> int:
-    """Exec calls since the last human message or the last Agent spawn, whichever is later."""
     n = 0
     for block in reversed(blocks):
         name = block.get("name")
@@ -194,7 +167,6 @@ def exec_calls_this_leg(blocks: list[dict]) -> int:
 
 
 def fable_guard(payload: dict, blocks: list[dict]) -> dict | None:
-    """Fable orchestrates; a Sonnet sub-agent grinds. Sub-agent calls carry agent_id."""
     if payload.get("agent_id") or FABLE_EXEC_BUDGET.lower() == "off":
         return None
     if "fable" not in current_model(blocks).lower():
@@ -233,7 +205,6 @@ def to_windows(path: str) -> str:
 
 
 def find_tripwires(cwd: str | None, command: str = "") -> tuple[Path | None, dict | None]:
-    """Walk up from cwd and from every absolute path named in the command."""
     starts = [cwd] if cwd else []
     starts += [to_windows(p) for p in ABS_PATH.findall(command)]
     seen: set[Path] = set()

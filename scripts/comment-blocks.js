@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Prints each comment block in a file with its line range and the code it precedes,
-// so a cleanup pass can judge blocks without reading the whole file.
-// Usage: node comment-blocks.js <file> [minBlockLines]
 
 const fs = require('fs');
 const path = require('path');

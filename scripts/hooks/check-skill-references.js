@@ -1,19 +1,8 @@
 #!/usr/bin/env node
 /**
- * UserPromptSubmit hook: capability existence check.
- *
- * Scans the user prompt for /slash-command references. For each token that
- * resolves to an installed skill directory (~/.claude/skills/<name>/ or a
- * project .claude/skills/<name>/), injects a reminder that the skill EXISTS,
- * so the model cannot claim it is unavailable nor silently substitute its own
- * plan.
- *
  * Match on DIRECTORY existence, not the manifest filename — gstack skills vary
  * the case (project-scaffold/skill.md vs office-hours/SKILL.md), so a
  * SKILL.md-based check produces false negatives.
- *
- * Fail-open: any error exits 0 with no output. Fires only on real on-disk
- * matches, so it can never produce a false "this exists" signal.
  */
 const fs = require('fs');
 const os = require('os');
@@ -33,7 +22,6 @@ function skillDirs() {
 }
 
 function resolveSkill(token, dirs) {
-  // Strip a plugin namespace prefix (plugin:skill -> skill).
   const name = token.includes(':') ? token.split(':').pop() : token;
   if (!name) return null;
   for (const d of dirs) {
@@ -54,8 +42,6 @@ function main() {
       const data = JSON.parse(input);
       const prompt = (data.prompt || data.user_prompt || '').toString();
 
-      // /token references: a slash at a word boundary, then a skill-ish name.
-      // Leading [\s(] or start-of-string avoids matching paths like src/foo or and/or.
       const tokens = new Set();
       const re = /(?:^|[\s(])\/([a-zA-Z][a-zA-Z0-9_:-]*)/g;
       let m;
@@ -97,7 +83,7 @@ function main() {
       }));
       process.exit(0);
     } catch (e) {
-      process.exit(0);  // never block on hook errors
+      process.exit(0);
     }
   });
 }

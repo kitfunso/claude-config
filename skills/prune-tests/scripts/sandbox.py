@@ -1,5 +1,3 @@
-"""Windows Low integrity for test runs: the process reads every file but writes only under LocalLow.
-prune_plugin drops each pytest run to Low as it loads, so a planted bug that writes live data gets access denied."""
 from __future__ import annotations
 
 import ctypes
@@ -24,20 +22,19 @@ def lower_self() -> None:
     adv = ctypes.WinDLL("advapi32", use_last_error=True)
     k32.GetCurrentProcess.restype = W.HANDLE
     token, sid = W.HANDLE(), ctypes.c_void_p()
-    label = _SidAttr(None, 0x20)  # SE_GROUP_INTEGRITY
+    label = _SidAttr(None, 0x20)
     ok = (adv.OpenProcessToken(W.HANDLE(k32.GetCurrentProcess()), 0x80 | 0x8, ctypes.byref(token))
           and adv.ConvertStringSidToSidW("S-1-16-4096", ctypes.byref(sid)))
     if ok:
         label.Sid = sid
         ok = adv.SetTokenInformation(token, 25, ctypes.byref(label),
-                                     ctypes.sizeof(label) + adv.GetLengthSid(sid))  # 25 = TokenIntegrityLevel
+                                     ctypes.sizeof(label) + adv.GetLengthSid(sid))
     if not ok:
         raise ctypes.WinError(ctypes.get_last_error(), "could not drop to Low integrity")
 
 
 def low_dir(prefix: str) -> tempfile.TemporaryDirectory:
     LOW_ROOT.mkdir(parents=True, exist_ok=True)
-    # a timed-out run can leave a killed child holding a file; a leftover folder must not fail the lane
     return tempfile.TemporaryDirectory(prefix=prefix, dir=LOW_ROOT, ignore_cleanup_errors=True)
 
 
@@ -45,13 +42,11 @@ _proven: set[str] = set()
 
 
 def prove(python: str) -> None:
-    """The sandbox is the only thing between a planted bug and live data: refuse to run if it does not hold."""
     if os.name != "nt":
         raise SystemExit("prune-tests runs planted bugs only inside the Windows Low integrity sandbox.")
     if python in _proven:
         return
     probe = Path(tempfile.gettempdir()) / f"prune-sandbox-probe-{os.getpid()}"
-    # exit 7 only when the drop worked and the write was then refused; a failed drop must not pass
     code = (f"import sandbox, sys; sandbox.lower_self()\ntry: open({str(probe)!r}, 'w').close()\n"
             "except PermissionError: sys.exit(7)")
     env = {**os.environ, "PYTHONPATH": str(SCRIPTS)}

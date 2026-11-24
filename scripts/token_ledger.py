@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""Price every Claude Code request under ~/.claude/projects by billing type and by what filled the prompt.
-
-Usage: python token_ledger.py [--since YYYY-MM-DD] [--json out.json]
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -16,7 +11,6 @@ from pathlib import Path
 
 PROJECTS = Path.home() / ".claude" / "projects"
 CHARS_PER_TOKEN = 4.0
-# $ per MTok: input, output, cache read, 5m write, 1h write. Most specific key first.
 PRICES = {
     "opus-5-5": (4.0, 20.0, 0.20, 5.0, 8.0),
     "opus": (5.0, 25.0, 0.50, 6.25, 10.0),
@@ -52,9 +46,9 @@ def text_len(content: object) -> int:
 
 @dataclass
 class Ledger:
-    cost: Counter = field(default_factory=Counter)  # (source, billing) -> $
-    tokens: Counter = field(default_factory=Counter)  # (source, billing) -> tokens
-    by_who: Counter = field(default_factory=Counter)  # (who, billing) -> $
+    cost: Counter = field(default_factory=Counter)
+    tokens: Counter = field(default_factory=Counter)
+    by_who: Counter = field(default_factory=Counter)
     by_model: Counter = field(default_factory=Counter)
     tool_calls: Counter = field(default_factory=Counter)
     tool_errors: Counter = field(default_factory=Counter)
@@ -138,7 +132,6 @@ def final_output(lines: list[str]) -> dict[str, tuple[int, int]]:
 
 
 def walk(path: Path, ledger: Ledger, since: str, session: str, who: str, until: str = "9999") -> None:
-    # One read for both passes: a live session appends between two reads, leaving requests the first pass never saw.
     with path.open(encoding="utf-8", errors="replace") as fh:
         lines = list(fh)
     final = final_output(lines)
@@ -233,7 +226,6 @@ def walk(path: Path, ledger: Ledger, since: str, session: str, who: str, until: 
 
 
 def run(since: str, until: str = "9999") -> Ledger:
-    """Price every request with since <= timestamp < until, main threads and their subagents."""
     ledger = Ledger()
     for main in sorted(PROJECTS.glob("*/*.jsonl")):
         session = main.stem

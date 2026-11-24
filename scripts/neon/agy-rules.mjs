@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// agy SessionStart hook: gives Gemini 4 Neon the rules Claude Code loads (global + repo CLAUDE.md, rules/, memory index, hippo pins).
 // agy cuts one injected message near 48 KB, so the text goes out as 16 KB parts (tested 22 Nov: all parts arrive).
 import fs from 'node:fs';
 import os from 'node:os';
@@ -14,7 +13,6 @@ const NATIVE = new Set(['agents.md', 'gemini.md']);
 const read = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch { return null; } };
 const file = (f, body) => `# FILE ${f}\n${body.trim()}`;
 
-/** Model Routing covers Claude sub-agent models only; Neon has no use for it. */
 export function stripSection(md, heading) {
   const i = md.indexOf(`\n${heading}`);
   if (i === -1) return md;
@@ -124,7 +122,6 @@ export function chunk(text, size = PART) {
 
 export function buildRules(cwd) {
   const pieces = [];
-  // hippo's pinned rules arrive through the hook bridge (agy-bridge.mjs runs Claude's hippo hooks), not from here.
   for (const fn of [globalRules, () => claudeMdChain(cwd), () => cutNotes(cwd), () => memoryIndexes(cwd)]) {
     try { pieces.push(...[].concat(fn() || [])); } catch { /* one bad source must not block agy */ }
   }

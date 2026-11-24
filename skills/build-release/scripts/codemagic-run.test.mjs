@@ -1,4 +1,3 @@
-// node --test codemagic-run.test.mjs: runs the script against a stand-in Codemagic API.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -9,12 +8,10 @@ import assert from 'node:assert/strict';
 
 const SCRIPT = new URL('./codemagic-run.mjs', import.meta.url).pathname.replace(/^\/(\w:)/, '$1');
 const IDS = ['a'.repeat(24), 'b'.repeat(24)];
-// Real shape: a script step's log sits on its one nameless subaction; built-in steps hold it themselves.
 const step = (name, status, log) => ({ name, status, type: null, logUrl: null,
   subactions: [{ command: '#!/usr/bin/env bash\n', status, logUrl: `http://HOST${log}` }] });
 const builtIn = (name, status, log) => ({ name, status, type: 'publishing', logUrl: `http://HOST${log}`, subactions: [] });
 
-// Each build id answers its states in turn, then repeats the last one.
 async function release(states, logs, extra = []) {
   const started = [];
   const hits = [];
@@ -42,7 +39,6 @@ async function release(states, logs, extra = []) {
   return { code, out, started, hits };
 }
 
-// --wait reads only a log file, so no server; --seconds 1 turns "still running" into a quick exit 2.
 async function wait(text) {
   const dir = mkdtempSync(join(tmpdir(), 'codemagic-run-test-'));
   try {
@@ -86,7 +82,6 @@ test('stops on a failure a rerun would not fix', async () => {
 
 const READ = 'Read the App Store numbers';
 const READ_ARGS = ['--report-step', READ, '--report-lines', '^(WEEK|RESULT) '];
-// The step's own RESULT line is what must never reach the start of an output line.
 const readLog = (result) => ['Fetching reports for app 123...', '  WEEK 2026-11-02 downloads 14\r', 'WEEKLY digest skipped',
   'WEEK 2026-11-02 sessions 90', 'Done in 2.1s', result].join('\n');
 const failedRead = { [IDS[0]]: [{ status: 'failed', buildActions: [step('Build web', 'success', '/log/web'),

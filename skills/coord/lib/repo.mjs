@@ -4,7 +4,6 @@ import { existsSync } from 'node:fs'
 const PROTECTED = new Set(['master', 'main', 'HEAD'])
 const RELEASE_BRANCH = /^(release\/|chore\/release-)/
 
-// Undefined when the tool exits non-zero (not a repo, no such PR); a missing binary or a hang still throws.
 export function run(cmd, args, cwd) {
   try {
     const out = execFileSync(cmd, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15000, windowsHide: true })
@@ -15,7 +14,6 @@ export function run(cmd, args, cwd) {
   }
 }
 
-// owner/name from the origin URL, so every worktree and clone of one GitHub repo shares a board.
 export function repoOf(cwd, hint) {
   if (hint === undefined && cwd !== undefined && !existsSync(cwd)) return undefined
   const url = hint ?? run('git', ['remote', 'get-url', 'origin'], cwd)

@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (ExitPlanMode): backstop for "Plans use html-plan" in CLAUDE.md.
-
-Denies leaving plan mode until the main-thread transcript shows the html-plan skill invoked,
-as a Skill tool call or a typed /html-plan. Escape hatch: CLAUDE_PLAN_GATE=off. On any error
-the call is allowed and one stderr line names it; a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -18,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 try:
     from record_component import record
-except Exception:  # the recorder is optional, the deny is not
+except Exception:
     def record(**_: object) -> None:
         return None
 
@@ -48,7 +41,7 @@ def invoked(row: dict) -> bool:
 def seen(transcript: Path) -> bool:
     with transcript.open("rb") as fh:
         for raw in fh:
-            if b"html-plan" not in raw:  # byte probe: transcripts reach hundreds of MB
+            if b"html-plan" not in raw:
                 continue
             try:
                 row = json.loads(raw)
@@ -60,7 +53,6 @@ def seen(transcript: Path) -> bool:
 
 
 def decide(payload: dict) -> dict | None:
-    """The deny output for an ExitPlanMode with no html-plan call behind it, else None."""
     if payload.get("tool_name") != "ExitPlanMode":
         return None
     path = payload.get("transcript_path")

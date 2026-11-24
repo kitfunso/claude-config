@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Proves a comment cleanup changed ONLY comments: strips comment and blank lines
-// from HEAD and from the working tree, then demands the remainder match exactly.
-// Usage: node verify-comment-edit.js <repo> [file...]  (files default to all modified)
 
 const { execFileSync } = require('child_process');
 const fs = require('fs');

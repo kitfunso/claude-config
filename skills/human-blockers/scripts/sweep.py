@@ -18,8 +18,6 @@ HOME = Path.home()
 MEMORY_DIR = HOME / ".claude" / "projects" / "C--Users-skf-s" / "memory"
 BLOCKERS = HOME / ".claude" / "BLOCKERS.md"
 
-# Measured against the 225 memory files on 2026-09-06; see the skill's Sources section.
-# BLOCKERS.md states openness structurally, so no keyword of its own appears on a row.
 UNCHECKED = re.compile(r"^- \[ \]")
 OPEN_MARKERS = re.compile(
     r"blocked on|BLOCKED|NOT yet|not yet run|unset|pending|awaiting|"
@@ -59,7 +57,6 @@ def scan(path: Path) -> list[Candidate]:
         box_open = UNCHECKED.match(text) is not None
         if not text or not (box_open or OPEN_MARKERS.search(text)):
             continue
-        # A row's own box outranks a word like "closed" or "live" in its prose.
         if not box_open and CLOSED_MARKERS.search(text):
             continue
         hits.append(Candidate(path, i, text))

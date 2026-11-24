@@ -1,4 +1,3 @@
-# Presses Chrome's "Allow remote debugging?" for our own connection, so Keith never has to (his ask, 2026-10-16).
 # A real mouse click: UIA Invoke only moves focus. Chrome also ignores clicks right after the prompt appears.
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 Add-Type @'

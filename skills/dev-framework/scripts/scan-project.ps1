@@ -1,5 +1,3 @@
-# Project Scanner — emits JSON describing project type, phase, sensitivity, artifacts
-# Usage: powershell -File scan-project.ps1 [-Path <dir>]
 param([string]$Path = (Get-Location).Path)
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -49,10 +47,8 @@ function Has-PyDep {
     return $false
 }
 
-# --- Project type detection — deps-based, no text matching ---
 $types = [ordered]@{}
 
-# UI
 $ui = 0.0
 if (Has-NodeDep @('react', 'next', 'vue', 'svelte', 'solid', 'astro', 'nuxt', 'remix', '@remix-run/react', 'preact', '@sveltejs/kit')) { $ui = 0.9 }
 if ((Has-File 'next.config.js') -or (Has-File 'next.config.ts') -or (Has-File 'next.config.mjs')) { $ui = 1.0 }
@@ -63,7 +59,6 @@ $tsxFiles = Get-ChildItem -Recurse -Depth 4 -File -Include *.tsx,*.jsx,*.svelte,
 if ($tsxFiles -and $ui -lt 0.7) { $ui = 0.7 }
 if ($ui -ge 0.4) { $types['ui'] = $ui }
 
-# AI / agent
 $ai = 0.0
 if (Has-NodeDep @('@anthropic-ai/sdk', 'anthropic', 'openai', 'langchain', '@langchain/core', 'llamaindex', '@llamaindex/core', 'litellm', '@modelcontextprotocol/sdk')) { $ai = 0.9 }
 elseif (Has-PyDep @('anthropic', 'openai', 'langchain', 'llamaindex', 'transformers', 'litellm', 'mcp')) { $ai = 0.9 }
@@ -72,7 +67,6 @@ if ((Has-File 'agents') -or (Has-File 'prompts') -or (Has-File 'evals') -or (Has
 }
 if ($ai -ge 0.4) { $types['ai-agent'] = $ai }
 
-# Backend
 $be = 0.0
 if (Has-NodeDep @('express', 'fastify', 'koa', '@koa/router', 'hono', '@nestjs/core')) { $be = 0.9 }
 elseif (Has-PyDep @('fastapi', 'django', 'flask', 'sqlalchemy', 'starlette')) { $be = 0.9 }
@@ -81,14 +75,12 @@ if ((Has-File 'routes') -or (Has-File 'api') -or (Has-File 'migrations')) {
 }
 if ($be -ge 0.4) { $types['backend'] = $be }
 
-# Quant
 $quant = 0.0
 if ($Path -match 'Quantamental') { $quant = 1.0 }
 elseif ((Has-File 'signals') -or (Has-File 'live_signal.json') -or (Has-File 'rolls.csv')) { $quant = 0.9 }
 elseif (Has-PyDep @('pandas', 'numpy', 'scipy', 'yfinance', 'QuantLib')) { $quant = 0.5 }
 if ($quant -ge 0.4) { $types['quant'] = $quant }
 
-# CLI
 $cli = 0.0
 if (Has-File 'package.json') {
     try {
@@ -107,7 +99,6 @@ if ((Has-File 'bin') -or (Has-File 'cmd')) {
 }
 if ($cli -ge 0.4) { $types['cli'] = $cli }
 
-# Library
 $lib = 0.0
 if (Has-File 'package.json') {
     try {
@@ -122,7 +113,6 @@ if ((Has-File 'CHANGELOG.md') -and (-not (Has-File 'app'))) {
 }
 if ($lib -ge 0.4) { $types['library'] = $lib }
 
-# Mobile — explicit deps OR config files OR both native dirs (no more text-matching "expo")
 $mobile = 0.0
 if ((Has-File 'capacitor.config.json') -or (Has-File 'capacitor.config.ts') -or (Has-File 'capacitor.config.js')) { $mobile = 1.0 }
 if ((Has-File 'android') -and (Has-File 'ios')) {
@@ -133,7 +123,6 @@ if (Has-NodeDep @('@capacitor/core', 'react-native', 'expo', '@react-native/core
 }
 if ($mobile -ge 0.4) { $types['mobile'] = $mobile }
 
-# --- Artifact detection ---
 $artifacts = [ordered]@{
     PRD = (Has-File 'PRD.md')
     ARCHITECTURE = (Has-File 'ARCHITECTURE.md')
@@ -144,7 +133,6 @@ $artifacts = [ordered]@{
     CHANGELOG = (Has-File 'CHANGELOG.md')
 }
 
-# --- Phase detection ---
 $phase = 'DISCOVER'
 if ($artifacts.PRD -or $artifacts.PLAN) { $phase = 'SCAFFOLD' }
 if ($artifacts.PRD -and $artifacts.ARCHITECTURE -and $artifacts.PLAN) { $phase = 'PLAN' }
@@ -170,12 +158,10 @@ try {
 if ($hasCommits -and $artifacts.PLAN) { $phase = 'EXECUTE' }
 if ($prOpen) { $phase = 'REVIEW' }
 
-# --- Sensitivity detection — deps-first, then import-style patterns. No bare-word matching. ---
 $sensitivity = New-Object System.Collections.Generic.List[string]
 $codeFiles = Get-ChildItem -Recurse -Depth 4 -File -Include *.py,*.ts,*.tsx,*.js,*.jsx -ErrorAction SilentlyContinue | Select-Object -First 200
 $codeBlob = ($codeFiles | Get-Content -Raw -ErrorAction SilentlyContinue) -join "`n"
 
-# Auth — auth library deps OR auth-specific usage patterns
 $authNodeDeps = @('passport', 'jsonwebtoken', 'next-auth', '@clerk/nextjs', '@clerk/clerk-sdk-node', '@auth0/auth0-react', '@auth0/nextjs-auth0', 'lucia', '@supabase/auth-helpers-nextjs', 'better-auth', 'iron-session')
 $authPyDeps = @('python-jose', 'authlib', 'pyjwt', 'fastapi-users', 'flask-login', 'django-allauth')
 if ((Has-NodeDep $authNodeDeps) -or (Has-PyDep $authPyDeps)) {
@@ -196,7 +182,6 @@ if ((Has-NodeDep $authNodeDeps) -or (Has-PyDep $authPyDeps)) {
     }
 }
 
-# Payments — explicit deps OR specific API calls (dropped "square" — too generic)
 $paymentNodeDeps = @('stripe', '@stripe/stripe-js', '@stripe/react-stripe-js', '@paypal/react-paypal-js', '@lemonsqueezy/lemonsqueezy.js', 'square')
 $paymentPyDeps = @('stripe', 'paypalrestsdk', 'squareup')
 if ((Has-NodeDep $paymentNodeDeps) -or (Has-PyDep $paymentPyDeps)) {
@@ -214,7 +199,6 @@ if ((Has-NodeDep $paymentNodeDeps) -or (Has-PyDep $paymentPyDeps)) {
     }
 }
 
-# PII — schema/model with PII fields (decorators or typed fields)
 $piiPatterns = @(
     '(@Column|@Field|@Property|@PrimaryColumn).*\b(email|phone|address|ssn|dob)\b',
     'String\s+(email|phone|address|firstName|lastName)\b',
@@ -243,7 +227,6 @@ if ($envFiles -and ($envFiles.Count -gt 0)) {
     }
 }
 
-# --- Output ---
 $result = [ordered]@{
     path = $Path
     types = $types

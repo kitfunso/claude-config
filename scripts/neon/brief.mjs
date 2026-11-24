@@ -1,4 +1,3 @@
-// Writes the handoff brief that a Neon tab starts from: Keith's words, Claude's last state and each repo's git state.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,7 +22,6 @@ function git(dir, args) {
 
 export const repoRoot = (dir) => (git(dir, ['rev-parse', '--show-toplevel']) || '').replace(/\//g, '\\') || null;
 
-/** Newest real cwd: exists, not under %TEMP%, mapped to its git toplevel. */
 export function workDir(scan, fallback) {
   for (const c of [...scan.cwds].reverse().map(toWin)) {
     if (c && !isTemp(c) && fs.existsSync(c)) return repoRoot(c) || c;
@@ -31,7 +29,6 @@ export function workDir(scan, fallback) {
   return fallback;
 }
 
-/** Every repo the session edited in or worked in, newest first, at most 6. */
 export function touchedRepos(scan) {
   const dirs = [...scan.edits.map((f) => path.dirname(toWin(f))), ...scan.cwds.map(toWin)].reverse();
   const roots = [];

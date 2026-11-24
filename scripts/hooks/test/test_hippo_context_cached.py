@@ -1,8 +1,3 @@
-"""Tests for the hippo UserPromptSubmit cache wrapper.
-
-Run: python -m unittest discover -s scripts/hooks/test -p "test_*.py"
-"""
-
 import json
 import sys
 import unittest
@@ -61,8 +56,6 @@ class StripSnapshot(unittest.TestCase):
 
 
 class RefreshLock(unittest.TestCase):
-    """Two concurrent refreshes deadlock SQLite, so the lock cannot be per cwd."""
-
     def test_one_lock_serves_every_working_directory(self):
         self.assertEqual(hook.lock_file(), hook.CACHE_DIR / "refresh.lock")
 
@@ -99,8 +92,6 @@ class RefreshLock(unittest.TestCase):
 
 
 class RefreshDue(unittest.TestCase):
-    """A refresh is a launch on the prompt's path, so a fresh cache must not start one."""
-
     def setUp(self):
         import shutil
         import tempfile
@@ -138,8 +129,6 @@ class RefreshDue(unittest.TestCase):
 
 
 class HippoCommand(unittest.TestCase):
-    """npm's Windows shim is cmd.exe starting node: one more launch on every call."""
-
     def setUp(self):
         import shutil
         import tempfile
@@ -197,8 +186,6 @@ class CacheFile(unittest.TestCase):
 
 
 class Dedupe(unittest.TestCase):
-    """One send per armed session per text; SessionStart arms the marker."""
-
     def setUp(self):
         import uuid
         self.sid = f"test-{uuid.uuid4()}"
@@ -249,8 +236,6 @@ RECALL = "## Prompt-Relevant Memory (1 entries, 30 tokens)\n\n- **[verified] a l
 
 
 class PromptRecall(unittest.TestCase):
-    """The cache holds pinned rules only, so the prompt must reach a live hippo call."""
-
     def setUp(self):
         hook.backoff_file().unlink(missing_ok=True)
         self.addCleanup(lambda: hook.backoff_file().unlink(missing_ok=True))

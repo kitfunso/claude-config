@@ -1,4 +1,3 @@
-"""What fills context (tool result sizes by tool and command) and why cache gets rewritten."""
 from __future__ import annotations
 
 import json

@@ -1,9 +1,3 @@
-"""Shared writer for component_outcomes, the Python twin of record-component.js.
-
-Every .py hook's deny path goes through here. Never raises: recording must not
-change what the caller was going to do.
-"""
-
 from __future__ import annotations
 
 import os

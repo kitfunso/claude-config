@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Weekly scorecard for the Claude Code config in ~/.claude: seven metrics, each scored 0..1, averaged into a score out of 100.
-
-Usage: python scorecard.py [--days 7] [--no-fetch]
-Appends one JSON line to ~/.claude/scorecard/history.jsonl, writes scorecard-YYYY-MM-DD.html beside it, prints a summary.
-The scorecard folder stays outside the git allowlist: the repo is public and the page shows local data.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -90,14 +83,12 @@ class Result:
 
 
 def score(value: float | None, floor: float, target: float) -> float:
-    """Linear from the floor (0) to the target (1), clipped; a metric with no data scores 0."""
     if value is None:
         return 0.0
     return min(max((value - floor) / (target - floor), 0.0), 1.0)
 
 
 def overall(scores: list[float]) -> float:
-    """Equal-weight mean of the metric scores, out of 100."""
     return 100 * sum(scores) / len(scores) if scores else 0.0
 
 
@@ -106,7 +97,6 @@ def goal_text(goal: Goal) -> str:
 
 
 def stamp(when: datetime) -> str:
-    """UTC with no zone suffix, so it string-compares correctly with transcript timestamps."""
     return when.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
 
@@ -116,7 +106,6 @@ def parse_ts(text: object) -> datetime:
 
 
 def approvals_metric(rows: list[dict], start: datetime, days: int) -> Result:
-    """Approval-only prompts in the window, scaled to a week so the weekly floor and target hold for any --days."""
     if not rows:
         return Result(None, "no data yet", details=("no human prompts in the window",))
     gaps = [gap for gap, _, _ in time_ledger.approval_gaps(rows)]
@@ -129,7 +118,6 @@ def approvals_metric(rows: list[dict], start: datetime, days: int) -> Result:
 
 
 def reply_record(line: str) -> dict | None:
-    """One reply-check record with its parsed time under "_ts"; None when the line does not fit the schema."""
     try:
         rec = json.loads(line)
         rec["_ts"] = parse_ts(rec["ts"])
@@ -139,7 +127,6 @@ def reply_record(line: str) -> dict | None:
 
 
 def read_reply_log(path: Path, since: datetime) -> tuple[list[dict], int] | None:
-    """(records stamped at or after since, unreadable line count); None until the Stop hook has written the log."""
     if not path.exists():
         return None
     parsed = [reply_record(line) for line in path.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
@@ -161,25 +148,21 @@ def reply_metric(log: tuple[list[dict], int] | None) -> Result:
 
 
 def critical_rules(text: str) -> list[str]:
-    """Heading and bold-lead bullet lines tagged (CRITICAL; prose that only mentions CRITICAL is not a rule."""
     return [line for line in text.splitlines() if RULE_LINE.match(line) and "(CRITICAL" in line]
 
 
 def rule_name(line: str) -> str:
-    """Heading text or bold lead, without its (CRITICAL) style tag."""
     head = RULE_LINE.sub("", line.strip()).lstrip("*")
     return re.split(r"\(|\*\*", head)[0].strip(" .:")
 
 
 def hook_scripts(settings: dict) -> set[str]:
-    """File names that settings.json hooks run, read from each hook's command and args."""
     parts = [str(part) for groups in (settings.get("hooks") or {}).values() for group in groups
              for hook in group.get("hooks") or [] for part in [hook.get("command", ""), *(hook.get("args") or [])]]
     return {re.split(r"[\\/]", token)[-1] for part in parts for token in re.split(r"[\s\"']+", part) if token}
 
 
 def check_gaps(checks: tuple[str, ...], wired: set[str], deny: list[str], hooks_dir: Path) -> list[str]:
-    """Why a rule's checks are not bound; empty when every script exists and is wired, and every deny is listed."""
     gaps = []
     for check in checks:
         if check.startswith("deny:"):
@@ -211,9 +194,7 @@ def critical_metric(files: list[Path], settings: dict, hooks_dir: Path) -> Resul
 
 
 def git(repo: Path, *args: str, timeout: float = 20) -> tuple[bool, str]:
-    """(ok, output or error); no optional locks, so a status never rewrites the index of a repo it must not modify."""
     try:
-        # The weekly task runs under pythonw, where each console child would flash its own window.
         done = subprocess.run(["git", "--no-optional-locks", "-C", str(repo), *args], capture_output=True, text=True,
                               timeout=timeout, env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
@@ -297,12 +278,10 @@ def eval_metric(skills: Path) -> Result:
 
 
 def cost_between(since: datetime, until: datetime | None) -> float:
-    """Dollars token_ledger prices for requests in [since, until), main threads and subagents."""
     return token_ledger.report(token_ledger.run(stamp(since), stamp(until) if until else "9999"))["total $"]
 
 
 def spend_metric(window: list[dict], prior: list[dict], cost_now: float, cost_prior: float) -> Result:
-    """Dollars per task (a prompt that used a tool) in the window, over the same ratio for the 28 days before it."""
     tasks_now, tasks_prior = sum(r["tools"] > 0 for r in window), sum(r["tools"] > 0 for r in prior)
     first = min((r["t0"] for r in prior), default=None)
     lines = (f"window: ${cost_now:,.0f} over {tasks_now} tasks",
@@ -316,7 +295,6 @@ def spend_metric(window: list[dict], prior: list[dict], cost_now: float, cost_pr
 
 
 def probation_rules(text: str) -> list[tuple[str, date]]:
-    """(rule, date set) per "Set YYYY-MM-DD (probation)", owned by the nearest heading or bold-lead bullet at or above it."""
     found, owner = [], "(no heading)"
     for line in text.splitlines():
         if RULE_LINE.match(line):
@@ -326,7 +304,6 @@ def probation_rules(text: str) -> list[tuple[str, date]]:
 
 
 def fires(rule: str, replies: list[dict] | None) -> str:
-    """Reply-check flags that belong to a probation rule; n/a when no feed checks it."""
     feed = next((pattern for key, pattern in PROBATION_FEEDS.items() if key in rule), None)
     if feed is None:
         return "n/a"
@@ -349,7 +326,6 @@ def probation_metric(files: list[Path], today: date, replies: list[dict] | None)
 
 
 def collect(now: datetime, days: int, fetch: bool) -> dict[str, Result]:
-    """Every metric's Result, keyed like GOALS."""
     start = now - timedelta(days=days)
     base = start - timedelta(days=BASELINE_DAYS)
     rows = time_ledger.load_rows(since=stamp(base))
@@ -406,7 +382,6 @@ def bar(value: float) -> str:
 
 
 def render(scored: list[tuple[Goal, Result, float]], total: float, window: str, day: str) -> str:
-    """The self-contained page: one table row per metric, then each metric's detail lines."""
     esc = html.escape
     rows = "\n".join(
         f'<tr><td>{esc(g.name)}<div class="why">{esc(g.why)}</div></td>'

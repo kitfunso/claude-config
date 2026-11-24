@@ -1,14 +1,4 @@
 #!/usr/bin/env node
-/**
- * Stop hook that persists session summary to ~/.claude/sessions/.
- *
- * Extracts key info from the transcript:
- * - Last 10 user messages (what was worked on)
- * - Files modified
- * - Tools used
- *
- * Uses marker-based idempotent updates so repeated invocations are safe.
- */
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -30,12 +20,10 @@ function main() {
         process.exit(0);
       }
 
-      // Ensure sessions directory exists
       if (!fs.existsSync(SESSIONS_DIR)) {
         fs.mkdirSync(SESSIONS_DIR, { recursive: true });
       }
 
-      // Parse transcript (JSONL format)
       const content = fs.readFileSync(transcriptPath, 'utf8');
       const lines = content.split('\n').filter(l => l.trim());
 
@@ -48,7 +36,6 @@ function main() {
           const entry = JSON.parse(line);
           const msg = entry.message || entry;
 
-          // Extract user messages
           if (msg.type === 'user' || msg.role === 'user') {
             const rawContent = msg.content;
             const text = Array.isArray(rawContent)
@@ -59,13 +46,11 @@ function main() {
             }
           }
 
-          // Extract tool usage
           if (msg.type === 'tool_use' || msg.tool_name) {
             const toolName = msg.tool_name || msg.name || '';
             if (toolName) toolsUsed.add(toolName);
           }
 
-          // Extract file paths from tool inputs
           if (msg.tool_input) {
             const input = msg.tool_input;
             if (input.file_path) filesModified.add(input.file_path);
@@ -80,7 +65,6 @@ function main() {
         process.exit(0);
       }
 
-      // Build session file
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toTimeString().substring(0, 5);
@@ -88,7 +72,6 @@ function main() {
       const filename = `${dateStr}-${sessionId}-session.md`;
       const filepath = path.join(SESSIONS_DIR, filename);
 
-      // Build summary block
       const lastMessages = userMessages.slice(-10);
       const summaryBlock = [
         SUMMARY_START,
@@ -104,7 +87,6 @@ function main() {
         SUMMARY_END
       ].join('\n');
 
-      // Idempotent update: replace between markers or create new
       if (fs.existsSync(filepath)) {
         let existing = fs.readFileSync(filepath, 'utf8');
         if (existing.includes(SUMMARY_START) && existing.includes(SUMMARY_END)) {

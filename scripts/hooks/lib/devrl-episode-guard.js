@@ -1,6 +1,5 @@
 // Bash checks for a session that holds a /dev-framework-rl episode lock. The Bash
 // tool keeps its cwd between calls, and an orchestrator interleaving repos loses it.
-
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

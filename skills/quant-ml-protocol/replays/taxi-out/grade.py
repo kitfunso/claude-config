@@ -1,4 +1,3 @@
-"""Score a taxi-out submission: RMSE in seconds on the hidden departures, missing rows filled with the naive."""
 from __future__ import annotations
 
 import json

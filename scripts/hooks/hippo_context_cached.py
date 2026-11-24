@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Serve hippo's pinned rules from a cache and add hippo's live prompt recall.
-
-`hippo context` costs 1-4s idle but 28-57s under 24-core load, against a 15s hook
-budget. See docs/incidents.md (2026-09-06, 2026-09-13, and 2026-10-04 for recall).
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -16,7 +10,6 @@ import sys
 import time
 from pathlib import Path
 
-# Pinned rules only: the last-N-writes add-on was global, so every prompt carried other projects' notes.
 ARGS = ["context", "--pinned-only", "--format", "additional-context"]
 CACHE_DIR = (Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
              / "cache" / "hippo-context")
@@ -41,18 +34,15 @@ def hippo() -> list[str] | None:
 
 
 def cache_file(cwd: str) -> Path:
-    """One key per folder and query: slash style never splits it, and a changed query never serves the old cache."""
     key = "\0".join([cwd.replace("\\", "/").rstrip("/"), *ARGS])
     return CACHE_DIR / f"{hashlib.sha1(key.encode('utf-8')).hexdigest()[:16]}.json"
 
 
 def lock_file() -> Path:
-    """One lock for the whole store: two concurrent refreshes deadlock SQLite."""
     return CACHE_DIR / "refresh.lock"
 
 
 def strip_snapshot(payload: str) -> str:
-    """The SessionStart hook already prints the snapshot; per prompt it is dead weight."""
     try:
         doc = json.loads(payload)
         block = doc["hookSpecificOutput"]["additionalContext"]
@@ -103,7 +93,6 @@ def backoff_file() -> Path:
 
 
 def prompt_recall(cwd: str, stdin_text: str, prompt: str, timeout: float) -> str:
-    """The cache cannot match a prompt, so recall runs live; a timeout pauses it so a busy box stays fast."""
     if not prompt.strip() or timeout < 1.0 or os.environ.get("CLAUDE_HIPPO_RECALL", "").lower() == "off":
         return ""
     try:
@@ -121,7 +110,6 @@ def prompt_recall(cwd: str, stdin_text: str, prompt: str, timeout: float) -> str
 
 
 def merge(static: str | None, recall: str) -> str | None:
-    """Pinned rules go once per session, recall goes every prompt, so they travel as one block."""
     if not recall:
         return static
     text = context_text(static)
@@ -146,14 +134,12 @@ def seen_file(session_id: str) -> Path:
 
 
 def already_sent(session_id: str, out: str) -> bool:
-    """The block stays in context until a compaction, so a repeat only burns tokens."""
     if not session_id or os.environ.get("CLAUDE_HIPPO_DEDUPE", "").lower() == "off":
         return False
     path = seen_file(session_id)
     try:
         seen = path.read_text(encoding="utf-8")
     except OSError:
-        # no marker: this box has no --reset hook, so nothing would re-send after a compaction
         return False
     digest = hashlib.sha1(out.encode("utf-8")).hexdigest()
     if seen == digest:
@@ -170,7 +156,6 @@ def reset(session_id: str) -> int:
 
 
 def refresh_running(lock: Path) -> bool:
-    """A crashed refresh must not wedge the cache, so the lock expires."""
     try:
         return time.time() - lock.stat().st_mtime < LOCK_TTL
     except OSError:
@@ -178,7 +163,6 @@ def refresh_running(lock: Path) -> bool:
 
 
 def refresh_due(cwd: str) -> bool:
-    """Pinned rules change a few times a day; a refresh per prompt put a launch on every prompt's path."""
     try:
         return time.time() - cache_file(cwd).stat().st_mtime >= CACHE_TTL
     except OSError:

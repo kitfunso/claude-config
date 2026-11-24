@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Where wall-clock goes per human prompt: model thinking, tools, background waits, and stops for approval.
-
-Usage: python time_ledger.py [--since YYYY-MM-DD] [--until ISO] [--skip SESSION_PREFIX] [--stops]
-Companion to token_ledger.py, which prices the same transcripts. Main-thread rows only.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -55,7 +49,6 @@ def waker(d: dict) -> str:
 
 
 def spans(path: Path, since: str, until: str):
-    """One span per human prompt: the prompt plus every main-thread row until the next human prompt."""
     cur = None
     for line in path.open(encoding="utf-8", errors="replace"):
         try:
@@ -78,7 +71,6 @@ def spans(path: Path, since: str, until: str):
 
 
 def measure(span: dict) -> dict:
-    """Model time runs from a request's trigger row to its last block; parked time runs from end_turn to the next user row."""
     prev = end = span["start"]
     reqs: dict[str, dict] = {}
     open_calls: dict[str, tuple] = {}
@@ -137,9 +129,6 @@ def hours(c: Counter, n: int = 8) -> list:
 
 
 def approval_gaps(rows: list[dict]) -> list[tuple[float, dict, dict]]:
-    """(idle minutes, prompt before, approval) for each approval-only prompt answering a reply in the same session.
-
-    A go after a usage-limit notice is left out: the limit ended that turn, not a choice to stop."""
     return [((r["t0"] - prev["t1"]).total_seconds() / 60, prev, r) for prev, r in zip(rows, rows[1:])
             if prev["session"] == r["session"] and len(r["prompt"]) <= 60 and APPROVAL.match(r["prompt"])
             and not LIMIT_HIT.match(prev["last_text"])]
@@ -178,7 +167,6 @@ def report(rows: list[dict], show_stops: bool) -> None:
 
 
 def load_rows(since: str = "", until: str = "9999", skip: str = "") -> list[dict]:
-    """One measured row per human prompt across every main-thread transcript, in file then prompt order."""
     rows = []
     for path in sorted(PROJECTS.glob("*/*.jsonl")):
         if not (skip and path.stem.startswith(skip)):

@@ -1,10 +1,7 @@
-# Reopen the most recent Claude Code session that is no longer running, like a browser's Ctrl+Shift+T.
-# Bound to Ctrl+Shift+T in Windows Terminal; each press reopens the next most recent closed session.
 param([switch]$DryRun)
 $ErrorActionPreference = 'Stop'
 $claudeDir = Join-Path $env:USERPROFILE '.claude'
 
-# A registry file with a live claude pid marks a session that is still open in some tab.
 $live = @(Get-ChildItem (Join-Path $claudeDir 'sessions\*.json') | ForEach-Object {
     $s = Get-Content $_.FullName -Raw | ConvertFrom-Json
     $p = Get-Process -Id $s.pid -ErrorAction SilentlyContinue

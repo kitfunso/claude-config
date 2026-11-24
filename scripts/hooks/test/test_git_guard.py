@@ -1,8 +1,3 @@
-"""Tests for git_guard.resolve_dir, the path the branch note reads.
-
-Run: python -m pytest scripts/hooks/test -q -p no:cacheprovider
-"""
-
 from __future__ import annotations
 
 import os

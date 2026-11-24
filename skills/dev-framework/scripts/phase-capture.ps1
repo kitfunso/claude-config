@@ -1,6 +1,3 @@
-# Captures hippo memory on phase boundary changes
-# Designed to run on Stop hook — silent on no-change, captures on phase transitions
-# Usage: powershell -File phase-capture.ps1 [-Path <dir>]
 param([string]$Path = (Get-Location).Path)
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -35,14 +32,12 @@ if (Test-Path $stateFile) {
     }
 }
 
-# Detect phase transition
 $prevPhase = $null
 if ($state.ContainsKey($projectKey)) { $prevPhase = $state[$projectKey].phase }
 
 if ($prevPhase -and ($prevPhase -ne $currentPhase)) {
     $msg = "dev-framework phase transition: $prevPhase -> $currentPhase in $($scan.path)"
 
-    # Try to capture via hippo CLI
     $hippoOk = $false
     try {
         $msg | hippo capture --stdin 2>$null | Out-Null
@@ -55,9 +50,6 @@ if ($prevPhase -and ($prevPhase -ne $currentPhase)) {
         Write-Host "[dev-framework] phase transition (hippo unavailable): $prevPhase -> $currentPhase in $($scan.path)"
     }
 }
-# else: phase stable — silent
-
-# Save state
 $ts = Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ'
 $state[$projectKey] = @{ phase = $currentPhase; timestamp = $ts }
 

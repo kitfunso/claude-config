@@ -1,4 +1,3 @@
-// node --test handoff.test.mjs : session filter, limit trigger, lock, tab args and guard, on a fake Claude dir.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

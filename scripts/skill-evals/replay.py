@@ -42,7 +42,6 @@ class Audit:
 
 
 def tool_uses(lines: list[str]) -> list[dict]:
-    """Every tool_use block in a stream-json transcript, sub-agents' included."""
     uses = []
     for line in lines:
         try:
@@ -56,7 +55,6 @@ def tool_uses(lines: list[str]) -> list[dict]:
 
 
 def own_folder(work: str) -> re.Pattern[str]:
-    """The run's own folder however a tool call spells it: C:/..., Git Bash /c/..., or a bare ../<run id>."""
     parts = work.replace("\\", "/").lower().rstrip("/").split("/")
     return re.compile(f"(?:{re.escape('/'.join(parts[-3:-1]))}/)?{re.escape(parts[-1])}(?![\\w-])")
 
@@ -67,7 +65,6 @@ def audit(lines: list[str], arm: str, forbid: tuple[str, ...], work: str) -> Aud
     own = own_folder(work)
     void = ""
     for use in uses:
-        # A run's own folder sits under qmp-replays/runs/; only its siblings are banned.
         text = own.sub("<work>", json.dumps(use.get("input", {})).replace("\\\\", "/").lower())
         hit = next((f for f in banned if f.lower() in text), None)
         if hit:
@@ -111,7 +108,6 @@ def nudge(case: dict, minutes_left: float, deadline: str) -> str:
 
 
 def drive(base: list[str], first: str, case: dict, work: Path, env: dict, budget_min: int, deadline: str) -> bool:
-    """Run one session, resuming it while time remains, so every arm spends the same budget. True if killed."""
     end = time.monotonic() + budget_min * 60
     message, resume = first, []
     with open(work / "transcript.jsonl", "a", encoding="utf-8") as log:
@@ -169,7 +165,6 @@ def run_one(case_dir: Path, case: dict, cache: Path, arm: str, n: int, budget_mi
     g = gain(score.get("value"), score["naive"], score["lower_is_better"])
     row = {"run_id": run_id, "case": case["name"], "arm": arm, "budget": budget_min, "minutes": round(minutes, 1),
            "timed_out": timed_out, "value": score.get("value"), "naive": score["naive"], "gain": g,
-           # Per budgeted hour, so a run that stops early gains no rate from it.
            "gain_per_hour": None if g is None else round(g / (budget_min / 60), 3),
            "void": checked.void, "skill_used": checked.skill_used, "turns": checked.turns,
            "output_tokens": checked.output_tokens}

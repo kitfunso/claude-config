@@ -3,10 +3,8 @@ const { spawnSync } = require('child_process');
 const os = require('os');
 const path = require('path');
 
-// record-component skips a missing file, so test denials never land in the live devrl db.
 const NO_DEVRL_DB = path.join(os.tmpdir(), 'hook-tests-no-devrl-db', 'episodes.db');
 
-// Strip TMUX by default so "no tmux" tests are deterministic on any host shell.
 function runHook(hookPath, payload, envOverrides) {
   const env = Object.assign({}, process.env, { DEVRL_DB: NO_DEVRL_DB }, envOverrides || {});
   if (!envOverrides || envOverrides.TMUX === undefined) delete env.TMUX;

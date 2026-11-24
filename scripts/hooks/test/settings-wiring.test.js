@@ -1,5 +1,4 @@
 'use strict';
-// settings.json is per box and untracked, so these check whatever wiring the box has.
 const { test } = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
@@ -30,7 +29,6 @@ test('a node or python hook is wired in exec form', { skip: skip || process.plat
   assert.deepStrictEqual(badExec, [], 'with "args", "command" is the program name alone');
 });
 
-// `hippo init` re-adds its raw prompt hook: it looks for its marker in `command` and cannot see the wrapper's args.
 test('hippo prompt context runs once, through the cached wrapper', { skip }, () => {
   const prompt = Object.values(JSON.parse(fs.readFileSync(SETTINGS, 'utf8')).hooks?.UserPromptSubmit || {})
     .flatMap((group) => group.hooks || []);

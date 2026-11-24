@@ -1,4 +1,3 @@
-"""Grade a seeded-duplicates run: python grade.py <repo> <run-folder>. Exit 0 only if every check passes."""
 import ast
 import json
 import re

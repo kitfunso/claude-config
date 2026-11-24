@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Stop hook: measures every reply against five CLAUDE.md rules and logs one JSON line.
-
-Flags: long, table, bullets and banned:<word> (Human Voice); sweeping (Do It Properly);
-unsourced-numbers (Sourcing); no-diagnosis (Root Cause); untested-doubt (Can-Do Default). Text inside ``` fences and
-`inline code` is never scanned; each inline span counts as one word. Never blocks: a
-Stop block cannot un-show a reply, it only makes Claude print a second one, so the
-feedback reaches the next turn through human_voice.py, which imports feedback().
-The log (~/.claude/state/reply_check.jsonl) holds counts and flags, never reply text;
-"tools" is null when the transcript cannot be read. Escape hatch: CLAUDE_REPLY_CHECK=off.
-Always exits 0, with one stderr line naming any error; a broken guard must not break the session.
-"""
-
 from __future__ import annotations
 
 import json
@@ -48,7 +36,6 @@ DOUBT = re.compile(r"\b(?:won['’]?t work|will not work|unlikely to work|can['�
                    r"|(?:not|isn['’]?t) (?:possible|feasible)|impossible|infeasible|no edge(?! cases?\b))\b", re.I)
 DEPTH = re.compile(r"\b(?:in detail|in[ -]depth|detailed|full report|walk me through|long[ -]form|go long)\b",
                    re.I)
-# "fixture" is a freight term on this desk, not a fix-it ask.
 FIX_IT = re.compile(r"\b(?:fix(?!ture)|bug|broken|crash|error|fails|failing)"
                     r"|does(?:n['’]t| not) work|n(?:o|['’])t working", re.I)
 MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?"
@@ -82,15 +69,12 @@ FLAG_WORDS = {
 # NamedTuple, not dataclass: human_voice imports this module on every prompt and
 # dataclasses drags in inspect.
 class Turn(NamedTuple):
-    """What the transcript says about the turn: the human prompt, its tool calls, any <diagnosis>."""
-
     prompt: str
     tools: tuple[str, ...]
     diagnosed: bool
 
 
 def prose(reply: str) -> list[str]:
-    """Non-blank reply lines outside ``` fences, each `inline code` span cut to one token."""
     kept: list[str] = []
     fenced = False
     for line in reply.splitlines():
@@ -106,7 +90,6 @@ def has_table(lines: list[str]) -> bool:
 
 
 def longest_list_run(lines: list[str]) -> int:
-    """Indented continuation lines keep a run going; any other prose line ends it."""
     best = run = 0
     for line in lines:
         if LIST_ITEM.match(line):
@@ -122,12 +105,10 @@ def count_words(text: str) -> int:
 
 
 def longest_sentence(lines: list[str]) -> int:
-    """A line end also ends a sentence, so each list item counts on its own."""
     return max((count_words(s) for line in lines for s in SENTENCE_END.split(line)), default=0)
 
 
 def banned(text: str) -> list[str]:
-    """git_guard's list; a phrase cut mid-word ('unpack th') is completed to the word."""
     hits = {word.lower() for word in BANNED_WORDS.findall(text)}
     for m in BANNED_PHRASES.finditer(text):
         hits.add((m.group(0) + WORD_TAIL.match(text, m.end()).group(0)).lower())
@@ -135,12 +116,10 @@ def banned(text: str) -> list[str]:
 
 
 def count_numbers(text: str) -> int:
-    """Numeric tokens left once dates, times, versions, hashes, file:line refs and list markers go."""
     return len(NUMBER.findall(NOT_A_QUANTITY.sub(" ", LIST_MARKER.sub("", text))))
 
 
 def measure(reply: str, turn: Turn | None) -> dict:
-    """Counts and flags for one reply; a None turn skips the checks that need the transcript."""
     lines = prose(reply)
     text = "\n".join(lines)
     words = count_words(text)
@@ -169,7 +148,6 @@ def measure(reply: str, turn: Turn | None) -> dict:
 
 
 def read_tail(path: Path, size: int) -> list[bytes]:
-    """Whole lines from the last `size` bytes; transcripts reach hundreds of MB."""
     with path.open("rb") as fh:
         end = fh.seek(0, os.SEEK_END)
         fh.seek(max(0, end - size))
@@ -194,8 +172,6 @@ def text_of(row: dict) -> str:
 
 
 def split_turn(lines: list[bytes]) -> tuple[dict | None, list[bytes]]:
-    """The last main-thread human prompt and the raw rows after it; with no prompt in
-    the tail, every row counts as the turn."""
     for i in range(len(lines) - 1, -1, -1):
         if b'"human"' in lines[i]:
             row = parse(lines[i])
@@ -206,7 +182,6 @@ def split_turn(lines: list[bytes]) -> tuple[dict | None, list[bytes]]:
 
 
 def last_prompt(transcript: Path) -> str:
-    """Text of the latest human prompt in the transcript tail; empty when none is found."""
     row, _ = split_turn(read_tail(transcript, TRANSCRIPT_TAIL))
     return text_of(row) if row else ""
 
@@ -215,7 +190,6 @@ def load_turn(transcript: Path) -> Turn:
     prompt_row, rows = split_turn(read_tail(transcript, TRANSCRIPT_TAIL))
     tools: list[str] = []
     diagnosed = False
-    # A byte probe before json.loads keeps a 4 MB tail inside the 150 ms budget.
     for raw in rows:
         if b'"tool_use"' not in raw and b"<diagnosis>" not in raw:
             continue
@@ -233,7 +207,6 @@ def load_turn(transcript: Path) -> Turn:
 
 
 def describe(record: dict) -> str:
-    """One plain sentence naming each flag on a log record; empty when the reply was clean."""
     flags = [str(flag) for flag in record.get("flags") or []]
     parts: list[str] = []
     if "long" in flags:
@@ -250,7 +223,6 @@ def describe(record: dict) -> str:
 
 
 def feedback(session_id: str) -> str:
-    """The flag sentence for this session's last logged reply, read from the log's tail."""
     if not session_id or os.environ.get("CLAUDE_REPLY_CHECK", "").lower() == "off":
         return ""
     try:

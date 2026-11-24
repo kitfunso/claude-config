@@ -1,8 +1,3 @@
-"""Tests for the reply_check Stop hook and the flag sentence human_voice.py adds.
-
-Run: python -m pytest scripts/hooks/test -q -p no:cacheprovider
-"""
-
 from __future__ import annotations
 
 import io

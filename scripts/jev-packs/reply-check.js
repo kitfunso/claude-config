@@ -1,6 +1,4 @@
 'use strict';
-// Campaign J4 in docs/EXPERIMENT-PROTOCOL.md. Rewording a question is a new lane there.
-// Cases hold transcript text, so they live in state/jev-cases (outside git); the builder is named in J4.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -56,7 +54,6 @@ const OPENER = /^\W*(here(?:'s| is)|let me|i'll|i will|fair\b|ok(?:ay)?\b|right\
 const firstSentence = (text) => String(text).trim().split(/(?<=[.!?])\s/)[0];
 
 const baselines = {
-  // Today's reply_check.py SWEEPING regex, precomputed by the builder; the hook has no answer-first check.
   A0_hook: (input) => input.a0,
   A1_regex: (input) => ({ sweeping: BROAD.test(input.reply), not_answer_first: OPENER.test(firstSentence(input.reply)) }),
 };

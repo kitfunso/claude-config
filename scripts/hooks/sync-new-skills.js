@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// SessionStart hook: bring ~/.claude up to kitfunso/claude-config origin/main.
-// A clean tree that is only behind fast-forwards; a dirty or diverged one gets new
-// skills/commands only, so no local edit is ever modified, deleted or merged.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +16,7 @@ function behindOnly() {
     git(['merge-base', '--is-ancestor', 'HEAD', 'origin/main']);
     return true;
   } catch {
-    return false; // exit 1: HEAD holds commits origin/main lacks
+    return false;
   }
 }
 
@@ -51,7 +48,7 @@ function installAdditions() {
       file &&
       (file.startsWith('skills/') || file.startsWith('commands/')) &&
       !deleted.has(file) &&
-      !fs.existsSync(path.join(REPO, file)) // guard: additions must not clobber anything on disk
+      !fs.existsSync(path.join(REPO, file))
     )
     .map(([, file]) => file);
   const adds = candidates.length ? insideSparse(candidates) : [];

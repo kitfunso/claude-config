@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Usage: setup.sh <target-dir>. Builds a git repo from the fixture with one real fix commit
-# in its history (band's edge bug), so the past-bug replay has something to put back.
 set -euo pipefail
 src="$(cd "$(dirname "$0")/fixture" && pwd)"
 mkdir -p "$1" && cp -r "$src"/. "$1"/

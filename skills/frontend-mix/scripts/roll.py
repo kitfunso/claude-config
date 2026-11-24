@@ -1,5 +1,3 @@
-"""Seeded recipe roller for frontend-mix. Rolls N distinct tech mixes per round,
-enforces clash/perf/novelty rules, writes manifest.json, board.html, and history.json."""
 from __future__ import annotations
 
 import argparse
@@ -47,7 +45,6 @@ def _font(text: str, label: str) -> str | None:
 
 
 def load_design(path: Path) -> dict:
-    """Lock palette + type from a DESIGN.md written in the /design-consultation shape."""
     text = path.read_text(encoding="utf-8")
     display, body, data = _font(text, "Display/Hero"), _font(text, "Body"), _font(text, "Data/Tables")
     primary = _field(text, "Primary") or _field(text, "Accent") or ""
@@ -215,7 +212,6 @@ def write_board(out: Path) -> Path:
     cards = []
     for v in manifest["variants"]:
         chips = "".join(f"<span>{s}: {o}</span>" for s, o in v["recipe"].items())
-        # srcdoc, not src: board.html stays one self-contained file, so it opens or moves without its siblings.
         doc = (out / v["file"]).read_text(encoding="utf-8").replace("&", "&amp;").replace('"', "&quot;")
         cards.append(
             f'<section class="card"><header><b>{v["id"]}</b> {chips}</header>'

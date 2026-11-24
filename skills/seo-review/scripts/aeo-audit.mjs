@@ -1,4 +1,3 @@
-// Live crawl and answer-engine audit of one site: robots rules per bot, host twins, sitemap, a page sample.
 import fs from 'node:fs'
 import { UA, flags, mode, pool, sitemapUrls } from './lib.mjs'
 
@@ -112,7 +111,6 @@ async function checkTwin(base) {
 
 const spread = (list, n) => (list.length <= n ? list : Array.from({ length: n }, (_, i) => list[Math.floor((i * list.length) / n)]))
 const path = u => u.replace(origin, '') || '/'
-// Counts only entries that carry a value, so seven guides sharing one date still show on a 16-page site.
 const most = (values, min) => {
   const present = values.filter(Boolean)
   const m = mode(present)
