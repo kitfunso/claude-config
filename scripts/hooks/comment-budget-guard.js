@@ -99,7 +99,7 @@ module.exports = { LINE_TOKENS, classify, isKept, strayComments, addedStray, cod
 if (require.main !== module) return;
 
 let record = () => {};
-try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
+try { ({ record } = require('./lib/record-component')); } catch (e) {}
 
 function applyEdit(content, oldStr, newStr, replaceAll) {
   if (!oldStr || content.indexOf(oldStr) === -1) return null;

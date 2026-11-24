@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 let record = () => {};
-try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
+try { ({ record } = require('./lib/record-component')); } catch (e) {}
 let devrlDenial = () => null;
 try { ({ devrlDenial } = require('./lib/devrl-episode-guard')); } catch (e) { process.stderr.write(`devrl episode guard off: ${e.message}\n`); }
 

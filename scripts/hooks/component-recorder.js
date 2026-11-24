@@ -22,7 +22,6 @@ process.stdin.on('end', () => {
   try {
     handle(JSON.parse(raw));
   } catch {
-    // Swallowed on purpose: every failure here must still exit 0.
   }
   process.exit(0);
 });

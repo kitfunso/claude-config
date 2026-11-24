@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 let record = () => {};
-try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
+try { ({ record } = require('./lib/record-component')); } catch (e) {}
 
 let raw = '';
 process.stdin.on('data', (d) => (raw += d));

@@ -67,7 +67,7 @@ export function claudeRows(steps, sessionId, cwd) {
 
 const cwdOf = (p) => p.cwd || p.workspacePaths?.[0] || process.cwd();
 const file = (p, ext) => path.join(STATE, `${p.conversationId || 'unknown'}${ext}`);
-const log = (line) => { try { fs.appendFileSync(path.join(STATE, 'bridge.log'), `${new Date().toISOString()} ${line}\n`); } catch { /* logging must never block agy */ } };
+const log = (line) => { try { fs.appendFileSync(path.join(STATE, 'bridge.log'), `${new Date().toISOString()} ${line}\n`); } catch {} };
 
 function claudeTranscript(p) {
   const steps = readSteps(p.transcriptPath);
@@ -177,7 +177,7 @@ const HANDLERS = { SessionStart: onSessionStart, PreInvocation: onPreInvocation,
 
 async function main(event) {
   let p = {};
-  try { p = JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); } catch { /* empty payload: run with defaults */ }
+  try { p = JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); } catch {}
   fs.mkdirSync(STATE, { recursive: true });
   let out = event === 'PreToolUse' ? { decision: 'allow' } : {};
   try { if (HANDLERS[event]) out = await HANDLERS[event](p); } catch (e) { log(`${event} failed, Claude hooks skipped: ${e.stack}`); }

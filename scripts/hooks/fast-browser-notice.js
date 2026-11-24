@@ -38,7 +38,6 @@ function main() {
         }));
       }
     } catch (e) {
-      // bad stdin or fs error: stay silent, never break the browser call
     }
     process.exit(0);
   });

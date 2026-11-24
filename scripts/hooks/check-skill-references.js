@@ -9,7 +9,7 @@ const os = require('os');
 const path = require('path');
 
 let record = () => {};
-try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep going */ }
+try { ({ record } = require('./lib/record-component')); } catch (e) {}
 
 function skillDirs() {
   const cfg = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');

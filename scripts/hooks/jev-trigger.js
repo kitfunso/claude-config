@@ -70,7 +70,6 @@ function main() {
         }));
       }
     } catch (e) {
-      // bad stdin or fs error: stay silent, never block the prompt or the edit
     }
     process.exit(0);
   });

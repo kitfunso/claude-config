@@ -38,7 +38,6 @@ function wranglerToken() {
     if (expires - Date.now() > 60000) return (toml.match(/oauth_token\s*=\s*"([^"]+)"/) || [])[1] || '';
     refreshWrangler();
   } catch (e) {
-    // no wrangler login on this box: the caller sees 'no key' and keeps its old path
   }
   return '';
 }
@@ -49,7 +48,6 @@ function refreshWrangler() {
   try {
     if (Date.now() - fs.statSync(marker).mtimeMs < 300000) return;
   } catch (e) {
-    // no marker yet: first refresh
   }
   fs.writeFileSync(marker, '');
   spawn('wrangler', ['whoami'], { detached: true, stdio: 'ignore', shell: true, windowsHide: true }).unref();

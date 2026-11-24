@@ -40,7 +40,6 @@ function log(message) {
     const ts = new Date().toISOString();
     fs.appendFileSync(LOG_FILE, `${ts} ${message}\n`);
   } catch (e) {
-    // never block on logging failure
   }
 }
 

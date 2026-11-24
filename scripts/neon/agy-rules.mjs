@@ -123,7 +123,7 @@ export function chunk(text, size = PART) {
 export function buildRules(cwd) {
   const pieces = [];
   for (const fn of [globalRules, () => claudeMdChain(cwd), () => cutNotes(cwd), () => memoryIndexes(cwd)]) {
-    try { pieces.push(...[].concat(fn() || [])); } catch { /* one bad source must not block agy */ }
+    try { pieces.push(...[].concat(fn() || [])); } catch {}
   }
   return pieces.filter(Boolean).join('\n\n');
 }
@@ -133,7 +133,7 @@ function main() {
   try {
     const p = JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
     cwd = p.cwd || p.workspacePaths?.[0] || cwd;
-  } catch { /* no payload: use process cwd */ }
+  } catch {}
   const parts = chunk(buildRules(cwd));
   process.stdout.write(JSON.stringify({
     injectSteps: parts.map((p, i) => ({ systemMessage: { systemMessage: `[claude rules part ${i + 1}/${parts.length}]\n${p}` } })),

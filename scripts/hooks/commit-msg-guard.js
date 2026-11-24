@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 let record = () => {};
-try { ({ record } = require('./lib/record-component')); } catch (e) { /* recorder missing: keep denying */ }
+try { ({ record } = require('./lib/record-component')); } catch (e) {}
 
 const GIT_COMMIT = /\bgit\b[^|&;]*\bcommit\b/;
 const PIPED_COMMIT = /\|\s*git\b[^|&;]*\bcommit\b/;

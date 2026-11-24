@@ -36,7 +36,6 @@ function record({ kind, name, sessionId, cwd, blocked = 0, notes = null }) {
       db.close();
     }
   } catch {
-    // Swallowed on purpose: every failure here must leave the caller untouched.
   }
 }
 

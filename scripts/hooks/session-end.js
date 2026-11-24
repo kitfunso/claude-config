@@ -57,7 +57,6 @@ function main() {
             if (input.path) filesModified.add(input.path);
           }
         } catch (e) {
-          // Skip unparseable lines
         }
       }
 
@@ -115,7 +114,6 @@ function main() {
       }
 
     } catch (e) {
-      // Never fail the session
     }
   });
 }

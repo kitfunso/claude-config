@@ -86,12 +86,12 @@ export function acquireLock(waitMs = 90_000) {
   for (;;) {
     try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); break; } catch (e) {
       if (e.code !== 'EEXIST') throw e;
-      try { if (Date.now() - fs.statSync(lock).mtimeMs > 5 * 60_000) fs.unlinkSync(lock); } catch { /* gone already */ }
+      try { if (Date.now() - fs.statSync(lock).mtimeMs > 5 * 60_000) fs.unlinkSync(lock); } catch {}
       if (Date.now() > until) throw new Error(`lock busy: ${lock}`);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
     }
   }
-  const beat = setInterval(() => { try { fs.utimesSync(lock, new Date(), new Date()); } catch { /* released */ } }, 60_000);
+  const beat = setInterval(() => { try { fs.utimesSync(lock, new Date(), new Date()); } catch {} }, 60_000);
   beat.unref();
   return () => { clearInterval(beat); fs.rmSync(lock, { force: true }); };
 }
