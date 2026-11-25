@@ -313,7 +313,7 @@ Claude does not do research work. Astra or Neon does it. Claude writes the brief
 - Neon: `node ~/.claude/scripts/neon/spawn.mjs --repo <repo> --task "<brief>" --out <file>`. Add `--mode accept-edits` to let it edit. Give the tool a 600000 ms timeout.
 - Use one route per task. Use both for a result Keith will rely on, and show where they disagree.
 - Claude's part: write the brief from files read this turn (No Fabrication still binds), run the route, then give the output file path and the result as the model wrote it. Never change a number, a conclusion or a limit. If Claude thinks a result is wrong, say so in one line beside it, never in place of it.
-- On a quota error or a rejected model, try the other route once. A corporate-repo refusal or a second failure is a stop to report in one line. Never fall back to doing the research in Claude.
+- On a quota error or a rejected model, try the other route once. A second failure is a stop to report in one line. Never fall back to doing the research in Claude.
 - For research work this overrides Model Routing and the sub-agent rules. Code, config and prose work stay as before.
 - Backstop: none yet. Proposed: a UserPromptSubmit note that fires on research prompts, like `scripts/hooks/neon-route.js`. Set 2026-11-25 (probation).
 

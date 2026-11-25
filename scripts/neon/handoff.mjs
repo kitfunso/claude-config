@@ -19,7 +19,6 @@ export const CFG = {
   noTab: process.env.NEON_NO_TAB === '1',
 };
 const MOVE_KINDS = ['interactive', 'bg'];
-const CORPORATE = ['mr3a_report'];
 const RECENT_MS = 15 * 60_000;
 const SELF = fileURLToPath(import.meta.url);
 
@@ -44,7 +43,6 @@ export function isAlive(pid) {
 }
 
 export const isMovable = (s) => MOVE_KINDS.includes(s?.kind) && Number.isInteger(s.pid) && isAlive(s.pid);
-export const isCorporate = (paths) => paths.some((p) => CORPORATE.some((c) => String(p).toLowerCase().includes(c)));
 
 /** Minutes until a "resets 4pm" / "resets Nov 28, 4am" time, in local time; null if no time is in the text. */
 export function resetMinutes(text, now = new Date()) {
@@ -114,7 +112,6 @@ async function moveOne(s, { dry, manual }) {
   const scan = await scanTranscript(transcript);
   if (manual) scan.limit = { ...scan.limit, working: true, limitText: 'none: Keith handed this session over by hand' };
   const repos = touchedRepos(scan);
-  if (isCorporate([s.cwd, ...repos, ...scan.cwds])) return `${s.name}\tskipped: corporate`;
   const cwd = workDir(scan, s.cwd);
   const movedAt = new Date().toISOString();
   const state = `${scan.permissionMode || 'default'}\t${scan.limit.working ? 'WORKING' : 'IDLE'}`;

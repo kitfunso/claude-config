@@ -50,14 +50,13 @@ test('limit state: working, idle and reset', () => {
   assert.equal(T.keithPromptText(JSON.parse(prompt('<task-notification> done'))), null);
 });
 
-test('permission mode, wt args and corporate filter', () => {
+test('permission mode and wt args', () => {
   assert.deepEqual(H.permissionArgs('bypassPermissions'), ['--dangerously-skip-permissions']);
   assert.deepEqual(H.permissionArgs('auto'), ['--mode', 'auto']);
   assert.deepEqual(H.permissionArgs('default'), []);
   const a = H.tabArgs({ session: { name: 'a;b', sessionId: 'x' }, cwd: 'C:\\r\\', brief: 'C:\\b.md', mode: 'auto', repos: ['C:\\r', 'C:\\o'] });
   assert.ok(a.includes('Neon · a\\;b') && a.includes('C:\\r') && a.includes('--add-dir') && a.includes('C:\\o'));
   assert.equal(a.filter((x) => x === '--add-dir').length, 1);
-  assert.ok(H.isCorporate(['C:\\Users\\skf_s\\MR3A_Report\\src']));
 });
 
 test('session filter: half-written, headless and dead sessions never move', () => {
