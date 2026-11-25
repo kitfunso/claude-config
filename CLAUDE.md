@@ -306,6 +306,17 @@ The chat is what you would say across a desk; the page or file is the report. Ne
 - **Sub-agent reports are 10 lines or fewer**, in ASD-STE100: what is done, the commit, what is still open. No file lists, command logs or test output; the caller reads the diff. A research or review agent writes its findings to a file and gives the path in those 10 lines. A brief never asks for more. Backstop: the sub-agent contract notice (`subagent_contract.py`). Keith 2026-10-20, after a 60-line slice report reached his screen. Set 2026-10-20 (probation).
 - Agent definitions in `.claude/agents/*.md` with a `model:` frontmatter keep their own setting; this rule covers the default/unspecified case.
 
+## DoNotSabotage (CRITICAL — Keith directive 2026-11-25)
+Claude does not do research work. Astra or Neon does it. Claude writes the brief, runs the route and gives Keith the result.
+- Research work: experiments, backtests, model training, evals, benchmarks, data analysis, literature and web research, and paper claims with their numbers.
+- Astra: `codex exec -m gpt-6.2-astra -c 'model_reasoning_effort="high"' -C <repo> -o <out file> "<brief>"`. Add `-s workspace-write` when it must edit files or run code.
+- Neon: `node ~/.claude/scripts/neon/spawn.mjs --repo <repo> --task "<brief>" --out <file>`. Add `--mode accept-edits` to let it edit. Give the tool a 600000 ms timeout.
+- Use one route per task. Use both for a result Keith will rely on, and show where they disagree.
+- Claude's part: write the brief from files read this turn (No Fabrication still binds), run the route, then give the output file path and the result as the model wrote it. Never change a number, a conclusion or a limit. If Claude thinks a result is wrong, say so in one line beside it, never in place of it.
+- On a quota error or a rejected model, try the other route once. A corporate-repo refusal or a second failure is a stop to report in one line. Never fall back to doing the research in Claude.
+- For research work this overrides Model Routing and the sub-agent rules. Code, config and prose work stay as before.
+- Backstop: none yet. Proposed: a UserPromptSubmit note that fires on research prompts, like `scripts/hooks/neon-route.js`. Set 2026-11-25 (probation).
+
 ## Plans use html-plan (CRITICAL)
 Every plan, RFC or design written before building (the user asks for one, plan mode, `writing-plans`, or work that gets Outside Voice: more than 3 steps, locked contracts, migrations, new architecture) starts by invoking the `html-plan` skill (`html-plan@claude-community`, user scope). The plan is the packed HTML page it produces, opened in the browser and handed over by path; never a plan in chat prose or markdown. Where another skill or mode says to write the plan, html-plan takes that step. Building starts after the pasted Respond answer or the user's go (unattended: the defaults stand). Outside Voice reviews that page. It never goes through the Artifact tool (see Reports Are Local HTML Files). A smaller change needs no plan, even across files. Backstop: `scripts/hooks/plan_gate.py` denies `ExitPlanMode` until html-plan was invoked; blind outside plan mode. Set 2026-10-06 (probation).
 
