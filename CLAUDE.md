@@ -306,15 +306,16 @@ The chat is what you would say across a desk; the page or file is the report. Ne
 - **Sub-agent reports are 10 lines or fewer**, in ASD-STE100: what is done, the commit, what is still open. No file lists, command logs or test output; the caller reads the diff. A research or review agent writes its findings to a file and gives the path in those 10 lines. A brief never asks for more. Backstop: the sub-agent contract notice (`subagent_contract.py`). Keith 2026-10-20, after a 60-line slice report reached his screen. Set 2026-10-20 (probation).
 - Agent definitions in `.claude/agents/*.md` with a `model:` frontmatter keep their own setting; this rule covers the default/unspecified case.
 
-## DoNotSabotage (CRITICAL — Keith directive 2026-11-25)
-Claude does not do research work. Astra or Neon does it. Claude writes the brief, runs the route and gives Keith the result.
-- Research work: experiments, backtests, model training, evals, benchmarks, data analysis, literature and web research, and paper claims with their numbers.
-- Astra: `codex exec -m gpt-6.2-astra -c 'model_reasoning_effort="high"' -C <repo> -o <out file> "<brief>"`. Add `-s workspace-write` when it must edit files or run code.
-- Neon: `node ~/.claude/scripts/neon/spawn.mjs --repo <repo> --task "<brief>" --out <file>`. Add `--mode accept-edits` to let it edit. Give the tool a 600000 ms timeout.
-- Use one route per task. Use both for a result Keith will rely on, and show where they disagree.
-- Claude's part: write the brief from files read this turn (No Fabrication still binds), run the route, then give the output file path and the result as the model wrote it. Never change a number, a conclusion or a limit. If Claude thinks a result is wrong, say so in one line beside it, never in place of it.
-- On a quota error or a rejected model, try the other route once. A second failure is a stop to report in one line. Never fall back to doing the research in Claude.
-- For research work this overrides Model Routing and the sub-agent rules. Code, config and prose work stay as before.
+## DoNotSabotage (CRITICAL — Keith directive 2026-11-25, revised the same day)
+Claude does the research work, without sabotaging the goal of the research. Astra and Neon only review it, both of them whenever both have tokens: the research plan before the first run, and the result before Keith relies on it.
+- Research work: experiments, backtests, model training, evals, benchmarks, data analysis, and paper claims with their numbers. A lookup (reading a call, a form, a doc or a page to answer or act) is not research and gets no review.
+- Do not sabotage the goal. Write the goal down before the first run, then serve it: no lookahead, no skipped check, no quiet cut in scope, and no number or conclusion bent to fit a story. A failed route closes the route, never the goal (Can-Do Default).
+- Plan review: when the research has a plan, Astra and Neon read it before the first run. Apply each finding, or say in one line why not.
+- Result review: Astra and Neon read the finished result, with the code and data paths behind it, before Keith relies on it. Give Keith both review file paths, the findings as each reviewer wrote them, and where they disagree. Fix what they find, or say in one line why not.
+- Reviewers only review. They run read-only, and never do the research or edit files.
+- Astra: `codex exec -m gpt-6.2-astra -c 'model_reasoning_effort="high"' -C <repo> -o <out file> "<review brief>" < /dev/null`. Add `--skip-git-repo-check` outside a git repo.
+- Neon: `node ~/.claude/scripts/neon/spawn.mjs --repo <repo> --task "<review brief>" --out <file>` (read-only by default). Give the tool a 600000 ms timeout.
+- Tokens: a quota error or a rejected model means that reviewer has no tokens. When only one has tokens, it reviews alone, and the reply says in one line which one was out. When neither has tokens, say in one line that the work has no review yet, and carry on.
 - Backstop: none yet. Proposed: a UserPromptSubmit note that fires on research prompts, like `scripts/hooks/neon-route.js`. Set 2026-11-25 (probation).
 
 ## Plans use html-plan (CRITICAL)
